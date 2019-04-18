@@ -81,9 +81,29 @@ impl Display for Error {
     }
 }
 
-pub struct ElfLoader;
+/// * `kernel_load` - The actual `guest_mem` address where kernel image is loaded start.
+/// * `kernel_end` - The offset of `guest_mem` where kernel image load is loaded finish, return
+///                  in case of loading initrd adjacent to kernel image.
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
+pub struct KernelLoaderResult {
+    pub kernel_load: GuestAddress,
+    pub kernel_end: GuestUsize,
+}
 
-impl ElfLoader {
+pub trait KernelLoader {
+    fn load<F>(
+        guest_mem: &GuestMemoryMmap,
+        kernel_start: Option<GuestAddress>,
+        kernel_image: &mut F,
+        lowest_kernel_start: Option<GuestAddress>,
+    ) -> Result<(KernelLoaderResult)>
+    where
+        F: Read + Seek;
+}
+
+pub struct Elf;
+
+impl KernelLoader for Elf {
     /// Loads a kernel from a vmlinux elf image to a slice
     ///
     /// kernel is loaded into guest memory at offset phdr.p_paddr specified by elf image.
@@ -96,15 +116,13 @@ impl ElfLoader {
     /// * `lowest_kernel_start` - This is the start of the high memory, kernel should above it.
     ///
     /// # Returns
-    /// * GuestAddress - GuestAddress where kernel is loaded.
-    /// * usize - the length of kernel image. Return this in case of other part
-    ///           like initrd will be loaded adjacent to the kernel part.
-    pub fn load_kernel<F>(
+    /// * KernelLoaderResult
+    fn load<F>(
         guest_mem: &GuestMemoryMmap,
         kernel_start: Option<GuestAddress>,
         kernel_image: &mut F,
         lowest_kernel_start: Option<GuestAddress>,
-    ) -> Result<(GuestAddress, GuestUsize)>
+    ) -> Result<(KernelLoaderResult)>
     where
         F: Read + Seek,
     {
@@ -140,8 +158,10 @@ impl ElfLoader {
                 return Err(Error::InvalidEntryAddress);
             }
         }
+
+        let mut loader_result: KernelLoaderResult = Default::default();
         // where the kernel will be start loaded.
-        let kernel_loaded_addr = match kernel_start {
+        loader_result.kernel_load = match kernel_start {
             Some(start) => GuestAddress(start.raw_value() + (ehdr.e_entry as u64)),
             None => GuestAddress(ehdr.e_entry as u64),
         };
@@ -154,8 +174,6 @@ impl ElfLoader {
             struct_util::read_struct_slice(kernel_image, ehdr.e_phnum as usize)
                 .map_err(|_| Error::ReadProgramHeader)?
         };
-
-        let mut kernel_end: GuestUsize = 0;
 
         // Read in each section pointed to by the program headers.
         for phdr in &phdrs {
@@ -180,10 +198,11 @@ impl ElfLoader {
                 .read_exact_from(mem_offset, kernel_image, phdr.p_filesz as usize)
                 .map_err(|_| Error::ReadKernelImage)?;
 
-            kernel_end = mem_offset.raw_value() as GuestUsize + phdr.p_memsz as GuestUsize;
+            loader_result.kernel_end =
+                mem_offset.raw_value() as GuestUsize + phdr.p_memsz as GuestUsize;
         }
 
-        Ok((kernel_loaded_addr, kernel_end))
+        Ok(loader_result)
     }
 }
 
@@ -221,8 +240,8 @@ pub fn load_cmdline(
 #[cfg(test)]
 mod test {
     use super::*;
-    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
     use std::io::Cursor;
+    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
     const MEM_SIZE: u64 = 0x1000000;
 
@@ -243,36 +262,45 @@ mod test {
         let image = make_elf_bin();
         let kernel_addr = GuestAddress(0x200000);
         let mut lowest_kernel_start = GuestAddress(0x0);
-
-        let mut x = ElfLoader::load_kernel(
+        let mut loader_result = Elf::load(
             &gm,
             Some(kernel_addr),
             &mut Cursor::new(&image),
             Some(lowest_kernel_start),
+        )
+        .unwrap();
+        println!(
+            "load elf at address {:8x} \n",
+            loader_result.kernel_load.raw_value()
         );
-        assert_eq!(x.is_ok(), true);
-        let mut entry_addr = x.unwrap().0;
-        println!("load elf at address {:8x} \n", entry_addr.raw_value());
 
-        x = ElfLoader::load_kernel(&gm, Some(kernel_addr), &mut Cursor::new(&image), None);
-        assert_eq!(x.is_ok(), true);
-        entry_addr = x.unwrap().0;
-        println!("load elf at address {:8x} \n", entry_addr.raw_value());
+        loader_result = Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
+        println!(
+            "load elf at address {:8x} \n",
+            loader_result.kernel_load.raw_value()
+        );
 
-        x = ElfLoader::load_kernel(
+        loader_result = Elf::load(
             &gm,
             None,
             &mut Cursor::new(&image),
             Some(lowest_kernel_start),
+        )
+        .unwrap();
+        println!(
+            "load elf at address {:8x} \n",
+            loader_result.kernel_load.raw_value()
         );
-        assert_eq!(x.is_ok(), true);
-        entry_addr = x.unwrap().0;
-        println!("load elf at address {:8x} \n", entry_addr.raw_value());
 
         lowest_kernel_start = GuestAddress(0xa00000);
         assert_eq!(
             Err(Error::InvalidEntryAddress),
-            ElfLoader::load_kernel(&gm, None, &mut Cursor::new(&image), Some(lowest_kernel_start))
+            Elf::load(
+                &gm,
+                None,
+                &mut Cursor::new(&image),
+                Some(lowest_kernel_start)
+            )
         );
     }
 
@@ -326,7 +354,7 @@ mod test {
         bad_image[0x1] = 0x33;
         assert_eq!(
             Err(Error::InvalidElfMagicNumber),
-            ElfLoader::load_kernel(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
+            Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
         );
     }
 
@@ -339,7 +367,7 @@ mod test {
         bad_image[0x5] = 2;
         assert_eq!(
             Err(Error::BigEndianElfOnLittle),
-            ElfLoader::load_kernel(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
+            Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
         );
     }
 
@@ -352,7 +380,7 @@ mod test {
         bad_image[0x20] = 0x10;
         assert_eq!(
             Err(Error::InvalidProgramHeaderOffset),
-            ElfLoader::load_kernel(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
+            Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
         );
     }
 }
