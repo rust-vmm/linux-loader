@@ -22,6 +22,12 @@ use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap, Gues
 #[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy))]
+pub mod bootparam;
+#[allow(dead_code)]
+#[allow(non_camel_case_types)]
+#[allow(non_snake_case)]
+#[allow(non_upper_case_globals)]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy))]
 mod elf;
 mod struct_util;
 
@@ -35,15 +41,21 @@ pub enum Error {
     InvalidProgramHeaderOffset,
     InvalidProgramHeaderAddress,
     InvalidEntryAddress,
+    InvalidBzImage,
     InvalidKernelStartAddress,
     InitrdImageSizeTooLarge,
     ReadElfHeader,
     ReadKernelImage,
     ReadProgramHeader,
+    ReadBzImageHeader,
+    ReadBzImageCompressedKernel,
     ReadInitrdImage,
     SeekKernelStart,
     SeekElfStart,
     SeekProgramHeader,
+    SeekBzImageEnd,
+    SeekBzImageHeader,
+    SeekBzImageCompressedKernel,
     SeekInitrdImage,
 }
 pub type Result<T> = std::result::Result<T, Error>;
@@ -61,15 +73,21 @@ impl error::Error for Error {
             Error::InvalidProgramHeaderOffset => "Invalid program header offset",
             Error::InvalidProgramHeaderAddress => "Invalid Program Header Address",
             Error::InvalidEntryAddress => "Invalid entry address",
+            Error::InvalidBzImage => "Invalid bzImage",
             Error::InvalidKernelStartAddress => "Invalid kernel start address",
             Error::InitrdImageSizeTooLarge => "Initrd image size too large",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
             Error::ReadProgramHeader => "Unable to read program header",
+            Error::ReadBzImageHeader => "Unable to read bzImage header",
+            Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
             Error::ReadInitrdImage => "Unable to read initrd image",
             Error::SeekKernelStart => "Unable to seek to kernel start",
             Error::SeekElfStart => "Unable to seek to elf start",
             Error::SeekProgramHeader => "Unable to seek to program header",
+            Error::SeekBzImageEnd => "Unable to seek bzImage end",
+            Error::SeekBzImageHeader => "Unable to seek bzImage header",
+            Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
             Error::SeekInitrdImage => "Unable to seek initrd image",
         }
     }
@@ -84,10 +102,14 @@ impl Display for Error {
 /// * `kernel_load` - The actual `guest_mem` address where kernel image is loaded start.
 /// * `kernel_end` - The offset of `guest_mem` where kernel image load is loaded finish, return
 ///                  in case of loading initrd adjacent to kernel image.
+/// * `setup_header` - The setup_header belongs to linux boot protocol, only for bzImage, vmm
+///                    will use it to setup setup_header.init_size, which is a must for bzImage
+///                    direct boot.
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct KernelLoaderResult {
     pub kernel_load: GuestAddress,
     pub kernel_end: GuestUsize,
+    pub setup_header: Option<bootparam::setup_header>,
 }
 
 pub trait KernelLoader {
@@ -202,6 +224,98 @@ impl KernelLoader for Elf {
                 mem_offset.raw_value() as GuestUsize + phdr.p_memsz as GuestUsize;
         }
 
+        loader_result.setup_header = None;
+
+        Ok(loader_result)
+    }
+}
+
+pub struct BzImage;
+
+impl KernelLoader for BzImage {
+    /// Loads a bzImage
+    ///
+    /// kernel is loaded into guest memory at code32_start the default load address
+    /// stored in bzImage setup header.
+    ///
+    /// # Arguments
+    ///
+    /// * `guest_mem` - The guest memory region the kernel is written to.
+    /// * `kernel_start` - The offset into 'guest _mem' at which to load the kernel.
+    /// * `kernel_image` - Input bzImage image.
+    /// * `lowest_kernel_start` - This is the start of the high memory, kernel should above it.
+    ///
+    /// # Returns
+    /// * KernelLoaderResult
+    fn load<F>(
+        guest_mem: &GuestMemoryMmap,
+        kernel_start: Option<GuestAddress>,
+        kernel_image: &mut F,
+        lowest_kernel_start: Option<GuestAddress>,
+    ) -> Result<(KernelLoaderResult)>
+    where
+        F: Read + Seek,
+    {
+        let mut kernel_size = kernel_image
+            .seek(SeekFrom::End(0))
+            .map_err(|_| Error::SeekBzImageEnd)? as usize;
+        let mut boot_header: bootparam::setup_header = Default::default();
+        kernel_image
+            .seek(SeekFrom::Start(0x1F1))
+            .map_err(|_| Error::SeekBzImageHeader)?;
+        unsafe {
+            // read_struct is safe when reading a POD struct.  It can be used and dropped without issue.
+            struct_util::read_struct(kernel_image, &mut boot_header)
+                .map_err(|_| Error::ReadBzImageHeader)?;
+        }
+
+        // if the HdrS magic number is not found at offset 0x202, the boot protocol version is "old",
+        // the image type is assumed as zImage, not bzImage.
+        if boot_header.header != 0x53726448 {
+            return Err(Error::InvalidBzImage);
+        }
+
+        // follow section of loading the rest of the kernel in linux boot protocol
+        if (boot_header.version < 0x0200) || ((boot_header.loadflags & 0x1) == 0x0) {
+            return Err(Error::InvalidBzImage);
+        }
+
+        let mut setup_size = boot_header.setup_sects as usize;
+        if setup_size == 0 {
+            setup_size = 4;
+        }
+        setup_size = (setup_size + 1) * 512;
+        kernel_size -= setup_size;
+
+        // verify bzImage validation by checking if code32_start, the defaults to the address of
+        // the kernel is not lower than high memory.
+        if lowest_kernel_start.is_some() {
+            if (boot_header.code32_start as u64) < lowest_kernel_start.unwrap().raw_value() {
+                return Err(Error::InvalidKernelStartAddress);
+            }
+        }
+
+        let mem_offset = match kernel_start {
+            Some(start) => start,
+            None => GuestAddress(boot_header.code32_start as u64),
+        };
+
+        boot_header.code32_start = mem_offset.raw_value() as u32;
+
+        let mut loader_result: KernelLoaderResult = Default::default();
+        loader_result.setup_header = Some(boot_header);
+        loader_result.kernel_load = mem_offset;
+
+        //seek the compressed vmlinux.bin and read to memory
+        kernel_image
+            .seek(SeekFrom::Start(setup_size as u64))
+            .map_err(|_| Error::SeekBzImageCompressedKernel)?;
+        guest_mem
+            .read_exact_from(mem_offset, kernel_image, kernel_size)
+            .map_err(|_| Error::ReadBzImageCompressedKernel)?;
+
+        loader_result.kernel_end = mem_offset.raw_value() as GuestUsize + kernel_size as GuestUsize;
+
         Ok(loader_result)
     }
 }
@@ -249,11 +363,89 @@ mod test {
         GuestMemoryMmap::new(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
+    #[allow(non_snake_case)]
+    fn make_bzImage() -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(include_bytes!("bzImage"));
+        v
+    }
+
     // Elf64 image that prints hello world on x86_64.
     fn make_elf_bin() -> Vec<u8> {
         let mut v = Vec::new();
         v.extend_from_slice(include_bytes!("test_elf.bin"));
         v
+    }
+
+    #[allow(safe_packed_borrows)]
+    #[allow(non_snake_case)]
+    #[test]
+    #[ignore]
+    fn load_bzImage() {
+        let gm = create_guest_mem();
+        let image = make_bzImage();
+        let mut kernel_start = GuestAddress(0x200000);
+        let mut lowest_kernel_start = GuestAddress(0x0);
+
+        // load bzImage with good kernel_start and himem_start setting
+        let mut loader_result = BzImage::load(
+            &gm,
+            Some(kernel_start),
+            &mut Cursor::new(&image),
+            Some(lowest_kernel_start),
+        )
+        .unwrap();
+        assert_eq!(0x53726448, loader_result.setup_header.unwrap().header);
+        println!(
+            "bzImage is loaded at {:8x} \n",
+            loader_result.kernel_load.raw_value()
+        );
+        println!(
+            "bzImage version is {:2x} \n",
+            loader_result.setup_header.unwrap().version
+        );
+        println!(
+            "bzImage loadflags is {:x} \n",
+            loader_result.setup_header.unwrap().loadflags
+        );
+        println!(
+            "bzImage kernel size is {:4x} \n",
+            (loader_result.kernel_end as u32)
+        );
+
+        // load bzImage without kernel_start
+        loader_result = BzImage::load(
+            &gm,
+            None,
+            &mut Cursor::new(&image),
+            Some(lowest_kernel_start),
+        )
+        .unwrap();
+        assert_eq!(0x53726448, loader_result.setup_header.unwrap().header);
+        println!(
+            "bzImage is loaded at {:8x} \n",
+            loader_result.kernel_load.raw_value()
+        );
+
+        // load bzImage withouth himem_start
+        loader_result = BzImage::load(&gm, None, &mut Cursor::new(&image), None).unwrap();
+        assert_eq!(0x53726448, loader_result.setup_header.unwrap().header);
+        println!(
+            "bzImage is loaded at {:8x} \n",
+            loader_result.kernel_load.raw_value()
+        );
+
+        // load bzImage with a bad himem setting
+        kernel_start = GuestAddress(0x1000);
+        lowest_kernel_start = GuestAddress(0x200000);
+        let x = BzImage::load(
+            &gm,
+            Some(kernel_start),
+            &mut Cursor::new(&image),
+            Some(lowest_kernel_start),
+        );
+        assert_eq!(x.is_ok(), false);
+        println!("load bzImage with bad himem setting \n");
     }
 
     #[test]
