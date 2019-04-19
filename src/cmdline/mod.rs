@@ -84,7 +84,7 @@ impl Cmdline {
         assert_ne!(capacity, 0);
         Cmdline {
             line: String::with_capacity(capacity),
-            capacity: capacity,
+            capacity,
         }
     }
 
