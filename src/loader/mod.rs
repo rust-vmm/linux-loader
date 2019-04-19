@@ -21,13 +21,13 @@ use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap, Gues
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 pub mod bootparam;
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 mod elf;
 mod struct_util;
 
@@ -175,10 +175,10 @@ impl KernelLoader for Elf {
             // If the program header is backwards, bail.
             return Err(Error::InvalidProgramHeaderOffset);
         }
-        if lowest_kernel_start.is_some() {
-            if (ehdr.e_entry as u64) < lowest_kernel_start.unwrap().raw_value() {
-                return Err(Error::InvalidEntryAddress);
-            }
+        if (lowest_kernel_start.is_some())
+            && ((ehdr.e_entry as u64) < lowest_kernel_start.unwrap().raw_value())
+        {
+            return Err(Error::InvalidEntryAddress);
         }
 
         let mut loader_result: KernelLoaderResult = Default::default();
@@ -271,7 +271,7 @@ impl KernelLoader for BzImage {
 
         // if the HdrS magic number is not found at offset 0x202, the boot protocol version is "old",
         // the image type is assumed as zImage, not bzImage.
-        if boot_header.header != 0x53726448 {
+        if boot_header.header != 0x5372_6448 {
             return Err(Error::InvalidBzImage);
         }
 
@@ -289,15 +289,15 @@ impl KernelLoader for BzImage {
 
         // verify bzImage validation by checking if code32_start, the defaults to the address of
         // the kernel is not lower than high memory.
-        if lowest_kernel_start.is_some() {
-            if (boot_header.code32_start as u64) < lowest_kernel_start.unwrap().raw_value() {
-                return Err(Error::InvalidKernelStartAddress);
-            }
+        if (lowest_kernel_start.is_some())
+            && (u64::from(boot_header.code32_start) < lowest_kernel_start.unwrap().raw_value())
+        {
+            return Err(Error::InvalidKernelStartAddress);
         }
 
         let mem_offset = match kernel_start {
             Some(start) => start,
-            None => GuestAddress(boot_header.code32_start as u64),
+            None => GuestAddress(u64::from(boot_header.code32_start)),
         };
 
         boot_header.code32_start = mem_offset.raw_value() as u32;
