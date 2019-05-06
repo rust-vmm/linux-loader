@@ -3,7 +3,7 @@ name = "linux-loader"
 version = "0.1.0"
 authors = ["Cathy Zhang <cathy.zhang@intel.com>"]
 edition = "2018"
-license = "Apache-2.0"
+license = "Apache-2.0 AND BSD-3-Clause"
 
 [dependencies.vm-memory]
 git = "https://github.com/rust-vmm/vm-memory"
