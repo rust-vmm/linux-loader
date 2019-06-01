@@ -51,6 +51,7 @@ pub enum Error {
     InvalidBzImage,
     InvalidKernelStartAddress,
     InitrdImageSizeTooLarge,
+    MemoryOverflow,
     ReadElfHeader,
     ReadKernelImage,
     ReadProgramHeader,
@@ -83,6 +84,7 @@ impl error::Error for Error {
             Error::InvalidBzImage => "Invalid bzImage",
             Error::InvalidKernelStartAddress => "Invalid kernel start address",
             Error::InitrdImageSizeTooLarge => "Initrd image size too large",
+            Error::MemoryOverflow => "Memory to load kernel image is not enough",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
             Error::ReadProgramHeader => "Unable to read program header",
@@ -227,8 +229,9 @@ impl KernelLoader for Elf {
                 .read_exact_from(mem_offset, kernel_image, phdr.p_filesz as usize)
                 .map_err(|_| Error::ReadKernelImage)?;
 
-            loader_result.kernel_end =
-                mem_offset.raw_value() as GuestUsize + phdr.p_memsz as GuestUsize;
+            loader_result.kernel_end = mem_offset.raw_value()
+                .checked_add(phdr.p_memsz as GuestUsize)
+                .ok_or(Error::MemoryOverflow)?;
         }
 
         loader_result.setup_header = None;
@@ -321,7 +324,9 @@ impl KernelLoader for BzImage {
             .read_exact_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadBzImageCompressedKernel)?;
 
-        loader_result.kernel_end = mem_offset.raw_value() as GuestUsize + kernel_size as GuestUsize;
+        loader_result.kernel_end = mem_offset.raw_value()  
+            .checked_add(kernel_size as GuestUsize)
+            .ok_or(Error::MemoryOverflow)?;
 
         Ok(loader_result)
     }
