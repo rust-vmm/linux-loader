@@ -7,6 +7,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
+//! Traits and Structs
+//! - [KernelLoader](trait.KernelLoader.html): load kernel image into guest memory
+//! - [KernelLoaderResult](struct.KernelLoaderResult.html): the structure which loader
+//! returns to VMM to assist zero page construction and boot environment setup
+//! - [Elf](struct.Elf.html): elf image loader
+//! - [BzImage](struct.BzImage.html): bzImage loader
+
 extern crate vm_memory;
 
 use std::error::{self, Error as KernelLoaderError};
