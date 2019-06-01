@@ -22,7 +22,7 @@ use std::fmt::{self, Display};
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
-use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap, GuestUsize};
+use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -120,8 +120,8 @@ pub struct KernelLoaderResult {
 }
 
 pub trait KernelLoader {
-    fn load<F>(
-        guest_mem: &GuestMemoryMmap,
+    fn load<F, M: GuestMemory>(
+        guest_mem: &M,
         kernel_start: Option<GuestAddress>,
         kernel_image: &mut F,
         lowest_kernel_start: Option<GuestAddress>,
@@ -146,8 +146,8 @@ impl KernelLoader for Elf {
     ///
     /// # Returns
     /// * KernelLoaderResult
-    fn load<F>(
-        guest_mem: &GuestMemoryMmap,
+    fn load<F, M: GuestMemory>(
+        guest_mem: &M,
         kernel_start: Option<GuestAddress>,
         kernel_image: &mut F,
         lowest_kernel_start: Option<GuestAddress>,
@@ -254,8 +254,8 @@ impl KernelLoader for BzImage {
     ///
     /// # Returns
     /// * KernelLoaderResult
-    fn load<F>(
-        guest_mem: &GuestMemoryMmap,
+    fn load<F, M: GuestMemory>(
+        guest_mem: &M,
         kernel_start: Option<GuestAddress>,
         kernel_image: &mut F,
         lowest_kernel_start: Option<GuestAddress>,
@@ -334,8 +334,8 @@ impl KernelLoader for BzImage {
 /// * `guest_mem` - A u8 slice that will be partially overwritten by the command line.
 /// * `guest_addr` - The address in `guest_mem` at which to load the command line.
 /// * `cmdline` - The kernel command line.
-pub fn load_cmdline(
-    guest_mem: &GuestMemoryMmap,
+pub fn load_cmdline<M: GuestMemory>(
+    guest_mem: &M,
     guest_addr: GuestAddress,
     cmdline: &CStr,
 ) -> Result<()> {
