@@ -108,16 +108,15 @@ impl Display for Error {
     }
 }
 
-/// * `kernel_load` - The actual `guest_mem` address where kernel image is loaded start.
-/// * `kernel_end` - The offset of `guest_mem` where kernel image load is loaded finish, return
-///                  in case of loading initrd adjacent to kernel image.
-/// * `setup_header` - The setup_header belongs to linux boot protocol, only for bzImage, vmm
-///                    will use it to setup setup_header.init_size, which is a must for bzImage
-///                    direct boot.
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct KernelLoaderResult {
+    // Address in the guest memory where the kernel image starts to be loaded
     pub kernel_load: GuestAddress,
+    // Offset in guest memory corresponding to the end of kernel image, in case that 
+    // device tree blob and initrd will be loaded adjacent to kernel image.
     pub kernel_end: GuestUsize,
+    // This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
+    // VMM should make use of it to fill zero page for bzImage direct boot.
     pub setup_header: Option<bootparam::setup_header>,
 }
 
@@ -142,7 +141,7 @@ impl KernelLoader for Elf {
     /// # Arguments
     ///
     /// * `guest_mem` - The guest memory region the kernel is written to.
-    /// * `kernel_start` - The offset into 'guest _mem' at which to load the kernel.
+    /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
     /// * `kernel_image` - Input vmlinux image.
     /// * `lowest_kernel_start` - This is the start of the high memory, kernel should above it.
     ///
@@ -181,7 +180,6 @@ impl KernelLoader for Elf {
             return Err(Error::InvalidProgramHeaderSize);
         }
         if (ehdr.e_phoff as usize) < mem::size_of::<elf::Elf64_Ehdr>() {
-            // If the program header is backwards, bail.
             return Err(Error::InvalidProgramHeaderOffset);
         }
         if (lowest_kernel_start.is_some())
@@ -216,7 +214,7 @@ impl KernelLoader for Elf {
                 .seek(SeekFrom::Start(phdr.p_offset))
                 .map_err(|_| Error::SeekKernelStart)?;
 
-            // vmm does not specify where the kernel should be loaded, just
+            // if the vmm does not specify where the kernel should be loaded, just
             // load it to the physical address p_paddr for each segment.
             let mem_offset = match kernel_start {
                 Some(start) => start
@@ -234,6 +232,7 @@ impl KernelLoader for Elf {
                 .ok_or(Error::MemoryOverflow)?;
         }
 
+        // elf image has no setup_header which is defined for bzImage
         loader_result.setup_header = None;
 
         Ok(loader_result)
@@ -250,8 +249,8 @@ impl KernelLoader for BzImage {
     ///
     /// # Arguments
     ///
-    /// * `guest_mem` - The guest memory region the kernel is written to.
-    /// * `kernel_start` - The offset into 'guest _mem' at which to load the kernel.
+    /// * `guest_mem` - The guest memory where the kernel image is loaded.
+    /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
     /// * `kernel_image` - Input bzImage image.
     /// * `lowest_kernel_start` - This is the start of the high memory, kernel should above it.
     ///
