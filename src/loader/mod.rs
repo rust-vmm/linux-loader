@@ -112,7 +112,7 @@ impl Display for Error {
 pub struct KernelLoaderResult {
     // Address in the guest memory where the kernel image starts to be loaded
     pub kernel_load: GuestAddress,
-    // Offset in guest memory corresponding to the end of kernel image, in case that 
+    // Offset in guest memory corresponding to the end of kernel image, in case that
     // device tree blob and initrd will be loaded adjacent to kernel image.
     pub kernel_end: GuestUsize,
     // This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
@@ -227,7 +227,8 @@ impl KernelLoader for Elf {
                 .read_exact_from(mem_offset, kernel_image, phdr.p_filesz as usize)
                 .map_err(|_| Error::ReadKernelImage)?;
 
-            loader_result.kernel_end = mem_offset.raw_value()
+            loader_result.kernel_end = mem_offset
+                .raw_value()
                 .checked_add(phdr.p_memsz as GuestUsize)
                 .ok_or(Error::MemoryOverflow)?;
         }
@@ -323,7 +324,8 @@ impl KernelLoader for BzImage {
             .read_exact_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadBzImageCompressedKernel)?;
 
-        loader_result.kernel_end = mem_offset.raw_value()  
+        loader_result.kernel_end = mem_offset
+            .raw_value()
             .checked_add(kernel_size as GuestUsize)
             .ok_or(Error::MemoryOverflow)?;
 
