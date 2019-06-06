@@ -40,6 +40,7 @@ pub unsafe fn read_struct<T: Copy, F: Read>(f: &mut F, out: &mut T) -> Result<()
 ///
 /// * `f` - The input to read from.  Often this is a file.
 /// * `len` - The number of structs to fill with data read from `f`.
+#[cfg(feature = "elf")]
 pub unsafe fn read_struct_slice<T: Copy, F: Read>(f: &mut F, len: usize) -> Result<Vec<T>> {
     let mut out: Vec<T> = Vec::with_capacity(len);
     out.set_len(len);
@@ -114,6 +115,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "elf")]
     fn struct_slice_read() {
         let orig = vec![
             TestRead {
