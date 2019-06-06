@@ -5,10 +5,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE-BSD-3-Clause file.
 //
-// SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause 
+// SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
 pub mod cmdline;
 pub mod loader;
 
 extern crate vm_memory;
-
