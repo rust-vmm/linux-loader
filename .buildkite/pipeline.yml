@@ -34,7 +34,55 @@ steps:
           privileged: true
           image: "rustvmm/dev:v2"
           always-pull: true
-  
+
+  - label: "build-gnu-x86-elf"
+    commands:
+     - cargo build --release --features elf
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          image: "rustvmm/dev:v2"
+          always-pull: true
+
+  - label: "unittests-gnu-x86-elf"
+    commands:
+     - cargo test --features elf
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          privileged: true
+          image: "rustvmm/dev:v2"
+
+  - label: "build-gnu-x86-bzimage"
+    commands:
+     - cargo build --release --features bzimage
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          image: "rustvmm/dev:v2"
+          always-pull: true
+
+  - label: "unittests-gnu-x86-bzimage"
+    commands:
+     - cargo test --features bzimage
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          privileged: true
+          image: "rustvmm/dev:v2"
+
   - label: "clippy-x86"
     commands:
      - cargo clippy --all -- -D warnings
