@@ -19,7 +19,10 @@ extern crate vm_memory;
 use std::error::{self, Error as KernelLoaderError};
 use std::ffi::CStr;
 use std::fmt::{self, Display};
-use std::io::{Read, Seek, SeekFrom};
+#[cfg(any(feature = "elf", feature = "bzimage"))]
+use std::io::SeekFrom;
+use std::io::{Read, Seek};
+#[cfg(feature = "elf")]
 use std::mem;
 
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
@@ -36,6 +39,7 @@ pub mod bootparam;
 #[allow(non_upper_case_globals)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 mod elf;
+#[cfg(any(feature = "elf", feature = "bzimage"))]
 mod struct_util;
 
 #[derive(Debug, PartialEq)]
@@ -371,6 +375,7 @@ pub fn load_cmdline<M: GuestMemory>(
 #[cfg(test)]
 mod test {
     use super::*;
+    #[cfg(any(feature = "elf", feature = "bzimage"))]
     use std::io::Cursor;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
