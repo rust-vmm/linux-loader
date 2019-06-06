@@ -87,7 +87,7 @@ than the coverage reported in [tests/coverage](tests/coverage).
 
 As we don't want to distribute an entire kernel bzImage, the `load_bzImage` test is ignored by
 default. In order to test the bzImage support, one needs to locally build a bzImage, copy it
-to the `src/loader` directory and run the ignored test:
+to the `src/loader` directory and run cargo test:
 
 ```shell
 # Assuming your linux-loader and linux-stable are both under $LINUX_LOADER
@@ -101,5 +101,5 @@ $ docker run -it \
            --volume $(pwd):/linux-loader \
            fandree/rust-vmm-dev
 $ cd linux-loader/
-$ cargo test -- --ignored
+$ cargo test 
 ```

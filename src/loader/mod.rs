@@ -391,7 +391,6 @@ mod test {
     #[allow(safe_packed_borrows)]
     #[allow(non_snake_case)]
     #[test]
-    #[ignore]
     fn load_bzImage() {
         let gm = create_guest_mem();
         let image = make_bzImage();
