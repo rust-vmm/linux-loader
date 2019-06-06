@@ -29,11 +29,13 @@ def _get_current_coverage():
     exclude_pattern = (
         '${CARGO_HOME:-$HOME/.cargo/},'
         'usr/lib/,'
-        'lib/'
+        'lib/,'
+        'bootparam.rs,'
+        'elf.rs'
     )
     exclude_region = "'mod tests {'"
 
-    kcov_cmd = "CARGO_TARGET_DIR={} cargo kcov --all " \
+    kcov_cmd = "CARGO_TARGET_DIR={} cargo kcov --all --features=elf,bzimage " \
                "--output {} -- " \
                "--exclude-region={} " \
                "--exclude-pattern={} " \
