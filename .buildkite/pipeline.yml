@@ -8,7 +8,7 @@ steps:
       platform: x86_64.metal
     plugins:
       - docker#v3.0.1:
-          image: "fandree/rust-vmm-dev"
+          image: "rustvmm/dev:v2"
           always-pull: true
           
   - label: "style"
@@ -19,7 +19,7 @@ steps:
       platform: x86_64.metal
     plugins:
       - docker#v3.0.1:
-          image: "fandree/rust-vmm-dev"
+          image: "rustvmm/dev:v2"
           always-pull: true
   
   - label: "unittests-gnu-x86"
@@ -32,7 +32,7 @@ steps:
     plugins:
       - docker#v3.0.1:
           privileged: true
-          image: "fandree/rust-vmm-dev"
+          image: "rustvmm/dev:v2"
           always-pull: true
   
   - label: "clippy-x86"
@@ -44,7 +44,7 @@ steps:
       platform: x86_64.metal
     plugins:
       - docker#v3.0.1:
-          image: "fandree/rust-vmm-dev"
+          image: "rustvmm/dev:v2"
           always-pull: true
   
   - label: "coverage-x86"
@@ -57,5 +57,5 @@ steps:
     plugins:
       - docker#v3.0.1:
           privileged: true
-          image: "fandree/rust-vmm-dev"
+          image: "rustvmm/dev:v2"
           always-pull: true

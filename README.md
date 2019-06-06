@@ -27,7 +27,7 @@ use the dev-container on both x86 and arm64.
 docker run -it \
            --security-opt seccomp=unconfined \
            --volume $(pwd):/linux-loader \
-           fandree/rust-vmm-dev
+           rustvmm/dev:v2
 cd linux-loader/
 cargo test
 ```
@@ -64,7 +64,7 @@ coverage before submitting a PR, run the coverage test:
 docker run -it \
            --security-opt seccomp=unconfined \
            --volume $(pwd):/linux-loader \
-           fandree/rust-vmm-dev
+           rustvmm/dev:v2
 cd linux-loader/
 pytest --profile=devel tests/test_coverage.py
 ```
@@ -99,7 +99,7 @@ $ cd $LINUX_LOADER/linux-loader
 $ docker run -it \
            --security-opt seccomp=unconfined \
            --volume $(pwd):/linux-loader \
-           fandree/rust-vmm-dev
+           rustvmm/dev:v2
 $ cd linux-loader/
 $ cargo test 
 ```
