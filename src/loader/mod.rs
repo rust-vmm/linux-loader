@@ -20,9 +20,11 @@ use std::error::{self, Error as KernelLoaderError};
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 #[cfg(any(feature = "elf", feature = "bzimage"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::io::SeekFrom;
 use std::io::{Read, Seek};
 #[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::mem;
 
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
@@ -41,6 +43,7 @@ pub mod bootparam;
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 mod elf;
 #[cfg(any(feature = "elf", feature = "bzimage"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod struct_util;
 
 #[derive(Debug, PartialEq)]
@@ -164,10 +167,12 @@ pub trait KernelLoader {
 }
 
 #[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 /// Raw ELF (a.k.a. vmlinux) kernel image support.
 pub struct Elf;
 
 #[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 impl KernelLoader for Elf {
     /// Loads a kernel from a vmlinux elf image to a slice
     ///
@@ -276,10 +281,12 @@ impl KernelLoader for Elf {
 }
 
 #[cfg(feature = "bzimage")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 /// Big zImage (bzImage) kernel image support.
 pub struct BzImage;
 
 #[cfg(feature = "bzimage")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 impl KernelLoader for BzImage {
     /// Loads a bzImage
     ///
@@ -406,6 +413,7 @@ pub fn load_cmdline<M: GuestMemory>(
 mod test {
     use super::*;
     #[cfg(any(feature = "elf", feature = "bzimage"))]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     use std::io::Cursor;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
@@ -417,6 +425,7 @@ mod test {
 
     #[allow(non_snake_case)]
     #[cfg(feature = "bzimage")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_bzImage() -> Vec<u8> {
         let mut v = Vec::new();
         v.extend_from_slice(include_bytes!("bzimage"));
@@ -425,6 +434,7 @@ mod test {
 
     // Elf64 image that prints hello world on x86_64.
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_elf_bin() -> Vec<u8> {
         let mut v = Vec::new();
         v.extend_from_slice(include_bytes!("test_elf.bin"));
@@ -435,6 +445,7 @@ mod test {
     #[allow(non_snake_case)]
     #[test]
     #[cfg(feature = "bzimage")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn load_bzImage() {
         let gm = create_guest_mem();
         let image = make_bzImage();
@@ -504,6 +515,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn load_elf() {
         let gm = create_guest_mem();
         let image = make_elf_bin();
@@ -594,6 +606,7 @@ mod test {
     }
 
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn bad_magic() {
         let gm = create_guest_mem();
@@ -607,6 +620,7 @@ mod test {
     }
 
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn bad_endian() {
         // Only little endian is supported
@@ -621,6 +635,7 @@ mod test {
     }
 
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn bad_phoff() {
         // program header has to be past the end of the elf header
