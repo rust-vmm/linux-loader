@@ -31,6 +31,7 @@ use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
+#[allow(missing_docs)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 pub mod bootparam;
 #[allow(dead_code)]
@@ -43,33 +44,55 @@ mod elf;
 mod struct_util;
 
 #[derive(Debug, PartialEq)]
+/// Kernel loader errors.
 pub enum Error {
+    /// Loaded big endian binary on a little endian platform.
     BigEndianElfOnLittle,
+    /// Failed writing command line to guest memory.
     CommandLineCopy,
+    /// Command line overflowed guest memory.
     CommandLineOverflow,
+    /// Invalid ELF magic number
     InvalidElfMagicNumber,
+    /// Invalid program header size.
     InvalidProgramHeaderSize,
+    /// Invalid program header offset.
     InvalidProgramHeaderOffset,
+    /// Invalid program header address.
     InvalidProgramHeaderAddress,
+    /// Invalid entry address.
     InvalidEntryAddress,
+    /// Invalid bzImage binary.
     InvalidBzImage,
+    /// Invalid kernel start address.
     InvalidKernelStartAddress,
-    InitrdImageSizeTooLarge,
+    /// Memory to load kernel image is too small.
     MemoryOverflow,
+    /// Unable to read ELF header.
     ReadElfHeader,
+    /// Unable to read kernel image.
     ReadKernelImage,
+    /// Unable to read program header.
     ReadProgramHeader,
+    /// Unable to read bzImage header.
     ReadBzImageHeader,
+    /// Unable to read bzImage compressed image.
     ReadBzImageCompressedKernel,
-    ReadInitrdImage,
+    /// Unable to seek to kernel start.
     SeekKernelStart,
+    /// Unable to seek to ELF start.
     SeekElfStart,
+    /// Unable to seek to program header.
     SeekProgramHeader,
+    /// Unable to seek to bzImage end.
     SeekBzImageEnd,
+    /// Unable to seek to bzImage header.
     SeekBzImageHeader,
+    /// Unable to seek to bzImage compressed kernel.
     SeekBzImageCompressedKernel,
-    SeekInitrdImage,
 }
+
+/// A specialized `Result` type for the kernel loader.
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl error::Error for Error {
@@ -87,21 +110,18 @@ impl error::Error for Error {
             Error::InvalidEntryAddress => "Invalid entry address",
             Error::InvalidBzImage => "Invalid bzImage",
             Error::InvalidKernelStartAddress => "Invalid kernel start address",
-            Error::InitrdImageSizeTooLarge => "Initrd image size too large",
             Error::MemoryOverflow => "Memory to load kernel image is not enough",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
             Error::ReadProgramHeader => "Unable to read program header",
             Error::ReadBzImageHeader => "Unable to read bzImage header",
             Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
-            Error::ReadInitrdImage => "Unable to read initrd image",
             Error::SeekKernelStart => "Unable to seek to kernel start",
             Error::SeekElfStart => "Unable to seek to elf start",
             Error::SeekProgramHeader => "Unable to seek to program header",
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
-            Error::SeekInitrdImage => "Unable to seek initrd image",
         }
     }
 }
@@ -113,18 +133,26 @@ impl Display for Error {
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
+/// Result of the KernelLoader load() call.
+///
+/// This specifies where the kernel is loading and passes additional
+/// information for the rest of the boot process to be completed by
+/// the VMM.
 pub struct KernelLoaderResult {
-    // Address in the guest memory where the kernel image starts to be loaded
+    /// Address in the guest memory where the kernel image starts to be loaded
     pub kernel_load: GuestAddress,
-    // Offset in guest memory corresponding to the end of kernel image, in case that
-    // device tree blob and initrd will be loaded adjacent to kernel image.
+    /// Offset in guest memory corresponding to the end of kernel image, in case that
+    /// device tree blob and initrd will be loaded adjacent to kernel image.
     pub kernel_end: GuestUsize,
-    // This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
-    // VMM should make use of it to fill zero page for bzImage direct boot.
+    /// This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
+    /// VMM should make use of it to fill zero page for bzImage direct boot.
     pub setup_header: Option<bootparam::setup_header>,
 }
 
+/// A kernel image loading support must implement the KernelLoader trait.
+/// The only method to be implemented is the load one, returning a KernelLoaderResult structure.
 pub trait KernelLoader {
+    /// How to load a specific kernel image format into the guest memory.
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
         kernel_start: Option<GuestAddress>,
@@ -136,6 +164,7 @@ pub trait KernelLoader {
 }
 
 #[cfg(feature = "elf")]
+/// Raw ELF (a.k.a. vmlinux) kernel image support.
 pub struct Elf;
 
 #[cfg(feature = "elf")]
@@ -247,6 +276,7 @@ impl KernelLoader for Elf {
 }
 
 #[cfg(feature = "bzimage")]
+/// Big zImage (bzImage) kernel image support.
 pub struct BzImage;
 
 #[cfg(feature = "bzimage")]
