@@ -1,64 +1,6 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 steps:
-  - label: "build-gnu-x86"
-    commands:
-     - cargo build --release
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v2"
-          always-pull: true
-          
-  - label: "style"
-    command: cargo fmt --all -- --check
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v2"
-          always-pull: true
-  
-  - label: "unittests-gnu-x86"
-    commands:
-     - cargo test
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          privileged: true
-          image: "rustvmm/dev:v2"
-          always-pull: true
-
-  - label: "build-gnu-x86-elf"
-    commands:
-     - cargo build --release --features elf
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v2"
-          always-pull: true
-
-  - label: "unittests-gnu-x86-elf"
-    commands:
-     - cargo test --features elf
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          privileged: true
-          image: "rustvmm/dev:v2"
-
   - label: "build-gnu-x86-bzimage"
     commands:
      - cargo build --release --features bzimage
@@ -71,39 +13,14 @@ steps:
           image: "rustvmm/dev:v2"
           always-pull: true
 
-  - label: "unittests-gnu-x86-bzimage"
+  - label: "build-musl-x86-bzimage"
     commands:
-     - cargo test --features bzimage
+     - cargo build --release --features bzimage --target x86_64-unknown-linux-musl
     retry:
       automatic: false
     agents:
       platform: x86_64.metal
     plugins:
       - docker#v3.0.1:
-          privileged: true
-          image: "rustvmm/dev:v2"
-
-  - label: "clippy-x86"
-    commands:
-     - cargo clippy --all -- -D warnings
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v2"
-          always-pull: true
-  
-  - label: "coverage-x86"
-    commands:
-      - pytest tests/test_coverage.py
-    retry:
-      automatic: false
-    agents:
-      platform: x86_64.metal
-    plugins:
-      - docker#v3.0.1:
-          privileged: true
           image: "rustvmm/dev:v2"
           always-pull: true
