@@ -423,10 +423,9 @@ mod test {
         GuestMemoryMmap::new(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
-    #[allow(non_snake_case)]
     #[cfg(feature = "bzimage")]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    fn make_bzImage() -> Vec<u8> {
+    fn make_bzimage() -> Vec<u8> {
         let mut v = Vec::new();
         v.extend_from_slice(include_bytes!("bzimage"));
         v
@@ -448,7 +447,7 @@ mod test {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn load_bzImage() {
         let gm = create_guest_mem();
-        let image = make_bzImage();
+        let image = make_bzimage();
         let mut kernel_start = GuestAddress(0x200000);
         let mut highmem_start_address = GuestAddress(0x0);
 
