@@ -47,6 +47,7 @@ pub unsafe fn read_struct<T: Copy, F: Read>(f: &mut F, out: &mut T) -> Result<()
 /// This is unsafe because the struct is initialized to unverified data read from the input.
 /// `read_struct_slice` should only be called to fill plain data structs. It is not endian safe.
 #[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub unsafe fn read_struct_slice<T: Copy, F: Read>(f: &mut F, len: usize) -> Result<Vec<T>> {
     let mut out: Vec<T> = Vec::with_capacity(len);
     out.set_len(len);
@@ -122,6 +123,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn struct_slice_read() {
         let orig = vec![
             TestRead {

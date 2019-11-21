@@ -11,7 +11,7 @@
 
 //! A Linux kernel image loading crate.
 //!
-//! This crate offers support for loading raw ELF (vmlinux) and compressed
+//! This crate offers support for loading raw ELF/PE (vmlinux) and compressed
 //! big zImage (bzImage) kernel images.
 //! Support for any other kernel image format can be added by implementing
 //! the KernelLoader.
@@ -19,12 +19,14 @@
 //! # Platform support
 //!
 //! - x86_64
+//! - aarch64
 //!
-//! This crates only supports x86_64 platforms because it implements support
-//! for kernel image formats (vmlinux and bzImage) that are x86 specific.
+//! This crates supports kernel image in format:
+//! - vmlinux and bzImage on x86_64 platform.
+//! - PE on aarch64 platform.
 //!
-//! Extending it to support other kernel image formats (e.g. ARM's Image)
-//! will make it consumable by other platforms.
+//! Extending it to support other kernel image formats will make it consumable
+//! by other platforms.
 
 pub mod cmdline;
 pub mod loader;

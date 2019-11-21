@@ -12,6 +12,7 @@
 //! - [KernelLoaderResult](struct.KernelLoaderResult.html): the structure which loader
 //! returns to VMM to assist zero page construction and boot environment setup
 //! - [Elf](struct.Elf.html): elf image loader
+//! - [Aarch64Pe](struct.Aarch64Pe.html): aarch64_pe image loader
 //! - [BzImage](struct.BzImage.html): bzImage loader
 
 extern crate vm_memory;
@@ -19,12 +20,8 @@ extern crate vm_memory;
 use std::error::{self, Error as KernelLoaderError};
 use std::ffi::CStr;
 use std::fmt::{self, Display};
-#[cfg(any(feature = "elf", feature = "bzimage"))]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::io::SeekFrom;
 use std::io::{Read, Seek};
-#[cfg(feature = "elf")]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::mem;
 
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
@@ -42,8 +39,6 @@ pub mod bootparam;
 #[allow(non_upper_case_globals)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 mod elf;
-#[cfg(any(feature = "elf", feature = "bzimage"))]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod struct_util;
 
 #[derive(Debug, PartialEq)]
@@ -55,8 +50,8 @@ pub enum Error {
     CommandLineCopy,
     /// Command line overflowed guest memory.
     CommandLineOverflow,
-    /// Invalid ELF magic number
-    InvalidElfMagicNumber,
+    /// Invalid magic number
+    InvalidMagicNumber,
     /// Invalid program header size.
     InvalidProgramHeaderSize,
     /// Invalid program header offset.
@@ -67,6 +62,8 @@ pub enum Error {
     InvalidEntryAddress,
     /// Invalid bzImage binary.
     InvalidBzImage,
+    /// Invalid PE image binary.
+    InvalidPeImage,
     /// Invalid kernel start address.
     InvalidKernelStartAddress,
     /// Memory to load kernel image is too small.
@@ -93,6 +90,14 @@ pub enum Error {
     SeekBzImageHeader,
     /// Unable to seek to bzImage compressed kernel.
     SeekBzImageCompressedKernel,
+    /// Unable to seek to image start.
+    SeekImageStart,
+    /// Unable to seek to image end.
+    SeekImageEnd,
+    /// Unable to seek to magic image number.
+    SeekImageMagicNumber,
+    /// Unable to seek to entry address.
+    SeekEntryAddress,
 }
 
 /// A specialized `Result` type for the kernel loader.
@@ -106,13 +111,14 @@ impl error::Error for Error {
             }
             Error::CommandLineCopy => "Failed writing command line to guest memory",
             Error::CommandLineOverflow => "Command line overflowed guest memory",
-            Error::InvalidElfMagicNumber => "Invalid Elf magic number",
+            Error::InvalidMagicNumber => "Invalid magic number",
             Error::InvalidProgramHeaderSize => "Invalid program header size",
             Error::InvalidProgramHeaderOffset => "Invalid program header offset",
             Error::InvalidProgramHeaderAddress => "Invalid Program Header Address",
             Error::InvalidEntryAddress => "Invalid entry address",
             Error::InvalidBzImage => "Invalid bzImage",
             Error::InvalidKernelStartAddress => "Invalid kernel start address",
+            Error::InvalidPeImage => "Invalid PE image",
             Error::MemoryOverflow => "Memory to load kernel image is not enough",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
@@ -125,6 +131,10 @@ impl error::Error for Error {
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
+            Error::SeekImageStart => "Unable to seek to image start",
+            Error::SeekImageEnd => "Unable to seek to image end",
+            Error::SeekImageMagicNumber => "Unable to seek to magic image number",
+            Error::SeekEntryAddress => "Unable to seek to entry address",
         }
     }
 }
@@ -184,9 +194,6 @@ impl KernelLoader for Elf {
     /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
     /// * `kernel_image` - Input vmlinux image.
     /// * `highmem_start_address` - This is the start of the high memory, kernel should above it.
-    ///
-    /// # Returns
-    /// * KernelLoaderResult
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
         kernel_start: Option<GuestAddress>,
@@ -211,7 +218,7 @@ impl KernelLoader for Elf {
             || ehdr.e_ident[elf::EI_MAG2 as usize] != elf::ELFMAG2
             || ehdr.e_ident[elf::EI_MAG3 as usize] != elf::ELFMAG3
         {
-            return Err(Error::InvalidElfMagicNumber);
+            return Err(Error::InvalidMagicNumber);
         }
         if ehdr.e_ident[elf::EI_DATA as usize] != elf::ELFDATA2LSB as u8 {
             return Err(Error::BigEndianElfOnLittle);
@@ -299,9 +306,6 @@ impl KernelLoader for BzImage {
     /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
     /// * `kernel_image` - Input bzImage image.
     /// * `highmem_start_address` - This is the start of the high memory, kernel should above it.
-    ///
-    /// # Returns
-    /// * KernelLoaderResult
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
         kernel_start: Option<GuestAddress>,
@@ -378,6 +382,116 @@ impl KernelLoader for BzImage {
     }
 }
 
+#[cfg(all(feature = "aarch64_pe", target_arch = "aarch64"))]
+/// Aarch64 kernel image support.
+pub struct Aarch64Pe;
+
+#[cfg(all(feature = "aarch64_pe", target_arch = "aarch64"))]
+impl Aarch64Pe {
+    const AARCH64_KERNEL_LOAD_ADDR: usize = 0x80000;
+    const AARCH64_MAGIC_NUMBER: u32 = 0x644d_5241;
+    const AARCH64_MAGIC_OFFSET: u64 =
+        2 * mem::size_of::<u32>() as u64 + 6 * mem::size_of::<u64>() as u64; // This should total 56.
+    const AARCH64_TEXT_OFFSET: u64 = 2 * mem::size_of::<u32>() as u64;
+}
+
+#[cfg(all(feature = "aarch64_pe", target_arch = "aarch64"))]
+impl KernelLoader for Aarch64Pe {
+    /// Loads a Aarch64 kernel image
+    ///
+    /// Aarch64 kernel boot protocol is specified in the kernel docs
+    /// Documentation/arm/Booting and Documentation/arm64/booting.txt.
+    ///
+    /// ======aarch64 kernel header========
+    /// u32 code0;                /* Executable code */
+    /// u32 code1;                /* Executable code */
+    /// u64 text_offset;          /* Image load offset, little endian */
+    /// u64 image_size;           /* Effective Image size, little endian */
+    /// u64 flags;                /* kernel flags, little endian */
+    /// u64 res2  = 0;            /* reserved */
+    /// u64 res3  = 0;            /* reserved */
+    /// u64 res4  = 0;            /* reserved */
+    /// u32 magic = 0x644d5241;   /* Magic number, little endian, "ARM\x64" */
+    /// u32 res5;                 /* reserved (used for PE COFF offset) */
+    /// ====================================
+    ///
+    /// # Arguments
+    ///
+    /// * `guest_mem` - The guest memory region the kernel is written to.
+    /// * `kernel_start` - The offset into `guest_mem` at which to load the kernel.
+    /// * `kernel_image` - Input vmlinux image.
+    /// * `highmem_start_address` - Start of the high memory, ignored on Aarch64.
+    fn load<F, M: GuestMemory>(
+        guest_mem: &M,
+        kernel_start: Option<GuestAddress>,
+        kernel_image: &mut F,
+        _highmem_start_address: Option<GuestAddress>,
+    ) -> Result<KernelLoaderResult>
+    where
+        F: Read + Seek,
+    {
+        let mut kernel_load_offset = Aarch64Pe::AARCH64_KERNEL_LOAD_ADDR;
+
+        /* Look for the magic number inside the elf header. */
+        kernel_image
+            .seek(SeekFrom::Start(Aarch64Pe::AARCH64_MAGIC_OFFSET))
+            .map_err(|_| Error::SeekImageMagicNumber)?;
+        let mut magic_number: u32 = 0;
+        unsafe {
+            struct_util::read_struct(kernel_image, &mut magic_number)
+                .map_err(|_| Error::InvalidPeImage)?
+        }
+        if u32::from_le(magic_number) != Aarch64Pe::AARCH64_MAGIC_NUMBER {
+            return Err(Error::InvalidMagicNumber);
+        }
+
+        /* Look for the `text_offset` from the elf header. */
+        kernel_image
+            .seek(SeekFrom::Start(Aarch64Pe::AARCH64_TEXT_OFFSET)) // This should total 8.
+            .map_err(|_| Error::SeekEntryAddress)?;
+        let mut hdrvals: [u64; 2] = [0; 2];
+        unsafe {
+            struct_util::read_struct(kernel_image, &mut hdrvals)
+                .map_err(|_| Error::InvalidPeImage)?;
+        }
+        /* Following the boot protocol mentioned above. */
+        if u64::from_le(hdrvals[1]) != 0 {
+            kernel_load_offset = u64::from_le(hdrvals[0]) as usize;
+        }
+        /* Get the total size of kernel image. */
+        let kernel_size = kernel_image
+            .seek(SeekFrom::End(0))
+            .map_err(|_| Error::SeekImageEnd)?;
+
+        /* Last `seek` will leave the image with the cursor at its end, rewind it to start. */
+        kernel_image
+            .seek(SeekFrom::Start(0))
+            .map_err(|_| Error::SeekImageStart)?;
+
+        let mut loader_result: KernelLoaderResult = Default::default();
+        // where the kernel will be start loaded.
+        let mem_offset = match kernel_start {
+            Some(start) => GuestAddress(start.raw_value() + (kernel_load_offset as u64)),
+            None => GuestAddress(kernel_load_offset as u64),
+        };
+
+        loader_result.kernel_load = mem_offset;
+
+        guest_mem
+            .read_exact_from(mem_offset, kernel_image, kernel_size as usize)
+            .map_err(|_| Error::ReadKernelImage)?;
+
+        loader_result.kernel_end = mem_offset
+            .raw_value()
+            .checked_add(kernel_size as GuestUsize)
+            .ok_or(Error::MemoryOverflow)?;
+
+        loader_result.setup_header = None;
+
+        Ok(loader_result)
+    }
+}
+
 /// Writes the command line string to the given memory slice.
 ///
 /// # Arguments
@@ -412,8 +526,6 @@ pub fn load_cmdline<M: GuestMemory>(
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(any(feature = "elf", feature = "bzimage"))]
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     use std::io::Cursor;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
@@ -437,6 +549,15 @@ mod test {
     fn make_elf_bin() -> Vec<u8> {
         let mut v = Vec::new();
         v.extend_from_slice(include_bytes!("test_elf.bin"));
+        v
+    }
+
+    // Aarch64 image.
+    #[cfg(feature = "aarch64_pe")]
+    #[cfg(target_arch = "aarch64")]
+    fn make_aarch64_bin() -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(include_bytes!("test_pe.bin"));
         v
     }
 
@@ -562,6 +683,29 @@ mod test {
         );
     }
 
+    // Aarch64 image.
+    #[cfg(feature = "aarch64_pe")]
+    #[cfg(target_arch = "aarch64")]
+    #[test]
+    fn load_aarch64() {
+        const TEST_IMAGE_KERNEL_OFFSET: u64 = 0x8_0000; // test binary specific
+        const TEST_IMAGE_KERNEL_SIZE: u64 = 0x50; // test binary specific
+        let gm = create_guest_mem();
+        let image = make_aarch64_bin();
+        let kernel_addr = GuestAddress(0x80000);
+
+        assert_eq!(
+            Ok(KernelLoaderResult {
+                kernel_load: GuestAddress(kernel_addr.raw_value() + TEST_IMAGE_KERNEL_OFFSET),
+                kernel_end: (kernel_addr.raw_value()
+                    + TEST_IMAGE_KERNEL_OFFSET
+                    + TEST_IMAGE_KERNEL_SIZE) as u64,
+                setup_header: None
+            }),
+            Aarch64Pe::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None)
+        );
+    }
+
     #[test]
     fn cmdline_overflow() {
         let gm = create_guest_mem();
@@ -613,8 +757,23 @@ mod test {
         let mut bad_image = make_elf_bin();
         bad_image[0x1] = 0x33;
         assert_eq!(
-            Err(Error::InvalidElfMagicNumber),
+            Err(Error::InvalidMagicNumber),
             Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
+        );
+    }
+
+    #[cfg(feature = "aarch64_pe")]
+    #[cfg(target_arch = "aarch64")]
+    #[test]
+    fn bad_magic() {
+        let gm = create_guest_mem();
+        let kernel_addr = GuestAddress(0x0);
+        let mut bad_image = make_aarch64_bin();
+        bad_image[0x38] = 0x33;
+
+        assert_eq!(
+            Err(Error::InvalidMagicNumber),
+            Aarch64Pe::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None)
         );
     }
 
