@@ -1,3 +1,5 @@
+// Copyright © 2020, Oracle and/or its affiliates.
+//
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -36,6 +38,13 @@ use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
 #[allow(missing_docs)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 pub mod bootparam;
+
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[allow(missing_docs)]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
+pub mod start_info;
+
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
@@ -93,6 +102,12 @@ pub enum Error {
     SeekBzImageHeader,
     /// Unable to seek to bzImage compressed kernel.
     SeekBzImageCompressedKernel,
+    /// Unable to seek to note header.
+    SeekNoteHeader,
+    /// Unable to read note header.
+    ReadNoteHeader,
+    /// Invalid PVH note.
+    InvalidPvhNote,
 }
 
 /// A specialized `Result` type for the kernel loader.
@@ -125,6 +140,9 @@ impl error::Error for Error {
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
+            Error::SeekNoteHeader => "Unable to seek to note header",
+            Error::ReadNoteHeader => "Unable to read note header",
+            Error::InvalidPvhNote => "Invalid PVH note header",
         }
     }
 }
@@ -150,6 +168,10 @@ pub struct KernelLoaderResult {
     /// This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
     /// VMM should make use of it to fill zero page for bzImage direct boot.
     pub setup_header: Option<bootparam::setup_header>,
+    /// This field optionally holds the address of a PVH entry point, indicating that
+    /// the kernel supports the PVH boot protocol as described in:
+    /// https://xenbits.xen.org/docs/unstable/misc/pvh.html
+    pub pvh_entry_addr: Option<GuestAddress>,
 }
 
 /// A kernel image loading support must implement the KernelLoader trait.
@@ -247,6 +269,10 @@ impl KernelLoader for Elf {
         // Read in each section pointed to by the program headers.
         for phdr in &phdrs {
             if phdr.p_type != elf::PT_LOAD || phdr.p_filesz == 0 {
+                if phdr.p_type == elf::PT_NOTE {
+                    // This segment describes a Note, check if PVH entry point is encoded.
+                    loader_result.pvh_entry_addr = parse_elf_note(phdr, kernel_image)?;
+                }
                 continue;
             }
 
@@ -278,6 +304,79 @@ impl KernelLoader for Elf {
 
         Ok(loader_result)
     }
+}
+
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<Option<GuestAddress>>
+where
+    F: Read + Seek,
+{
+    // Type of note header that encodes a 32-bit entry point address
+    // to boot a guest kernel using the PVH boot protocol.
+    const XEN_ELFNOTE_PHYS32_ENTRY: u32 = 18;
+
+    let n_align = phdr.p_align;
+
+    // Seek to the beginning of the note segment
+    kernel_image
+        .seek(SeekFrom::Start(phdr.p_offset))
+        .map_err(|_| Error::SeekNoteHeader)?;
+
+    // Now that the segment has been found, we must locate an ELF note with the
+    // correct type that encodes the PVH entry point if there is one.
+    let mut nhdr: elf::Elf64_Nhdr = Default::default();
+    let mut read_size: usize = 0;
+
+    while read_size < phdr.p_filesz as usize {
+        unsafe {
+            // read_struct is safe when reading a POD struct.
+            // It can be used and dropped without issue.
+            struct_util::read_struct(kernel_image, &mut nhdr).map_err(|_| Error::ReadNoteHeader)?;
+        }
+        // If the note header found is not the desired one, keep reading until
+        // the end of the segment
+        if nhdr.n_type == XEN_ELFNOTE_PHYS32_ENTRY {
+            break;
+        }
+        // Skip the note header plus the size of its fields (with alignment)
+        read_size += mem::size_of::<elf::Elf64_Nhdr>()
+            + align_up(u64::from(nhdr.n_namesz), n_align)
+            + align_up(u64::from(nhdr.n_descsz), n_align);
+
+        kernel_image
+            .seek(SeekFrom::Start(phdr.p_offset + read_size as u64))
+            .map_err(|_| Error::SeekNoteHeader)?;
+    }
+
+    if read_size >= phdr.p_filesz as usize {
+        return Ok(None); // PVH ELF note not found, nothing else to do.
+    }
+    // Otherwise the correct note type was found.
+    // The note header struct has already been read, so we can seek from the
+    // current position and just skip the name field contents.
+    kernel_image
+        .seek(SeekFrom::Current(
+            align_up(u64::from(nhdr.n_namesz), n_align) as i64,
+        ))
+        .map_err(|_| Error::SeekNoteHeader)?;
+
+    // The PVH entry point is a 32-bit address, so the descriptor field
+    // must be capable of storing all such addresses.
+    if (nhdr.n_descsz as usize) < mem::size_of::<u32>() {
+        return Err(Error::InvalidPvhNote);
+    }
+
+    let mut pvh_addr_bytes = [0; mem::size_of::<u32>()];
+
+    // Read 32-bit address stored in the PVH note descriptor field.
+    kernel_image
+        .read_exact(&mut pvh_addr_bytes)
+        .map_err(|_| Error::ReadNoteHeader)?;
+
+    Ok(Some(GuestAddress(
+        u32::from_le_bytes(pvh_addr_bytes).into(),
+    )))
 }
 
 #[cfg(feature = "bzimage")]
@@ -407,6 +506,23 @@ pub fn load_cmdline<M: GuestMemory>(
         .map_err(|_| Error::CommandLineCopy)?;
 
     Ok(())
+}
+
+/// Align address upwards. Taken from x86_64 crate:
+/// https://docs.rs/x86_64/latest/x86_64/fn.align_up.html
+///
+/// Returns the smallest x with alignment `align` so that x >= addr. The alignment must be
+/// a power of 2.
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn align_up(addr: u64, align: u64) -> usize {
+    assert!(align.is_power_of_two(), "`align` must be a power of two");
+    let align_mask = align - 1;
+    if addr & align_mask == 0 {
+        addr as usize // already aligned
+    } else {
+        ((addr | align_mask) + 1) as usize
+    }
 }
 
 #[cfg(test)]
