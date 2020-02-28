@@ -556,6 +556,24 @@ mod test {
         v
     }
 
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn make_elfnote() -> Vec<u8> {
+        include_bytes!("test_elfnote.bin").to_vec()
+    }
+
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn make_dummy_elfnote() -> Vec<u8> {
+        include_bytes!("test_dummynote.bin").to_vec()
+    }
+
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn make_bad_elfnote() -> Vec<u8> {
+        include_bytes!("test_badnote.bin").to_vec()
+    }
+
     #[allow(safe_packed_borrows)]
     #[allow(non_snake_case)]
     #[test]
@@ -675,6 +693,42 @@ mod test {
                 &mut Cursor::new(&image),
                 Some(highmem_start_address)
             )
+        );
+    }
+
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[test]
+    fn load_pvh() {
+        let gm = create_guest_mem();
+        let pvhnote_image = make_elfnote();
+        let loader_result = Elf::load(&gm, None, &mut Cursor::new(&pvhnote_image), None).unwrap();
+        println!(
+            "PVH entry point at address {:8x} \n",
+            loader_result.pvh_entry_addr.unwrap().raw_value()
+        );
+        assert_eq!(loader_result.pvh_entry_addr.unwrap().raw_value(), 0x1e1fe1f);
+    }
+
+    #[test]
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn dumy_elfnote() {
+        let gm = create_guest_mem();
+        let dummynote_image = make_dummy_elfnote();
+        let loader_result = Elf::load(&gm, None, &mut Cursor::new(&dummynote_image), None).unwrap();
+        assert!(loader_result.pvh_entry_addr.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "elf")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn bad_elfnote() {
+        let gm = create_guest_mem();
+        let badnote_image = make_bad_elfnote();
+        assert_eq!(
+            Err(Error::InvalidPvhNote),
+            Elf::load(&gm, None, &mut Cursor::new(&badnote_image), None)
         );
     }
 
