@@ -10,6 +10,5 @@ default = ["elf"]
 elf = []
 bzimage = []
 
-[dependencies.vm-memory]
-git = "https://github.com/rust-vmm/vm-memory"
-features = ["backend-mmap"]
+[dependencies]
+vm-memory = {version = "0.1.0", features = ["backend-mmap"]}
