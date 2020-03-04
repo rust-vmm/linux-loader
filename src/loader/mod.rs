@@ -420,7 +420,7 @@ mod test {
     const MEM_SIZE: u64 = 0x1000000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
-        GuestMemoryMmap::new(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+        GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
     #[cfg(feature = "bzimage")]
