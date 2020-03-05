@@ -399,7 +399,7 @@ pub fn load_cmdline<M: GuestMemory>(
         .checked_add(len as u64 + 1)
         .ok_or(Error::CommandLineOverflow)?; // Extra for null termination.
     if end > guest_mem.last_addr() {
-        return Err(Error::CommandLineOverflow)?;
+        return Err(Error::CommandLineOverflow);
     }
 
     guest_mem
