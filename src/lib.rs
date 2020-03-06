@@ -13,14 +13,17 @@
 //!
 //! This crate offers support for loading raw ELF (vmlinux), compressed
 //! big zImage (bzImage) and PE (Image) kernel images.
+//! ELF support includes the Linux and PVH boot protocols.
 //! Support for any other kernel image format can be added by implementing
-//! the KernelLoader.
+//! the [`KernelLoader`] and [`BootConfigurator`].
 //!
 //! # Platform support
 //!
-//! - x86_64
-//! - ARM64
+//! - `x86_64`
+//! - `ARM64`
 //!
+//! [`BootConfigurator`]: trait.BootConfigurator.html
+//! [`KernelLoader`]: trait.KernelLoader.html
 
 pub mod cmdline;
 pub mod configurator;

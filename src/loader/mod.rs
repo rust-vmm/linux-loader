@@ -9,12 +9,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
-//! Traits and Structs for loading kernels into guest memory.
-//! - [KernelLoader](trait.KernelLoader.html): load kernel image into guest memory
-//! - [KernelLoaderResult](struct.KernelLoaderResult.html): the structure which loader
-//! returns to VMM to assist zero page construction and boot environment setup
-//! - [Elf](struct.Elf.html): elf image loader
-//! - [BzImage](struct.BzImage.html): bzImage loader
+//! Traits and structs for loading kernels into guest memory.
+//! - [KernelLoader](trait.KernelLoader.html): load kernel image into guest memory.
+//! - [KernelLoaderResult](struct.KernelLoaderResult.html): structure passed to the VMM to assist
+//!   zero page construction and boot environment setup.
+//! - [Elf](struct.Elf.html): elf image loader.
+//! - [BzImage](struct.BzImage.html): bzImage loader.
 
 extern crate vm_memory;
 
@@ -71,7 +71,8 @@ pub enum Error {
     MemoryOverflow,
 }
 
-/// A specialized `Result` type for the kernel loader.
+/// A specialized [`Result`] type for the kernel loader.
+/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl StdError for Error {
@@ -126,13 +127,13 @@ impl From<pe::Error> for Error {
 /// the VMM.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct KernelLoaderResult {
-    /// Address in the guest memory where the kernel image starts to be loaded
+    /// Address in the guest memory where the kernel image starts to be loaded.
     pub kernel_load: GuestAddress,
-    /// Offset in guest memory corresponding to the end of kernel image, in case that
-    /// device tree blob and initrd will be loaded adjacent to kernel image.
+    /// Offset in guest memory corresponding to the end of kernel image, in case the device tree
+    /// blob and initrd will be loaded adjacent to kernel image.
     pub kernel_end: GuestUsize,
-    /// This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
-    /// VMM should make use of it to fill zero page for bzImage direct boot.
+    /// Configuration for the VMM to use to fill zero page for bzImage direct boot.
+    /// See https://www.kernel.org/doc/Documentation/x86/boot.txt.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub setup_header: Option<bootparam::setup_header>,
     /// This field optionally holds the address of a PVH entry point, indicating that
@@ -141,10 +142,18 @@ pub struct KernelLoaderResult {
     pub pvh_entry_addr: Option<GuestAddress>,
 }
 
-/// A kernel image loading support must implement the KernelLoader trait.
-/// The only method to be implemented is the load one, returning a KernelLoaderResult structure.
+/// Trait that specifies kernel image loading support.
 pub trait KernelLoader {
     /// How to load a specific kernel image format into the guest memory.
+    ///
+    /// # Arguments
+    ///
+    /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
+    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_image`: Kernel image to be loaded.
+    /// * `highmem_start_address`: Address where high memory starts.
+    ///
+    /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
         kernel_start: Option<GuestAddress>,
@@ -164,9 +173,27 @@ unsafe impl ByteValued for bootparam::boot_params {}
 ///
 /// # Arguments
 ///
-/// * `guest_mem` - A u8 slice that will be partially overwritten by the command line.
+/// * `guest_mem` - [`GuestMemory`] that will be partially overwritten by the command line.
 /// * `guest_addr` - The address in `guest_mem` at which to load the command line.
 /// * `cmdline` - The kernel command line.
+///
+/// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
+///
+/// # Examples
+///
+/// ```rust
+/// # extern crate vm_memory;
+/// # use linux_loader::loader::*;
+/// # use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+/// # use std::ffi::CStr;
+/// let mem_size: usize = 0x1000000;
+/// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
+/// let cl = CStr::from_bytes_with_nul(b"foo=bar\0").unwrap();
+/// let mut buf = vec![0u8;8];
+/// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
+/// gm.read_slice(buf.as_mut_slice(), GuestAddress(0x1000)).unwrap();
+/// assert_eq!(buf.as_slice(), "foo=bar\0".as_bytes());
+///
 pub fn load_cmdline<M: GuestMemory>(
     guest_mem: &M,
     guest_addr: GuestAddress,
@@ -203,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn cmdline_overflow() {
+    fn test_cmdline_overflow() {
         let gm = create_guest_mem();
         let cmdline_address = GuestAddress(MEM_SIZE - 5);
         assert_eq!(
@@ -217,7 +244,7 @@ mod tests {
     }
 
     #[test]
-    fn cmdline_write_end() {
+    fn test_cmdline_write_end() {
         let gm = create_guest_mem();
         let mut cmdline_address = GuestAddress(45);
         assert_eq!(
