@@ -12,7 +12,7 @@ use std::fmt;
 use std::result;
 
 /// The error type for command line building operations.
-#[derive(PartialEq, Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     /// Operation would have resulted in a non-printable ASCII character.
     InvalidAscii,
@@ -30,16 +30,17 @@ impl fmt::Display for Error {
             f,
             "{}",
             match *self {
-                Error::InvalidAscii => "string contains non-printable ASCII character",
-                Error::HasSpace => "string contains a space",
-                Error::HasEquals => "string contains an equals sign",
-                Error::TooLarge => "inserting string would make command line too long",
+                Error::InvalidAscii => "String contains a non-printable ASCII character.",
+                Error::HasSpace => "String contains a space.",
+                Error::HasEquals => "String contains an equals sign.",
+                Error::TooLarge => "Inserting string would make command line too long.",
             }
         )
     }
 }
 
-/// Specialized Result type for command line operations.
+/// Specialized [`Result`] type for command line operations.
+/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = result::Result<T, Error>;
 
 fn valid_char(c: char) -> bool {
@@ -69,17 +70,37 @@ fn valid_element(s: &str) -> Result<()> {
     }
 }
 
-/// A builder for a kernel command line string that validates the string as its being built. A
-/// `CString` can be constructed from this directly using `CString::new`.
-#[derive(Clone)]
+/// A builder for a kernel command line string that validates the string as it's being built.
+/// A `CString` can be constructed from this directly using `CString::new`.
+///
+/// # Examples
+///
+/// ```rust
+/// # use linux_loader::cmdline::*;
+/// # use std::ffi::CString;
+/// let cl = Cmdline::new(100);
+/// let cl_cstring = CString::new(cl).unwrap();
+/// assert_eq!(cl_cstring.to_str().unwrap(), "");
+/// ```
 pub struct Cmdline {
     line: String,
     capacity: usize,
 }
 
 impl Cmdline {
-    /// Constructs an empty Cmdline with the given capacity, which includes the nul terminator.
-    /// Capacity must be greater than 0.
+    /// Constructs an empty [`Cmdline`] with the given capacity, including the nul terminator.
+    ///
+    /// # Arguments
+    ///
+    /// * `capacity` - Command line capacity. Must be greater than 0.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// let cl = Cmdline::new(100);
+    /// ```
+    /// [`Cmdline`]: struct.Cmdline.html
     pub fn new(capacity: usize) -> Cmdline {
         assert_ne!(capacity, 0);
         Cmdline {
@@ -109,7 +130,23 @@ impl Cmdline {
         assert!(self.line.len() < self.capacity);
     }
 
-    /// Validates and inserts a key value pair into this command line
+    /// Validates and inserts a key-value pair into this command line.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key to be inserted in the command line string.
+    /// * `val` - Value corresponding to `key`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// # use std::ffi::CString;
+    /// let mut cl = Cmdline::new(100);
+    /// cl.insert("foo", "bar");
+    /// let cl_cstring = CString::new(cl).unwrap();
+    /// assert_eq!(cl_cstring.to_str().unwrap(), "foo=bar");
+    /// ```
     pub fn insert<T: AsRef<str>>(&mut self, key: T, val: T) -> Result<()> {
         let k = key.as_ref();
         let v = val.as_ref();
@@ -127,7 +164,22 @@ impl Cmdline {
         Ok(())
     }
 
-    /// Validates and inserts a string to the end of the current command line
+    /// Validates and inserts a string to the end of the current command line.
+    ///
+    /// # Arguments
+    ///
+    /// * `slug` - String to be appended to the command line.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// # use std::ffi::CString;
+    /// let mut cl = Cmdline::new(100);
+    /// cl.insert_str("foobar");
+    /// let cl_cstring = CString::new(cl).unwrap();
+    /// assert_eq!(cl_cstring.to_str().unwrap(), "foobar");
+    /// ```
     pub fn insert_str<T: AsRef<str>>(&mut self, slug: T) -> Result<()> {
         let s = slug.as_ref();
         valid_str(s)?;
@@ -141,7 +193,16 @@ impl Cmdline {
         Ok(())
     }
 
-    /// Returns the cmdline in progress without nul termination
+    /// Returns the string representation of the command line without the nul terminator.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// let mut cl = Cmdline::new(10);
+    /// cl.insert_str("foobar");
+    /// assert_eq!(cl.as_str(), "foobar");
+    /// ```
     pub fn as_str(&self) -> &str {
         self.line.as_str()
     }
@@ -159,7 +220,7 @@ mod tests {
     use std::ffi::CString;
 
     #[test]
-    fn insert_hello_world() {
+    fn test_insert_hello_world() {
         let mut cl = Cmdline::new(100);
         assert_eq!(cl.as_str(), "");
         assert!(cl.insert("hello", "world").is_ok());
@@ -170,7 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_multi() {
+    fn test_insert_multi() {
         let mut cl = Cmdline::new(100);
         assert!(cl.insert("hello", "world").is_ok());
         assert!(cl.insert("foo", "bar").is_ok());
@@ -178,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_space() {
+    fn test_insert_space() {
         let mut cl = Cmdline::new(100);
         assert_eq!(cl.insert("a ", "b"), Err(Error::HasSpace));
         assert_eq!(cl.insert("a", "b "), Err(Error::HasSpace));
@@ -188,7 +249,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_equals() {
+    fn test_insert_equals() {
         let mut cl = Cmdline::new(100);
         assert_eq!(cl.insert("a=", "b"), Err(Error::HasEquals));
         assert_eq!(cl.insert("a", "b="), Err(Error::HasEquals));
@@ -199,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_emoji() {
+    fn test_insert_emoji() {
         let mut cl = Cmdline::new(100);
         assert_eq!(cl.insert("heart", "💖"), Err(Error::InvalidAscii));
         assert_eq!(cl.insert("💖", "love"), Err(Error::InvalidAscii));
@@ -207,7 +268,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_string() {
+    fn test_insert_string() {
         let mut cl = Cmdline::new(13);
         assert_eq!(cl.as_str(), "");
         assert!(cl.insert_str("noapic").is_ok());
@@ -217,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn insert_too_large() {
+    fn test_insert_too_large() {
         let mut cl = Cmdline::new(4);
         assert_eq!(cl.insert("hello", "world"), Err(Error::TooLarge));
         assert_eq!(cl.insert("a", "world"), Err(Error::TooLarge));
