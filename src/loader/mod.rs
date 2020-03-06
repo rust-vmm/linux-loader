@@ -398,8 +398,8 @@ pub fn load_cmdline<M: GuestMemory>(
     let end = guest_addr
         .checked_add(len as u64 + 1)
         .ok_or(Error::CommandLineOverflow)?; // Extra for null termination.
-    if end > guest_mem.end_addr() {
-        return Err(Error::CommandLineOverflow)?;
+    if end > guest_mem.last_addr() {
+        return Err(Error::CommandLineOverflow);
     }
 
     guest_mem
@@ -420,7 +420,7 @@ mod test {
     const MEM_SIZE: u64 = 0x1000000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
-        GuestMemoryMmap::new(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+        GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
     #[cfg(feature = "bzimage")]
