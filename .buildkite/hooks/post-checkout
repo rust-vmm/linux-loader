@@ -13,8 +13,6 @@ mkdir -p ${EXTRACT_PATH}
 wget $DEB_URL -P ${REPO_PATH}
 dpkg-deb -x ${DEB_PATH} ${EXTRACT_PATH}
 
-
-mv ${BZIMAGE_PATH} ${REPO_PATH}/src/loader/bzimage
+mv ${BZIMAGE_PATH} ${REPO_PATH}/src/loader/x86_64/bzimage/bzimage
 rm -r ${EXTRACT_PATH}
 rm -f ${DEB_PATH}
-
