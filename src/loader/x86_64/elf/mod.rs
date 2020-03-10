@@ -18,7 +18,7 @@ use std::mem;
 
 use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
-use super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
+use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -151,12 +151,12 @@ impl KernelLoader for Elf {
     /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
     /// let mut kernel_image = vec![];
     /// kernel_image.extend_from_slice(include_bytes!("test_elf.bin"));
-    /// assert!(Elf::load(
+    /// elf::Elf::load(
     ///     &gm,
     ///     Some(kernel_addr),
     ///     &mut Cursor::new(&kernel_image),
     ///     Some(himem_start),
-    /// ).is_ok());
+    /// ).unwrap();
     /// ```
     ///
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
@@ -182,7 +182,7 @@ impl KernelLoader for Elf {
         Self::validate_header(&ehdr)?;
         if let Some(addr) = highmem_start_address {
             if (ehdr.e_entry as u64) < addr.raw_value() {
-                Err(Error::InvalidEntryAddress)?;
+                return Err(Error::InvalidEntryAddress.into());
             }
         }
 
@@ -252,19 +252,19 @@ fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<Opt
 where
     F: Read + Seek,
 {
-    // Type of note header that encodes a 32-bit entry point address
-    // to boot a guest kernel using the PVH boot protocol.
+    // Type of note header that encodes a 32-bit entry point address to boot a guest kernel using
+    // the PVH boot protocol.
     const XEN_ELFNOTE_PHYS32_ENTRY: u32 = 18;
 
     let n_align = phdr.p_align;
 
-    // Seek to the beginning of the note segment
+    // Seek to the beginning of the note segment.
     kernel_image
         .seek(SeekFrom::Start(phdr.p_offset))
         .map_err(|_| Error::SeekNoteHeader)?;
 
-    // Now that the segment has been found, we must locate an ELF note with the
-    // correct type that encodes the PVH entry point if there is one.
+    // Now that the segment has been found, we must locate an ELF note with the correct type that
+    // encodes the PVH entry point if there is one.
     let mut nhdr: elf::Elf64_Nhdr = Default::default();
     let mut read_size: usize = 0;
     let nhdr_sz = mem::size_of::<elf::Elf64_Nhdr>();
@@ -274,12 +274,12 @@ where
             .read_from(0, kernel_image, nhdr_sz)
             .map_err(|_| Error::ReadNoteHeader)?;
 
-        // If the note header found is not the desired one, keep reading until
-        // the end of the segment
+        // If the note header found is not the desired one, keep reading until the end of the
+        // segment.
         if nhdr.n_type == XEN_ELFNOTE_PHYS32_ENTRY {
             break;
         }
-        // Skip the note header plus the size of its fields (with alignment)
+        // Skip the note header plus the size of its fields (with alignment).
         read_size += nhdr_sz
             + align_up(u64::from(nhdr.n_namesz), n_align)
             + align_up(u64::from(nhdr.n_descsz), n_align);
@@ -290,21 +290,23 @@ where
     }
 
     if read_size >= phdr.p_filesz as usize {
-        return Ok(None); // PVH ELF note not found, nothing else to do.
+        // PVH ELF note not found, nothing else to do.
+        return Ok(None);
     }
+
     // Otherwise the correct note type was found.
-    // The note header struct has already been read, so we can seek from the
-    // current position and just skip the name field contents.
+    // The note header struct has already been read, so we can seek from the current position and
+    // just skip the name field contents.
     kernel_image
         .seek(SeekFrom::Current(
             align_up(u64::from(nhdr.n_namesz), n_align) as i64,
         ))
         .map_err(|_| Error::SeekNoteHeader)?;
 
-    // The PVH entry point is a 32-bit address, so the descriptor field
-    // must be capable of storing all such addresses.
+    // The PVH entry point is a 32-bit address, so the descriptor field must be capable of storing
+    // all such addresses.
     if (nhdr.n_descsz as usize) < mem::size_of::<u32>() {
-        Err(Error::InvalidPvhNote)?;
+        return Err(Error::InvalidPvhNote.into());
     }
 
     let mut pvh_addr_bytes = [0; mem::size_of::<u32>()];

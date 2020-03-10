@@ -9,7 +9,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
-//! Traits and Structs
+//! Traits and Structs for loading kernels into guest memory.
 //! - [KernelLoader](trait.KernelLoader.html): load kernel image into guest memory
 //! - [KernelLoaderResult](struct.KernelLoaderResult.html): the structure which loader
 //! returns to VMM to assist zero page construction and boot environment setup
@@ -33,32 +33,26 @@ use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsiz
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 pub mod bootparam;
 
-#[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-pub mod elf;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+mod x86_64;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use x86_64::*;
 
-#[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-pub mod bzimage;
-
-#[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-pub use elf::Elf;
-#[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-pub use elf::Error as ElfError;
-
-#[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-pub use bzimage::BzImage;
-#[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-pub use bzimage::Error as BzImageError;
+#[cfg(target_arch = "aarch64")]
+mod aarch64;
+#[cfg(target_arch = "aarch64")]
+pub use aarch64::*;
 
 #[derive(Debug, PartialEq)]
 /// Kernel loader errors.
 pub enum Error {
     /// Failed to load bzimage.
     #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-    Bzimage(BzImageError),
+    Bzimage(bzimage::Error),
 
     /// Failed to load elf image.
     #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-    Elf(ElfError),
+    Elf(elf::Error),
 
     /// Failed writing command line to guest memory.
     CommandLineCopy,
@@ -96,15 +90,15 @@ impl Display for Error {
 }
 
 #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-impl From<ElfError> for Error {
-    fn from(err: ElfError) -> Self {
+impl From<elf::Error> for Error {
+    fn from(err: elf::Error) -> Self {
         Error::Elf(err)
     }
 }
 
 #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-impl From<BzImageError> for Error {
-    fn from(err: BzImageError) -> Self {
+impl From<bzimage::Error> for Error {
+    fn from(err: bzimage::Error) -> Self {
         Error::Bzimage(err)
     }
 }
@@ -114,7 +108,7 @@ impl From<BzImageError> for Error {
 /// This specifies where the kernel is loading and passes additional
 /// information for the rest of the boot process to be completed by
 /// the VMM.
-#[derive(Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct KernelLoaderResult {
     /// Address in the guest memory where the kernel image starts to be loaded
     pub kernel_load: GuestAddress,
