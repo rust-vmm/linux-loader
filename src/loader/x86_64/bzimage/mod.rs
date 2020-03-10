@@ -18,7 +18,9 @@ use std::mem;
 
 use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
-use super::{bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
+use super::super::{
+    bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
+};
 
 #[derive(Debug, PartialEq)]
 /// Bzimage kernel loader errors.
@@ -85,12 +87,12 @@ impl KernelLoader for BzImage {
     /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
     /// let mut kernel_image = vec![];
     /// kernel_image.extend_from_slice(include_bytes!("bzimage"));
-    /// assert!(BzImage::load(
+    /// bzimage::BzImage::load(
     ///     &gm,
     ///     Some(kernel_addr),
     ///     &mut Cursor::new(&kernel_image),
     ///     Some(himem_start),
-    /// ).is_ok());
+    /// ).unwrap();
     /// ```
     ///
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
