@@ -29,7 +29,7 @@ use std::io::{Read, Seek};
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::mem;
 
-use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
+use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -51,9 +51,6 @@ pub mod start_info;
 #[allow(non_upper_case_globals)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
 mod elf;
-#[cfg(any(feature = "elf", feature = "bzimage"))]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-mod struct_util;
 
 #[derive(Debug, PartialEq)]
 /// Kernel loader errors.
@@ -195,6 +192,18 @@ pub struct Elf;
 
 #[cfg(feature = "elf")]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+unsafe impl ByteValued for elf::Elf64_Ehdr {}
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+unsafe impl ByteValued for elf::Elf64_Nhdr {}
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+unsafe impl ByteValued for elf::Elf64_Phdr {}
+
+unsafe impl ByteValued for bootparam::setup_header {}
+
+#[cfg(feature = "elf")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 impl KernelLoader for Elf {
     /// Loads a kernel from a vmlinux elf image to a slice
     ///
@@ -218,14 +227,14 @@ impl KernelLoader for Elf {
     where
         F: Read + Seek,
     {
-        let mut ehdr: elf::Elf64_Ehdr = Default::default();
         kernel_image
             .seek(SeekFrom::Start(0))
             .map_err(|_| Error::SeekElfStart)?;
-        unsafe {
-            // read_struct is safe when reading a POD struct.  It can be used and dropped without issue.
-            struct_util::read_struct(kernel_image, &mut ehdr).map_err(|_| Error::ReadElfHeader)?;
-        }
+
+        let mut ehdr = elf::Elf64_Ehdr::default();
+        ehdr.as_bytes()
+            .read_from(0, kernel_image, mem::size_of::<elf::Elf64_Ehdr>())
+            .map_err(|_| Error::ReadElfHeader)?;
 
         // Sanity checks
         if ehdr.e_ident[elf::EI_MAG0 as usize] != elf::ELFMAG0 as u8
@@ -260,18 +269,23 @@ impl KernelLoader for Elf {
         kernel_image
             .seek(SeekFrom::Start(ehdr.e_phoff))
             .map_err(|_| Error::SeekProgramHeader)?;
-        let phdrs: Vec<elf::Elf64_Phdr> = unsafe {
-            // Reading the structs is safe for a slice of POD structs.
-            struct_util::read_struct_slice(kernel_image, ehdr.e_phnum as usize)
-                .map_err(|_| Error::ReadProgramHeader)?
-        };
+
+        let phdr_sz = mem::size_of::<elf::Elf64_Phdr>();
+        let mut phdrs: Vec<elf::Elf64_Phdr> = vec![];
+        for _ in 0usize..ehdr.e_phnum as usize {
+            let mut phdr = elf::Elf64_Phdr::default();
+            phdr.as_bytes()
+                .read_from(0, kernel_image, phdr_sz)
+                .map_err(|_| Error::ReadProgramHeader)?;
+            phdrs.push(phdr);
+        }
 
         // Read in each section pointed to by the program headers.
-        for phdr in &phdrs {
+        for phdr in phdrs {
             if phdr.p_type != elf::PT_LOAD || phdr.p_filesz == 0 {
                 if phdr.p_type == elf::PT_NOTE {
                     // This segment describes a Note, check if PVH entry point is encoded.
-                    loader_result.pvh_entry_addr = parse_elf_note(phdr, kernel_image)?;
+                    loader_result.pvh_entry_addr = parse_elf_note(&phdr, kernel_image)?;
                 }
                 continue;
             }
@@ -327,20 +341,20 @@ where
     // correct type that encodes the PVH entry point if there is one.
     let mut nhdr: elf::Elf64_Nhdr = Default::default();
     let mut read_size: usize = 0;
+    let nhdr_sz = mem::size_of::<elf::Elf64_Nhdr>();
 
     while read_size < phdr.p_filesz as usize {
-        unsafe {
-            // read_struct is safe when reading a POD struct.
-            // It can be used and dropped without issue.
-            struct_util::read_struct(kernel_image, &mut nhdr).map_err(|_| Error::ReadNoteHeader)?;
-        }
+        nhdr.as_bytes()
+            .read_from(0, kernel_image, nhdr_sz)
+            .map_err(|_| Error::ReadNoteHeader)?;
+
         // If the note header found is not the desired one, keep reading until
         // the end of the segment
         if nhdr.n_type == XEN_ELFNOTE_PHYS32_ENTRY {
             break;
         }
         // Skip the note header plus the size of its fields (with alignment)
-        read_size += mem::size_of::<elf::Elf64_Nhdr>()
+        read_size += nhdr_sz
             + align_up(u64::from(nhdr.n_namesz), n_align)
             + align_up(u64::from(nhdr.n_descsz), n_align);
 
@@ -413,15 +427,15 @@ impl KernelLoader for BzImage {
         let mut kernel_size = kernel_image
             .seek(SeekFrom::End(0))
             .map_err(|_| Error::SeekBzImageEnd)? as usize;
-        let mut boot_header: bootparam::setup_header = Default::default();
         kernel_image
             .seek(SeekFrom::Start(0x1F1))
             .map_err(|_| Error::SeekBzImageHeader)?;
-        unsafe {
-            // read_struct is safe when reading a POD struct.  It can be used and dropped without issue.
-            struct_util::read_struct(kernel_image, &mut boot_header)
-                .map_err(|_| Error::ReadBzImageHeader)?;
-        }
+
+        let mut boot_header = bootparam::setup_header::default();
+        boot_header
+            .as_bytes()
+            .read_from(0, kernel_image, mem::size_of::<bootparam::setup_header>())
+            .map_err(|_| Error::ReadBzImageHeader)?;
 
         // if the HdrS magic number is not found at offset 0x202, the boot protocol version is "old",
         // the image type is assumed as zImage, not bzImage.
