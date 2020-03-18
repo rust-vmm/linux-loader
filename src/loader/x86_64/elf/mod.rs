@@ -104,6 +104,7 @@ impl Display for Error {
 pub struct Elf;
 
 impl Elf {
+    /// Verifies that magic numbers are present in the Elf header.
     fn validate_header(ehdr: &elf::Elf64_Ehdr) -> std::result::Result<(), Error> {
         // Sanity checks
         if ehdr.e_ident[elf::EI_MAG0 as usize] != elf::ELFMAG0 as u8
@@ -248,6 +249,12 @@ impl KernelLoader for Elf {
     }
 }
 
+/// Examines a supplied elf program header of type `PT_NOTE` to determine if it contains an entry
+/// of type `XEN_ELFNOTE_PHYS32_ENTRY` (0x12). Notes of this type encode a physical 32-bit entry
+/// point address into the kernel, which is used when launching guests in 32-bit (protected) mode
+/// with paging disabled, as described by the PVH boot protocol.
+/// Returns the encoded entry point address, or `None` if no `XEN_ELFNOTE_PHYS32_ENTRY` entries are
+/// found in the note header.
 fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<Option<GuestAddress>>
 where
     F: Read + Seek,
