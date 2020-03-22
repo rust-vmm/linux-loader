@@ -236,10 +236,11 @@ impl KernelLoader for Elf {
                 .read_exact_from(mem_offset, kernel_image, phdr.p_filesz as usize)
                 .map_err(|_| Error::ReadKernelImage)?;
 
-            loader_result.kernel_end = mem_offset
+            let kernel_end = mem_offset
                 .raw_value()
                 .checked_add(phdr.p_memsz as GuestUsize)
                 .ok_or(KernelLoaderError::MemoryOverflow)?;
+            loader_result.kernel_end = std::cmp::max(loader_result.kernel_end, kernel_end);
         }
 
         // elf image has no setup_header which is defined for bzImage
