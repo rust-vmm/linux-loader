@@ -249,6 +249,9 @@ impl KernelLoader for Elf {
     }
 }
 
+// Size of string "Xen", including the terminating NULL.
+const PVH_NOTE_STR_SZ: usize = 4;
+
 /// Examines a supplied elf program header of type `PT_NOTE` to determine if it contains an entry
 /// of type `XEN_ELFNOTE_PHYS32_ENTRY` (0x12). Notes of this type encode a physical 32-bit entry
 /// point address into the kernel, which is used when launching guests in 32-bit (protected) mode
@@ -281,11 +284,17 @@ where
             .read_from(0, kernel_image, nhdr_sz)
             .map_err(|_| Error::ReadNoteHeader)?;
 
-        // If the note header found is not the desired one, keep reading until the end of the
-        // segment.
-        if nhdr.n_type == XEN_ELFNOTE_PHYS32_ENTRY {
-            break;
+        // Check if the note header's name and type match the ones specified by the PVH ABI.
+        if nhdr.n_type == XEN_ELFNOTE_PHYS32_ENTRY && nhdr.n_namesz as usize == PVH_NOTE_STR_SZ {
+            let mut buf = [0u8; PVH_NOTE_STR_SZ];
+            kernel_image
+                .read_exact(&mut buf)
+                .map_err(|_| Error::ReadNoteHeader)?;
+            if buf == [b'X', b'e', b'n', b'\0'] {
+                break;
+            }
         }
+
         // Skip the note header plus the size of its fields (with alignment).
         read_size += nhdr_sz
             + align_up(u64::from(nhdr.n_namesz), n_align)
@@ -306,7 +315,7 @@ where
     // just skip the name field contents.
     kernel_image
         .seek(SeekFrom::Current(
-            align_up(u64::from(nhdr.n_namesz), n_align) as i64,
+            align_up(u64::from(nhdr.n_namesz), n_align) as i64 - PVH_NOTE_STR_SZ as i64,
         ))
         .map_err(|_| Error::SeekNoteHeader)?;
 
