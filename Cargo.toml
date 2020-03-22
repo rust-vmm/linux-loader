@@ -11,4 +11,7 @@ elf = []
 bzimage = []
 
 [dependencies]
-vm-memory = {version = ">=0.2.0", features = ["backend-mmap"]}
+vm-memory = ">=0.2.0"
+
+[dev-dependencies]
+vm-memory = {features = ["backend-mmap"]}
