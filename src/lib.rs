@@ -23,6 +23,7 @@
 //!
 
 pub mod cmdline;
+pub mod configurator;
 pub mod loader;
 
 extern crate vm_memory;

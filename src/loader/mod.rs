@@ -157,6 +157,7 @@ pub trait KernelLoader {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 unsafe impl ByteValued for bootparam::setup_header {}
+unsafe impl ByteValued for bootparam::boot_params {}
 
 /// Writes the command line string to the given guest memory slice.
 ///
