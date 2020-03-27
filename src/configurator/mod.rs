@@ -29,7 +29,7 @@ pub use x86_64::*;
 #[cfg(target_arch = "aarch64")]
 mod aarch64;
 #[cfg(target_arch = "aarch64")]
-pub use aarch64::Error as ArmError;
+pub use aarch64::*;
 
 /// Errors specific to boot protocol configuration.
 #[derive(Debug, PartialEq)]
@@ -42,7 +42,7 @@ pub enum Error {
     Pvh(pvh::Error),
     /// Errors specific to device tree boot configuration.
     #[cfg(target_arch = "aarch64")]
-    Arm(ArmError),
+    Fdt(fdt::Error),
 }
 
 impl StdError for Error {
@@ -54,7 +54,7 @@ impl StdError for Error {
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
             Pvh(ref e) => e.description(),
             #[cfg(target_arch = "aarch64")]
-            Arm(ref e) => e.description(),
+            Fdt(ref e) => e.description(),
         }
     }
 }
