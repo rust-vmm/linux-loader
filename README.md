@@ -2,8 +2,9 @@
 
 ## Short-description
 
-* Parsing and loading vmlinux (raw ELF image) and bzImage images
+* Parsing and loading vmlinux (raw ELF image), bzImage and PE images
 * Linux command line parsing and generation
+* Loading device tree blobs
 * Definitions and helpers for the Linux boot protocol
 
 ## How to build
@@ -44,7 +45,7 @@ locally build a bzImage, copy it to the `src/loader` directory and run
 # Assuming your linux-loader and linux-stable are both under ${LINUX_LOADER}:
 git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git ${LINUX_LOADER}/linux-stable
 cd linux-stable
-make bzImage 
+make bzImage
 cp linux-stable/arch/x86/boot/bzImage ${LINUX_LOADER}/linux-loader/src/loader/
 cd ${LINUX_LOADER}/linux-loader
 container_version=5
@@ -53,5 +54,5 @@ docker run -it \
            --volume $(pwd):/linux-loader \
            rustvmm/dev:v${container_version}
 cd linux-loader/
-cargo test 
+cargo test
 ```
