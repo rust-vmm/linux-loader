@@ -146,3 +146,41 @@ impl KernelLoader for PE {
         Ok(loader_result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
+
+    const MEM_SIZE: u64 = 0x1000000;
+
+    fn create_guest_mem() -> GuestMemoryMmap {
+        GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+    }
+
+    fn make_image_bin() -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(include_bytes!("test_image.bin"));
+        v
+    }
+
+    #[test]
+    fn load_image() {
+        let gm = create_guest_mem();
+        let mut image = make_image_bin();
+        let kernel_addr = GuestAddress(0x200000);
+
+        let loader_result =
+            PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x280000);
+        assert_eq!(loader_result.kernel_end, 0x281000);
+
+        image[0x39] = 0x0;
+        let loader_result = PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None);
+        assert_eq!(
+            loader_result,
+            Err(KernelLoaderError::Pe(Error::InvalidImageMagicNumber))
+        );
+    }
+}
