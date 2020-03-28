@@ -10,3 +10,6 @@
 //! Traits and structs for loading `aarch64` kernels into guest memory.
 
 #![cfg(target_arch = "aarch64")]
+
+#[cfg(feature = "pe")]
+pub mod pe;

@@ -54,6 +54,10 @@ pub enum Error {
     #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
     Elf(elf::Error),
 
+    /// Failed to load PE image.
+    #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+    Pe(pe::Error),
+
     /// Failed writing command line to guest memory.
     CommandLineCopy,
     /// Command line overflowed guest memory.
@@ -74,6 +78,8 @@ impl StdError for Error {
             Error::Bzimage(ref e) => e.description(),
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Elf(ref e) => e.description(),
+            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            Error::Pe(ref e) => e.description(),
 
             Error::CommandLineCopy => "Failed writing command line to guest memory",
             Error::CommandLineOverflow => "Command line overflowed guest memory",
@@ -100,6 +106,13 @@ impl From<elf::Error> for Error {
 impl From<bzimage::Error> for Error {
     fn from(err: bzimage::Error) -> Self {
         Error::Bzimage(err)
+    }
+}
+
+#[cfg(all(feature = "pe", target_arch = "aarch64"))]
+impl From<pe::Error> for Error {
+    fn from(err: pe::Error) -> Self {
+        Error::Pe(err)
     }
 }
 
