@@ -32,10 +32,18 @@ pub enum Error {
     SeekImageEnd,
     /// Unable to seek to Image header.
     SeekImageHeader,
+    /// Unable to seek to DTB start.
+    SeekDtbStart,
+    /// Unable to seek to DTB end.
+    SeekDtbEnd,
+    /// Device tree binary too big.
+    DtbTooBig,
     /// Unable to read kernel image.
     ReadKernelImage,
     /// Unable to read Image header.
     ReadImageHeader,
+    /// Unable to read DTB image
+    ReadDtbImage,
     /// Invalid Image binary.
     InvalidImage,
     /// Invalid Image magic number.
@@ -48,8 +56,12 @@ impl error::Error for Error {
             Error::SeekImageEnd => "Unable to seek Image end",
             Error::SeekImageHeader => "Unable to seek Image header",
             Error::ReadImageHeader => "Unable to read Image header",
+            Error::ReadDtbImage => "Unable to read DTB image",
+            Error::SeekDtbStart => "Unable to seek DTB start",
+            Error::SeekDtbEnd => "Unable to seek DTB end",
             Error::InvalidImage => "Invalid Image",
             Error::InvalidImageMagicNumber => "Invalid Image magic number",
+            Error::DtbTooBig => "Device tree image too big",
             Error::ReadKernelImage => "Unable to read kernel image",
         }
     }
@@ -145,6 +157,36 @@ impl KernelLoader for PE {
 
         Ok(loader_result)
     }
+}
+
+/// Writes the device tree to the given memory slice.
+///
+/// # Arguments
+///
+/// * `guest_mem` - A u8 slice that will be partially overwritten by the device tree blob.
+/// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
+/// * `dtb_image` - The device tree blob.
+#[cfg(target_arch = "aarch64")]
+pub fn load_dtb<F, M: GuestMemory>(
+    guest_mem: &M,
+    guest_addr: GuestAddress,
+    dtb_image: &mut F,
+) -> Result<()>
+where
+    F: Read + Seek,
+{
+    let dtb_size = dtb_image
+        .seek(SeekFrom::End(0))
+        .map_err(|_| Error::SeekDtbEnd)? as usize;
+    if dtb_size > 0x200000 {
+        return Err(Error::DtbTooBig.into());
+    }
+    dtb_image
+        .seek(SeekFrom::Start(0))
+        .map_err(|_| Error::SeekDtbStart)?;
+    guest_mem
+        .read_exact_from(guest_addr, dtb_image, dtb_size)
+        .map_err(|_| Error::ReadDtbImage.into())
 }
 
 #[cfg(test)]
