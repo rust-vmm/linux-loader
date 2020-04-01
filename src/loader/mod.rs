@@ -23,7 +23,9 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 use std::io::{Read, Seek};
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use vm_memory::ByteValued;
+use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -31,6 +33,7 @@ use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsiz
 #[allow(non_upper_case_globals)]
 #[allow(missing_docs)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod bootparam;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -54,6 +57,10 @@ pub enum Error {
     #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
     Elf(elf::Error),
 
+    /// Failed to load PE image.
+    #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+    Pe(pe::Error),
+
     /// Failed writing command line to guest memory.
     CommandLineCopy,
     /// Command line overflowed guest memory.
@@ -74,6 +81,8 @@ impl StdError for Error {
             Error::Bzimage(ref e) => e.description(),
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Elf(ref e) => e.description(),
+            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            Error::Pe(ref e) => e.description(),
 
             Error::CommandLineCopy => "Failed writing command line to guest memory",
             Error::CommandLineOverflow => "Command line overflowed guest memory",
@@ -103,6 +112,13 @@ impl From<bzimage::Error> for Error {
     }
 }
 
+#[cfg(all(feature = "pe", target_arch = "aarch64"))]
+impl From<pe::Error> for Error {
+    fn from(err: pe::Error) -> Self {
+        Error::Pe(err)
+    }
+}
+
 /// Result of [`KernelLoader.load()`](trait.KernelLoader.html#tymethod.load).
 ///
 /// This specifies where the kernel is loading and passes additional
@@ -117,6 +133,7 @@ pub struct KernelLoaderResult {
     pub kernel_end: GuestUsize,
     /// This field is only for bzImage following https://www.kernel.org/doc/Documentation/x86/boot.txt
     /// VMM should make use of it to fill zero page for bzImage direct boot.
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub setup_header: Option<bootparam::setup_header>,
     /// This field optionally holds the address of a PVH entry point, indicating that
     /// the kernel supports the PVH boot protocol as described in:
@@ -138,6 +155,7 @@ pub trait KernelLoader {
         F: Read + Seek;
 }
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 unsafe impl ByteValued for bootparam::setup_header {}
 
 /// Writes the command line string to the given guest memory slice.
