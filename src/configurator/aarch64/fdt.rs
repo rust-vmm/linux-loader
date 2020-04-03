@@ -4,12 +4,12 @@
 
 //! Traits and structs for loading the device tree.
 
-use vm_memory::{ByteValued, Bytes, GuestAddress, GuestMemory};
+use vm_memory::{Bytes, GuestMemory};
 
 use std::error::Error as StdError;
 use std::fmt;
 
-use super::super::{BootConfigurator, Error as BootConfiguratorError, Result};
+use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
 /// Errors specific to the device tree boot protocol configuration.
 #[derive(Debug, PartialEq)]
@@ -51,22 +51,70 @@ impl BootConfigurator for FdtBootConfigurator {
     ///
     /// # Arguments
     ///
-    /// * `fdt` - flattened device tree.
-    /// * `sections` - unused.
+    /// * `params` - boot parameters containing the FDT.
     /// * `guest_memory` - guest's physical memory.
-    fn write_bootparams<T, S, M>(
-        fdt: (T, GuestAddress),
-        _sections: Option<(Vec<S>, GuestAddress)>,
-        guest_memory: &M,
-    ) -> Result<()>
+    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
-        T: ByteValued,
-        S: ByteValued,
         M: GuestMemory,
     {
         // The VMM has filled an FDT and passed it as a `ByteValued` object.
         guest_memory
-            .write_obj(fdt.0, fdt.1)
+            .write_slice(params.header.0.as_slice(), params.header.1)
             .map_err(|_| Error::WriteFDTToMemory.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vm_memory::{Address, ByteValued, GuestAddress, GuestMemoryMmap};
+
+    const FDT_MAX_SIZE: usize = 0x20;
+    const MEM_SIZE: u64 = 0x100_0000;
+
+    fn create_guest_mem() -> GuestMemoryMmap {
+        GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+    }
+
+    #[derive(Clone, Copy, Default)]
+    struct FdtPlaceholder([u8; FDT_MAX_SIZE]);
+    unsafe impl ByteValued for FdtPlaceholder {}
+
+    #[test]
+    fn test_configure_fdt_boot() {
+        let fdt = FdtPlaceholder([0u8; FDT_MAX_SIZE]);
+        let guest_memory = create_guest_mem();
+
+        // Error case: FDT doesn't fit in guest memory.
+        let fdt_addr = guest_memory
+            .last_addr()
+            .checked_sub(FDT_MAX_SIZE as u64 - 2)
+            .unwrap();
+        assert_eq!(
+            FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+                BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+                &guest_memory,
+            )
+            .err(),
+            Some(Error::WriteFDTToMemory.into())
+        );
+
+        let fdt_addr = guest_memory
+            .last_addr()
+            .checked_sub(FDT_MAX_SIZE as u64 - 1)
+            .unwrap();
+        assert!(FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+            BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+            &guest_memory,
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn test_error_messages() {
+        assert_eq!(
+            format!("{}", Error::WriteFDTToMemory),
+            "Device Tree Boot Configurator Error: Error writing FDT in guest memory."
+        )
     }
 }

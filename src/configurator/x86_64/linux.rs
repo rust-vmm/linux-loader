@@ -12,14 +12,12 @@
 //! Traits and structs for configuring and loading boot parameters on `x86_64` using the Linux
 //! boot protocol.
 
-use vm_memory::{ByteValued, Bytes, GuestAddress, GuestMemory};
+use vm_memory::{Bytes, GuestMemory};
 
-use super::super::{BootConfigurator, Error as BootConfiguratorError, Result};
-use crate::loader::bootparam::boot_params;
+use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
 use std::error::Error as StdError;
 use std::fmt;
-use std::mem;
 
 /// Boot configurator for the Linux boot protocol.
 pub struct LinuxBootConfigurator {}
@@ -64,28 +62,22 @@ impl BootConfigurator for LinuxBootConfigurator {
     ///
     /// # Arguments
     ///
-    /// * `header` - boot parameters encapsulated in a [`boot_params`] struct.
-    /// * `sections` - unused.
+    /// * `params` - boot parameters. The header contains a [`boot_params`] struct. The `sections`
+    ///              and `modules` are unused.
     /// * `guest_memory` - guest's physical memory.
     ///
-    /// [`boot_params`]: ../loader/bootparam/struct.boot_e820_entry.html
-    fn write_bootparams<T, S, M>(
-        header: (T, GuestAddress),
-        _sections: Option<(Vec<S>, GuestAddress)>,
-        guest_memory: &M,
-    ) -> Result<()>
+    /// [`boot_params`]: ../loader/bootparam/struct.boot_params.html
+    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
-        T: ByteValued,
-        S: ByteValued,
         M: GuestMemory,
     {
         // The VMM has filled a `boot_params` struct and its e820 map.
         // This will be written in guest memory at the zero page.
         guest_memory
-            .checked_offset(header.1, mem::size_of::<boot_params>())
+            .checked_offset(params.header.1, params.header.0.len())
             .ok_or(Error::ZeroPagePastRamEnd)?;
         guest_memory
-            .write_obj(header.0, header.1)
+            .write_slice(params.header.0.as_slice(), params.header.1)
             .map_err(|_| Error::ZeroPageSetup)?;
 
         Ok(())
@@ -95,6 +87,7 @@ impl BootConfigurator for LinuxBootConfigurator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::loader::bootparam::boot_params;
     use std::mem;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
@@ -102,7 +95,7 @@ mod tests {
     const KERNEL_HDR_MAGIC: u32 = 0x53726448;
     const KERNEL_LOADER_OTHER: u8 = 0xff;
     const KERNEL_MIN_ALIGNMENT_BYTES: u32 = 0x1000000;
-    const MEM_SIZE: u64 = 0x1000000;
+    const MEM_SIZE: u64 = 0x100_0000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
@@ -130,10 +123,10 @@ mod tests {
         let bad_zeropg_addr = GuestAddress(
             guest_memory.last_addr().raw_value() - mem::size_of::<boot_params>() as u64 + 1,
         );
+        let mut bootparams = BootParams::new::<boot_params>(&params, bad_zeropg_addr);
         assert_eq!(
-            LinuxBootConfigurator::write_bootparams::<boot_params, boot_params, GuestMemoryMmap>(
-                (params, bad_zeropg_addr),
-                None,
+            LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+                bootparams.clone(),
                 &guest_memory,
             )
             .err(),
@@ -141,13 +134,23 @@ mod tests {
         );
 
         // Success case.
-        assert!(
-            LinuxBootConfigurator::write_bootparams::<boot_params, boot_params, GuestMemoryMmap>(
-                (params, zero_page_addr),
-                None,
-                &guest_memory
-            )
-            .is_ok()
+        bootparams.header.1 = zero_page_addr;
+        assert!(LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+            bootparams,
+            &guest_memory,
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn test_error_messages() {
+        assert_eq!(
+            format!("{}", Error::ZeroPagePastRamEnd),
+            "Linux Boot Configurator Error: The zero page extends past the end of guest memory."
+        );
+        assert_eq!(
+            format!("{}", Error::ZeroPageSetup),
+            "Linux Boot Configurator Error: Error writing to the zero page of guest memory."
         );
     }
 }

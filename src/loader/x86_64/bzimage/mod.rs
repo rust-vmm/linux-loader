@@ -179,7 +179,7 @@ mod tests {
     use std::io::Cursor;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
-    const MEM_SIZE: u64 = 0x1000000;
+    const MEM_SIZE: u64 = 0x100_0000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()

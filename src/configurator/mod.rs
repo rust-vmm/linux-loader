@@ -90,27 +90,137 @@ pub trait BootConfigurator {
     ///
     /// # Arguments
     ///
-    /// * `header` - header section of the boot parameters and address where to write it in guest
-    ///              memory. The first element must be a POD struct that implements [`ByteValued`].
-    ///              For the Linux protocol it's the [`boot_params`] struct, and for PVH the
-    ///             [`hvm_start_info`] struct.
-    /// * `sections` - vector of sections that compose the boot parameters and address where to
-    ///                write them in guest memory. Unused for the Linux protocol. For PVH, it's the
-    ///                memory map table represented as a vector of [`hvm_memmap_table_entry`]. Must
-    ///                be a `Vec` of POD data structs that implement [`ByteValued`].
+    /// * `params` - struct containing the header section of the boot parameters, additional
+    ///              sections and modules, and their associated addresses in guest memory. These
+    ///              vary with the boot protocol used.
     /// * `guest_memory` - guest's physical memory.
-    ///
-    /// [`boot_params`]: ../loader/bootparam/struct.boot_e820_entry.html
-    /// [`hvm_memmap_table_entry`]: ../loader/elf/start_info/struct.hvm_memmap_table_entry.html
-    /// [`hvm_start_info`]: ../loader/elf/start_info/struct.hvm_start_info.html
-    /// [`ByteValued`]: https://docs.rs/vm-memory/latest/vm_memory/bytes/trait.ByteValued.html
-    fn write_bootparams<T, S, M>(
-        header: (T, GuestAddress),
-        sections: Option<(Vec<S>, GuestAddress)>,
-        guest_memory: &M,
-    ) -> Result<()>
+    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
-        T: ByteValued,
-        S: ByteValued,
         M: GuestMemory;
+}
+
+/// Boot parameters to be written in guest memory.
+#[derive(Clone)]
+pub struct BootParams {
+    /// "Header section", always written in guest memory irrespective of boot protocol.
+    pub header: (Vec<u8>, GuestAddress),
+    /// Optional sections containing boot configurations (e.g. E820 map).
+    pub sections: Option<(Vec<u8>, GuestAddress)>,
+    /// Optional modules specified at boot configuration time.
+    pub modules: Option<(Vec<u8>, GuestAddress)>,
+}
+
+impl BootParams {
+    /// Creates a new [`BootParams`](struct.BootParams.html) struct with the specified header.
+    ///
+    /// # Arguments
+    ///
+    /// * `header` - [`ByteValued`] representation of mandatory boot parameters.
+    /// * `header_addr` - address in guest memory where `header` will be written.
+    ///
+    /// [`ByteValued`]: https://docs.rs/vm-memory/latest/vm_memory/bytes/trait.ByteValued.html
+    pub fn new<T: ByteValued>(header: &T, header_addr: GuestAddress) -> Self {
+        BootParams {
+            header: (header.as_slice().to_vec(), header_addr),
+            sections: None,
+            modules: None,
+        }
+    }
+
+    /// Adds or overwrites the boot sections and associated memory address.
+    ///
+    /// Unused on `aarch64` and for the Linux boot protocol.
+    /// For the PVH boot protocol, the sections specify the memory map table in
+    /// [`hvm_memmap_table_entry`] structs.
+    ///
+    /// # Arguments
+    ///
+    /// * `sections` - vector of [`ByteValued`] boot configurations.
+    /// * `sections_addr` - address where the sections will be written in guest memory.
+    ///
+    /// [`ByteValued`]: https://docs.rs/vm-memory/latest/vm_memory/bytes/trait.ByteValued.html
+    /// [`hvm_memmap_table_entry`]: ../loader/elf/start_info/struct.hvm_memmap_table_entry.html
+    pub fn add_sections<T: ByteValued>(&mut self, sections: &[T], sections_addr: GuestAddress) {
+        self.sections = Some((
+            sections
+                .iter()
+                .flat_map(|section| section.as_slice().to_vec())
+                .collect(),
+            sections_addr,
+        ));
+    }
+
+    /// Adds or overwrites the boot modules and associated memory address.
+    ///
+    /// Unused on `aarch64` and for the Linux boot protocol.
+    /// For the PVH boot protocol, the modules are specified in [`hvm_modlist_entry`] structs.
+    ///
+    /// # Arguments
+    ///
+    /// * `modules` - vector of [`ByteValued`] boot configurations.
+    /// * `modules_addr` - address where the modules will be written in guest memory.
+    ///
+    /// [`ByteValued`]: https://docs.rs/vm-memory/latest/vm_memory/bytes/trait.ByteValued.html
+    /// [`hvm_modlist_entry`]: ../loader/elf/start_info/struct.hvm_modlist_entry.html
+    pub fn add_modules<T: ByteValued>(&mut self, modules: &[T], modules_addr: GuestAddress) {
+        self.modules = Some((
+            modules
+                .iter()
+                .flat_map(|module| module.as_slice().to_vec())
+                .collect(),
+            modules_addr,
+        ));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_messages() {
+        #[cfg(target_arch = "x86_64")]
+        {
+            // Linux
+            assert_eq!(
+                format!("{}", Error::Linux(linux::Error::ZeroPagePastRamEnd)),
+                "Boot Configurator Error: The zero page extends past the end of guest memory."
+            );
+            assert_eq!(
+                format!("{}", Error::Linux(linux::Error::ZeroPageSetup)),
+                "Boot Configurator Error: Error writing to the zero page of guest memory."
+            );
+
+            // PVH
+            assert_eq!(
+                format!("{}", Error::Pvh(pvh::Error::MemmapTableMissing)),
+                "Boot Configurator Error: No memory map was passed to the boot configurator."
+            );
+            assert_eq!(
+                format!("{}", Error::Pvh(pvh::Error::MemmapTablePastRamEnd)),
+                "Boot Configurator Error: \
+                 The memory map table extends past the end of guest memory."
+            );
+            assert_eq!(
+                format!("{}", Error::Pvh(pvh::Error::MemmapTableSetup)),
+                "Boot Configurator Error: Error writing memory map table to guest memory."
+            );
+            assert_eq!(
+                format!("{}", Error::Pvh(pvh::Error::StartInfoPastRamEnd)),
+                "Boot Configurator Error: \
+                 The hvm_start_info structure extends past the end of guest memory."
+            );
+            assert_eq!(
+                format!("{}", Error::Pvh(pvh::Error::StartInfoSetup)),
+                "Boot Configurator Error: Error writing hvm_start_info to guest memory."
+            );
+        }
+
+        #[cfg(target_arch = "aarch64")]
+        // FDT
+        assert_eq!(
+            format!("{}", Error::Fdt(fdt::Error::WriteFDTToMemory)),
+            "Boot Configurator Error: Error writing FDT in guest memory."
+        );
+    }
 }
