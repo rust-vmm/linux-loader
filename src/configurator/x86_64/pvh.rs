@@ -26,6 +26,8 @@ pub struct PvhBootConfigurator {}
 /// Errors specific to the PVH boot protocol configuration.
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// The starting address for the memory map wasn't passed to the boot configurator.
+    MemmapTableAddressMissing,
     /// No memory map wasn't passed to the boot configurator.
     MemmapTableMissing,
     /// The memory map table extends past the end of guest memory.
@@ -42,6 +44,9 @@ impl StdError for Error {
     fn description(&self) -> &str {
         use Error::*;
         match self {
+            MemmapTableAddressMissing => {
+                "The starting address for the memory map wasn't passed to the boot configurator."
+            }
             MemmapTableMissing => "No memory map was passed to the boot configurator.",
             MemmapTablePastRamEnd => "The memory map table extends past the end of guest memory.",
             MemmapTableSetup => "Error writing memory map table to guest memory.",
@@ -95,20 +100,22 @@ impl BootConfigurator for PvhBootConfigurator {
         // The `hvm_start_info` will be written at `addr` and the memmap entries at
         // `start_info.0.memmap_paddr`.
         let memmap = params.sections.ok_or(Error::MemmapTableMissing)?;
-        let header = params.header;
+        let memmap_addr = params
+            .sections_start
+            .ok_or(Error::MemmapTableAddressMissing)?;
 
         guest_memory
-            .checked_offset(memmap.1, memmap.0.len())
+            .checked_offset(memmap_addr, memmap.len())
             .ok_or(Error::MemmapTablePastRamEnd)?;
         guest_memory
-            .write_slice(memmap.0.as_slice(), memmap.1)
+            .write_slice(memmap.as_slice(), memmap_addr)
             .map_err(|_| Error::MemmapTableSetup)?;
 
         guest_memory
-            .checked_offset(header.1, header.0.len())
+            .checked_offset(params.header_start, params.header.len())
             .ok_or(Error::StartInfoPastRamEnd)?;
         guest_memory
-            .write_slice(header.0.as_slice(), header.1)
+            .write_slice(params.header.as_slice(), params.header_start)
             .map_err(|_| Error::StartInfoSetup)?;
 
         Ok(())
@@ -171,8 +178,8 @@ mod tests {
         let bad_start_info_addr = GuestAddress(
             guest_memory.last_addr().raw_value() - mem::size_of::<hvm_start_info>() as u64 + 1,
         );
-        boot_params.add_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
-        boot_params.header.1 = bad_start_info_addr;
+        boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
+        boot_params.header_start = bad_start_info_addr;
         assert_eq!(
             PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
                 boot_params.clone(),
@@ -184,12 +191,12 @@ mod tests {
 
         // Error case: memory map doesn't fit in guest memory.
         let himem_start = GuestAddress(0x100000);
-        boot_params.header.1 = himem_start;
+        boot_params.header_start = himem_start;
         let bad_memmap_addr = GuestAddress(
             guest_memory.last_addr().raw_value() - mem::size_of::<hvm_memmap_table_entry>() as u64
                 + 1,
         );
-        boot_params.add_sections::<hvm_memmap_table_entry>(&memmap_entries, bad_memmap_addr);
+        boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, bad_memmap_addr);
 
         assert_eq!(
             PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
@@ -200,7 +207,7 @@ mod tests {
             Some(Error::MemmapTablePastRamEnd.into())
         );
 
-        boot_params.add_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
+        boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
         assert!(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
             boot_params,
             &guest_memory,
