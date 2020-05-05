@@ -74,10 +74,10 @@ impl BootConfigurator for LinuxBootConfigurator {
         // The VMM has filled a `boot_params` struct and its e820 map.
         // This will be written in guest memory at the zero page.
         guest_memory
-            .checked_offset(params.header.1, params.header.0.len())
+            .checked_offset(params.header_start, params.header.len())
             .ok_or(Error::ZeroPagePastRamEnd)?;
         guest_memory
-            .write_slice(params.header.0.as_slice(), params.header.1)
+            .write_slice(params.header.as_slice(), params.header_start)
             .map_err(|_| Error::ZeroPageSetup)?;
 
         Ok(())
@@ -134,7 +134,7 @@ mod tests {
         );
 
         // Success case.
-        bootparams.header.1 = zero_page_addr;
+        bootparams.header_start = zero_page_addr;
         assert!(LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
             bootparams,
             &guest_memory,

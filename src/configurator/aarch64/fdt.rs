@@ -59,7 +59,7 @@ impl BootConfigurator for FdtBootConfigurator {
     {
         // The VMM has filled an FDT and passed it as a `ByteValued` object.
         guest_memory
-            .write_slice(params.header.0.as_slice(), params.header.1)
+            .write_slice(params.header.as_slice(), params.header_start)
             .map_err(|_| Error::WriteFDTToMemory.into())
     }
 }
