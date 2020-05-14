@@ -14,6 +14,8 @@ use crate::configurator::{BootConfigurator, BootParams, Error as BootConfigurato
 /// Errors specific to the device tree boot protocol configuration.
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// FDT does not fit in guest memory.
+    FDTPastRamEnd,
     /// Error writing FDT in memory.
     WriteFDTToMemory,
 }
@@ -22,6 +24,7 @@ impl StdError for Error {
     fn description(&self) -> &str {
         use Error::*;
         match self {
+            FDTPastRamEnd => "FDT does not fit in guest memory.",
             WriteFDTToMemory => "Error writing FDT in guest memory.",
         }
     }
@@ -57,6 +60,10 @@ impl BootConfigurator for FdtBootConfigurator {
     where
         M: GuestMemory,
     {
+        guest_memory
+            .checked_offset(params.header_start, params.header.len())
+            .ok_or(Error::FDTPastRamEnd)?;
+
         // The VMM has filled an FDT and passed it as a `ByteValued` object.
         guest_memory
             .write_slice(params.header.as_slice(), params.header_start)
@@ -86,23 +93,17 @@ mod tests {
         let guest_memory = create_guest_mem();
 
         // Error case: FDT doesn't fit in guest memory.
-        let fdt_addr = guest_memory
-            .last_addr()
-            .checked_sub(FDT_MAX_SIZE as u64 - 2)
-            .unwrap();
+        let fdt_addr = GuestAddress(guest_memory.last_addr().raw_value() - FDT_MAX_SIZE as u64 + 1);
         assert_eq!(
             FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
                 BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
                 &guest_memory,
             )
             .err(),
-            Some(Error::WriteFDTToMemory.into())
+            Some(Error::FDTPastRamEnd.into())
         );
 
-        let fdt_addr = guest_memory
-            .last_addr()
-            .checked_sub(FDT_MAX_SIZE as u64 - 1)
-            .unwrap();
+        let fdt_addr = GuestAddress(guest_memory.last_addr().raw_value() - FDT_MAX_SIZE as u64);
         assert!(FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
             BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
             &guest_memory,
@@ -113,8 +114,12 @@ mod tests {
     #[test]
     fn test_error_messages() {
         assert_eq!(
+            format!("{}", Error::FDTPastRamEnd),
+            "Device Tree Boot Configurator Error: FDT does not fit in guest memory."
+        );
+        assert_eq!(
             format!("{}", Error::WriteFDTToMemory),
             "Device Tree Boot Configurator Error: Error writing FDT in guest memory."
-        )
+        );
     }
 }
