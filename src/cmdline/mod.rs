@@ -40,6 +40,7 @@ impl fmt::Display for Error {
 }
 
 /// Specialized [`Result`] type for command line operations.
+///
 /// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = result::Result<T, Error>;
 

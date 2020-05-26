@@ -66,6 +66,43 @@ impl BootConfigurator for LinuxBootConfigurator {
     ///              and `modules` are unused.
     /// * `guest_memory` - guest's physical memory.
     ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate vm_memory;
+    /// # use linux_loader::configurator::{BootConfigurator, BootParams};
+    /// # use linux_loader::configurator::linux::LinuxBootConfigurator;
+    /// # use linux_loader::loader::bootparam::boot_params;
+    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # const KERNEL_BOOT_FLAG_MAGIC: u16 = 0xaa55;
+    /// # const KERNEL_HDR_MAGIC: u32 = 0x53726448;
+    /// # const KERNEL_LOADER_OTHER: u8 = 0xff;
+    /// # const KERNEL_MIN_ALIGNMENT_BYTES: u32 = 0x1000000;
+    /// # const MEM_SIZE: u64 = 0x100_0000;
+    /// # fn create_guest_memory() -> GuestMemoryMmap {
+    /// #   GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+    /// # }
+    /// fn build_bootparams() -> boot_params {
+    ///     let mut params = boot_params::default();
+    ///     params.hdr.boot_flag = KERNEL_BOOT_FLAG_MAGIC;
+    ///     params.hdr.header = KERNEL_HDR_MAGIC;
+    ///     params.hdr.kernel_alignment = KERNEL_MIN_ALIGNMENT_BYTES;
+    ///     params.hdr.type_of_loader = KERNEL_LOADER_OTHER;
+    ///     params
+    /// }
+    ///
+    /// fn main() {
+    /// #   let zero_page_addr = GuestAddress(0x30000);
+    ///     let guest_memory = create_guest_memory();
+    ///     let params = build_bootparams();
+    ///     let mut bootparams = BootParams::new::<boot_params>(&params, zero_page_addr);
+    ///     LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+    ///         bootparams,
+    ///         &guest_memory,
+    ///     ).unwrap();
+    /// }
+    /// ```
+    ///
     /// [`boot_params`]: ../loader/bootparam/struct.boot_params.html
     fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
