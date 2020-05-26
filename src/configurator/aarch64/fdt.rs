@@ -56,6 +56,33 @@ impl BootConfigurator for FdtBootConfigurator {
     ///
     /// * `params` - boot parameters containing the FDT.
     /// * `guest_memory` - guest's physical memory.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate vm_memory;
+    /// # use linux_loader::configurator::{BootConfigurator, BootParams};
+    /// # use linux_loader::configurator::fdt::FdtBootConfigurator;
+    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # #[derive(Clone, Copy, Default)]
+    /// # struct FdtPlaceholder([u8; 0x20]);
+    /// # unsafe impl ByteValued for FdtPlaceholder {}
+    /// # fn create_guest_memory() -> GuestMemoryMmap {
+    /// #   GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x100_0000 as usize))]).unwrap()
+    /// # }
+    /// # fn create_fdt(guest_memory: &GuestMemoryMmap) -> (FdtPlaceholder, GuestAddress) {
+    /// #   let last_addr = guest_memory.last_addr().raw_value();
+    /// #   (FdtPlaceholder([0u8; 0x20]), GuestAddress(last_addr - 0x20u64))
+    /// # }
+    /// # fn main() {
+    /// let guest_memory = create_guest_memory();
+    /// let (fdt, fdt_addr) = create_fdt(&guest_memory);
+    /// FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
+    ///     BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+    ///     &guest_memory,
+    /// ).unwrap();
+    /// # }
+    /// ```
     fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,
