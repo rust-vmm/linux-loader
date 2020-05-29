@@ -1,5 +1,5 @@
 {
-  "coverage_score": 78.7,
+  "coverage_score": 81,
   "exclude_path": "",
-  "crate_features": ""
+  "crate_features": "bzimage,elf"
 }
