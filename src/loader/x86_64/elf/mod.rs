@@ -18,18 +18,9 @@ use std::mem;
 
 use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
-use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
-
-#[allow(dead_code)]
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-#[allow(non_upper_case_globals)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
-mod elf;
-
-#[allow(missing_docs)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
-pub mod start_info;
+use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
+use crate::loader_gen::elf;
+pub use crate::loader_gen::start_info;
 
 unsafe impl ByteValued for elf::Elf64_Ehdr {}
 unsafe impl ByteValued for elf::Elf64_Nhdr {}
