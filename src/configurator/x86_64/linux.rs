@@ -124,7 +124,7 @@ impl BootConfigurator for LinuxBootConfigurator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::loader::bootparam::boot_params;
+    use crate::loader_gen::bootparam::boot_params;
     use std::mem;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 

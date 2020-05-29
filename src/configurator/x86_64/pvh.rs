@@ -15,7 +15,7 @@
 use vm_memory::{ByteValued, Bytes, GuestMemory};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
-use crate::loader::elf::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, hvm_start_info};
+use crate::loader_gen::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, hvm_start_info};
 
 use std::error::Error as StdError;
 use std::fmt;
