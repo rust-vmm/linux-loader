@@ -132,10 +132,11 @@ pub struct KernelLoaderResult {
     /// See https://www.kernel.org/doc/Documentation/x86/boot.txt.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub setup_header: Option<bootparam::setup_header>,
-    /// This field optionally holds the address of a PVH entry point, indicating that
-    /// the kernel supports the PVH boot protocol as described in:
+    /// Availability of a PVH entry point. Only used for ELF boot, indicates whether the kernel
+    /// supports the PVH boot protocol as described in:
     /// https://xenbits.xen.org/docs/unstable/misc/pvh.html
-    pub pvh_entry_addr: Option<GuestAddress>,
+    #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+    pub pvh_boot_cap: elf::PvhBootCapability,
 }
 
 /// Trait that specifies kernel image loading support.
