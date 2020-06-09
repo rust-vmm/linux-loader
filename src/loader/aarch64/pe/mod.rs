@@ -1,3 +1,4 @@
+// Copyright © 2020, Oracle and/or its affiliates.
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -48,6 +49,8 @@ pub enum Error {
     InvalidImage,
     /// Invalid Image magic number.
     InvalidImageMagicNumber,
+    /// Invalid base address alignment
+    InvalidBaseAddrAlignment,
 }
 
 impl error::Error for Error {
@@ -63,6 +66,7 @@ impl error::Error for Error {
             Error::InvalidImageMagicNumber => "Invalid Image magic number",
             Error::DtbTooBig => "Device tree image too big",
             Error::ReadKernelImage => "Unable to read kernel image",
+            Error::InvalidBaseAddrAlignment => "Base address not aligned to 2 MB",
         }
     }
 }
@@ -96,7 +100,7 @@ impl KernelLoader for PE {
     /// # Arguments
     ///
     /// * `guest_mem` - The guest memory where the kernel image is loaded.
-    /// * `kernel_offset` - 2MB-aligned base addres in guest memory at at which to load the kernel.
+    /// * `kernel_offset` - 2MB-aligned base addres in guest memory at which to load the kernel.
     /// * `kernel_image` - Input Image format kernel image.
     /// * `highmem_start_address` - ignored on ARM64.
     ///
@@ -133,6 +137,14 @@ impl KernelLoader for PE {
 
         if image_size == 0 {
             text_offset = 0x80000;
+        }
+
+        // Validate that kernel_offset is 2 MB aligned, as required by the
+        // arm64 boot protocol
+        if let Some(kernel_offset) = kernel_offset {
+            if kernel_offset.raw_value() % 0x0020_0000 != 0 {
+                return Err(Error::InvalidBaseAddrAlignment.into());
+            }
         }
 
         let mem_offset = kernel_offset
@@ -217,6 +229,14 @@ mod tests {
             PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
         assert_eq!(loader_result.kernel_load.raw_value(), 0x280000);
         assert_eq!(loader_result.kernel_end, 0x281000);
+
+        // Attempt to load the kernel at an address that is not aligned to 2MB boundary
+        let kernel_offset = GuestAddress(0x0030_0000);
+        let loader_result = PE::load(&gm, Some(kernel_offset), &mut Cursor::new(&image), None);
+        assert_eq!(
+            loader_result,
+            Err(KernelLoaderError::Pe(Error::InvalidBaseAddrAlignment))
+        );
 
         image[0x39] = 0x0;
         let loader_result = PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None);
