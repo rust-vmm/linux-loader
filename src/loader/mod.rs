@@ -145,14 +145,14 @@ pub trait KernelLoader {
     /// # Arguments
     ///
     /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
-    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_offset`: Usage varies between implementations.
     /// * `kernel_image`: Kernel image to be loaded.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>

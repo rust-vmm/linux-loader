@@ -126,7 +126,7 @@ impl KernelLoader for Elf {
     /// # Arguments
     ///
     /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
-    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_offset`: Offset to be added to default kernel load address in guest memory.
     /// * `kernel_image` - Input vmlinux image.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
@@ -154,7 +154,7 @@ impl KernelLoader for Elf {
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -181,8 +181,8 @@ impl KernelLoader for Elf {
         let mut loader_result: KernelLoaderResult = Default::default();
 
         // Address where the kernel will be loaded.
-        loader_result.kernel_load = match kernel_start {
-            Some(start) => GuestAddress(start.raw_value() + (ehdr.e_entry as u64)),
+        loader_result.kernel_load = match kernel_offset {
+            Some(k_offset) => GuestAddress(k_offset.raw_value() + (ehdr.e_entry as u64)),
             None => GuestAddress(ehdr.e_entry as u64),
         };
 
@@ -216,8 +216,8 @@ impl KernelLoader for Elf {
 
             // if the vmm does not specify where the kernel should be loaded, just
             // load it to the physical address p_paddr for each segment.
-            let mem_offset = match kernel_start {
-                Some(start) => start
+            let mem_offset = match kernel_offset {
+                Some(k_offset) => k_offset
                     .checked_add(phdr.p_paddr as u64)
                     .ok_or(Error::InvalidProgramHeaderAddress)?,
                 None => GuestAddress(phdr.p_paddr as u64),
