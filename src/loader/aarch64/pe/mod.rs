@@ -96,7 +96,7 @@ impl KernelLoader for PE {
     /// # Arguments
     ///
     /// * `guest_mem` - The guest memory where the kernel image is loaded.
-    /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
+    /// * `kernel_offset` - 2MB-aligned base addres in guest memory at at which to load the kernel.
     /// * `kernel_image` - Input Image format kernel image.
     /// * `highmem_start_address` - ignored on ARM64.
     ///
@@ -104,7 +104,7 @@ impl KernelLoader for PE {
     /// * KernelLoaderResult
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         _highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -135,7 +135,7 @@ impl KernelLoader for PE {
             text_offset = 0x80000;
         }
 
-        let mem_offset = kernel_start
+        let mem_offset = kernel_offset
             .unwrap_or(GuestAddress(0))
             .checked_add(text_offset)
             .ok_or(Error::InvalidImage)?;

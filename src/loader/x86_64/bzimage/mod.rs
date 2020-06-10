@@ -70,7 +70,7 @@ impl KernelLoader for BzImage {
     /// # Arguments
     ///
     /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
-    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_offset`: Address in guest memory where the kernel is loaded.
     /// * `kernel_image` - Input bzImage image.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
@@ -98,7 +98,7 @@ impl KernelLoader for BzImage {
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -144,7 +144,7 @@ impl KernelLoader for BzImage {
             return Err(KernelLoaderError::InvalidKernelStartAddress);
         }
 
-        let mem_offset = match kernel_start {
+        let mem_offset = match kernel_offset {
             Some(start) => start,
             None => GuestAddress(u64::from(boot_header.code32_start)),
         };
@@ -197,13 +197,13 @@ mod tests {
     fn test_load_bzImage() {
         let gm = create_guest_mem();
         let image = make_bzimage();
-        let mut kernel_start = GuestAddress(0x200000);
+        let mut kernel_offset = GuestAddress(0x200000);
         let mut highmem_start_address = GuestAddress(0x0);
 
-        // load bzImage with good kernel_start and himem_start setting
+        // load bzImage with good kernel_offset and himem_start setting
         let mut loader_result = BzImage::load(
             &gm,
-            Some(kernel_start),
+            Some(kernel_offset),
             &mut Cursor::new(&image),
             Some(highmem_start_address),
         )
@@ -215,7 +215,7 @@ mod tests {
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
         assert_eq!(loader_result.kernel_end, 0x60c320);
 
-        // load bzImage without kernel_start
+        // load bzImage without kernel_offset
         loader_result = BzImage::load(
             &gm,
             None,
@@ -231,14 +231,14 @@ mod tests {
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
         // load bzImage with a bad himem setting
-        kernel_start = GuestAddress(0x1000);
+        kernel_offset = GuestAddress(0x1000);
         highmem_start_address = GuestAddress(0x200000);
 
         assert_eq!(
             Some(KernelLoaderError::InvalidKernelStartAddress),
             BzImage::load(
                 &gm,
-                Some(kernel_start),
+                Some(kernel_offset),
                 &mut Cursor::new(&image),
                 Some(highmem_start_address),
             )
