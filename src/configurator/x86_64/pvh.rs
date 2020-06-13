@@ -40,10 +40,12 @@ pub enum Error {
     StartInfoSetup,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
+impl StdError for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
-        match self {
+        let msg = match self {
             MemmapTableAddressMissing => {
                 "The starting address for the memory map wasn't passed to the boot configurator."
             }
@@ -54,17 +56,8 @@ impl StdError for Error {
                 "The hvm_start_info structure extends past the end of guest memory."
             }
             StartInfoSetup => "Error writing hvm_start_info to guest memory.",
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "PVH Boot Configurator Error: {}",
-            StdError::description(self)
-        )
+        };
+        write!(f, "PVH Boot Configurator Error: {}", msg)
     }
 }
 

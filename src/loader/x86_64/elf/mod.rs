@@ -11,7 +11,7 @@
 
 #![cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
+use std::error;
 use std::fmt::{self, Display};
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
@@ -61,9 +61,11 @@ pub enum Error {
     InvalidPvhNote,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl error::Error for Error {}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let msg = match self {
             Error::BigEndianElfOnLittle => {
                 "Trying to load big-endian binary on little-endian machine"
             }
@@ -81,13 +83,8 @@ impl error::Error for Error {
             Error::SeekNoteHeader => "Unable to seek to note header",
             Error::ReadNoteHeader => "Unable to read note header",
             Error::InvalidPvhNote => "Invalid PVH note header",
-        }
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
+        };
+        write!(f, "Kernel Loader Error: {}", msg)
     }
 }
 

@@ -45,7 +45,6 @@ pub enum Error {
     /// Errors specific to device tree boot configuration.
     #[cfg(target_arch = "aarch64")]
     Fdt(fdt::Error),
-
     /// Boot parameter was specified without its starting address in guest memory.
     MissingStartAddress,
     /// Boot parameter address overflows.
@@ -54,33 +53,26 @@ pub enum Error {
     InvalidAddress,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        use Error::*;
-        match self {
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-            Linux(ref e) => e.description(),
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-            Pvh(ref e) => e.description(),
-            #[cfg(target_arch = "aarch64")]
-            Fdt(ref e) => e.description(),
-
-            MissingStartAddress => {
-                "Boot parameter was specified without its starting address in guest memory."
-            }
-            Overflow => "Boot parameter address overflows.",
-            InvalidAddress => "Boot parameter address precedes the starting address.",
-        }
-    }
-}
+impl StdError for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Boot Configurator Error: {}",
-            StdError::description(self)
-        )
+        use Error::*;
+        write!(f, "Boot Configurator Error: ")?;
+        match self {
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+            Linux(ref e) => write!(f, "{}", e),
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+            Pvh(ref e) => write!(f, "{}", e),
+            #[cfg(target_arch = "aarch64")]
+            Fdt(ref e) => write!(f, "{}", e),
+            MissingStartAddress => write!(
+                f,
+                "Boot parameter was specified without its starting address in guest memory."
+            ),
+            Overflow => write!(f, "Boot parameter address overflows."),
+            InvalidAddress => write!(f, "Boot parameter address precedes the starting address."),
+        }
     }
 }
 
@@ -455,35 +447,40 @@ mod tests {
             // Linux
             assert_eq!(
                 format!("{}", Error::Linux(linux::Error::ZeroPagePastRamEnd)),
-                "Boot Configurator Error: The zero page extends past the end of guest memory."
+                "Boot Configurator Error: Linux Boot Configurator Error: \
+                 The zero page extends past the end of guest memory."
             );
             assert_eq!(
                 format!("{}", Error::Linux(linux::Error::ZeroPageSetup)),
-                "Boot Configurator Error: Error writing to the zero page of guest memory."
+                "Boot Configurator Error: Linux Boot Configurator Error: \
+                 Error writing to the zero page of guest memory."
             );
 
             // PVH
             assert_eq!(
                 format!("{}", Error::Pvh(pvh::Error::MemmapTableMissing)),
-                "Boot Configurator Error: No memory map was passed to the boot configurator."
+                "Boot Configurator Error: PVH Boot Configurator Error: \
+                 No memory map was passed to the boot configurator."
             );
             assert_eq!(
                 format!("{}", Error::Pvh(pvh::Error::MemmapTablePastRamEnd)),
-                "Boot Configurator Error: \
+                "Boot Configurator Error: PVH Boot Configurator Error: \
                  The memory map table extends past the end of guest memory."
             );
             assert_eq!(
                 format!("{}", Error::Pvh(pvh::Error::MemmapTableSetup)),
-                "Boot Configurator Error: Error writing memory map table to guest memory."
+                "Boot Configurator Error: PVH Boot Configurator Error: \
+                 Error writing memory map table to guest memory."
             );
             assert_eq!(
                 format!("{}", Error::Pvh(pvh::Error::StartInfoPastRamEnd)),
-                "Boot Configurator Error: \
+                "Boot Configurator Error: PVH Boot Configurator Error: \
                  The hvm_start_info structure extends past the end of guest memory."
             );
             assert_eq!(
                 format!("{}", Error::Pvh(pvh::Error::StartInfoSetup)),
-                "Boot Configurator Error: Error writing hvm_start_info to guest memory."
+                "Boot Configurator Error: PVH Boot Configurator Error: \
+                 Error writing hvm_start_info to guest memory."
             );
         }
 
@@ -491,7 +488,8 @@ mod tests {
         // FDT
         assert_eq!(
             format!("{}", Error::Fdt(fdt::Error::WriteFDTToMemory)),
-            "Boot Configurator Error: Error writing FDT in guest memory."
+            "Boot Configurator Error: Device Tree Boot Configurator Error: \
+             Error writing FDT in guest memory."
         );
 
         assert_eq!(

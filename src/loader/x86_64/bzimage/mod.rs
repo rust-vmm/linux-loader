@@ -11,7 +11,7 @@
 
 #![cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
+use std::error;
 use std::fmt::{self, Display};
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
@@ -39,22 +39,19 @@ pub enum Error {
     SeekBzImageCompressedKernel,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl error::Error for Error {}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let msg = match self {
             Error::InvalidBzImage => "Invalid bzImage",
             Error::ReadBzImageHeader => "Unable to read bzImage header",
             Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
-        }
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
+        };
+        write!(f, "Kernel Loader Error: {}", msg)
     }
 }
 
@@ -80,13 +77,15 @@ impl KernelLoader for BzImage {
     /// # extern crate vm_memory;
     /// # use linux_loader::loader::*;
     /// # use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
-    /// # use std::io::Cursor;
+    /// # use std::fs::File;
+    /// # use std::io::{Cursor, Read};
     /// let mem_size: usize = 0x1000000;
     /// let himem_start = GuestAddress(0x0);
     /// let kernel_addr = GuestAddress(0x200000);
     /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
     /// let mut kernel_image = vec![];
-    /// kernel_image.extend_from_slice(include_bytes!("bzimage"));
+    /// let mut bzimage_file = File::open("bzImage").unwrap();
+    /// bzimage_file.read_to_end(&mut kernel_image).unwrap();
     /// bzimage::BzImage::load(
     ///     &gm,
     ///     Some(kernel_addr),
@@ -176,7 +175,9 @@ impl KernelLoader for BzImage {
 mod tests {
     use super::*;
 
+    use std::fs::File;
     use std::io::Cursor;
+
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
     const MEM_SIZE: u64 = 0x100_0000;
@@ -187,7 +188,9 @@ mod tests {
 
     fn make_bzimage() -> Vec<u8> {
         let mut v = Vec::new();
-        v.extend_from_slice(include_bytes!("bzimage"));
+        let mut f = File::open("bzImage").expect("Failed to open bzImage file");
+        // Read the whole file.
+        f.read_to_end(&mut v).expect("Failed to read bzImage file");
         v
     }
 

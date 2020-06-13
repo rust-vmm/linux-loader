@@ -71,27 +71,23 @@ pub enum Error {
 /// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = std::result::Result<T, Error>;
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        match self {
-            #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Bzimage(ref e) => e.description(),
-            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Elf(ref e) => e.description(),
-            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
-            Error::Pe(ref e) => e.description(),
-
-            Error::CommandLineCopy => "Failed writing command line to guest memory",
-            Error::CommandLineOverflow => "Command line overflowed guest memory",
-            Error::InvalidKernelStartAddress => "Invalid kernel start address",
-            Error::MemoryOverflow => "Memory to load kernel image is not enough",
-        }
-    }
-}
+impl StdError for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", Error::description(self))
+        write!(f, "Kernel Loader Error: ")?;
+        match self {
+            #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
+            Error::Bzimage(ref e) => write!(f, "{}", e),
+            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            Error::Elf(ref e) => write!(f, "{}", e),
+            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            Error::Pe(ref e) => write!(f, "{}", e),
+            Error::CommandLineCopy => write!(f, "Failed writing command line to guest memory"),
+            Error::CommandLineOverflow => write!(f, "Command line overflowed guest memory"),
+            Error::InvalidKernelStartAddress => write!(f, "Invalid kernel start address"),
+            Error::MemoryOverflow => write!(f, "Memory to load kernel image is not enough"),
+        }
     }
 }
 

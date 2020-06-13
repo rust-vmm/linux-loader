@@ -31,23 +31,16 @@ pub enum Error {
     ZeroPageSetup,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        use Error::*;
-        match self {
-            ZeroPagePastRamEnd => "The zero page extends past the end of guest memory.",
-            ZeroPageSetup => "Error writing to the zero page of guest memory.",
-        }
-    }
-}
+impl StdError for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Linux Boot Configurator Error: {}",
-            StdError::description(self)
-        )
+        use Error::*;
+        let msg = match self {
+            ZeroPagePastRamEnd => "The zero page extends past the end of guest memory.",
+            ZeroPageSetup => "Error writing to the zero page of guest memory.",
+        };
+        write!(f, "Linux Boot Configurator Error: {}", msg)
     }
 }
 
