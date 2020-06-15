@@ -120,12 +120,12 @@ impl KernelLoader for BzImage {
         // If the `HdrS` magic number is not found at offset 0x202, the boot protocol version is
         // "old", the image type is assumed as zImage, not bzImage.
         if boot_header.header != 0x5372_6448 {
-            Err(Error::InvalidBzImage)?;
+            return Err(Error::InvalidBzImage.into());
         }
 
         // Follow the section related to loading the rest of the kernel in the linux boot protocol.
         if (boot_header.version < 0x0200) || ((boot_header.loadflags & 0x1) == 0x0) {
-            Err(Error::InvalidBzImage)?;
+            return Err(Error::InvalidBzImage.into());
         }
 
         let mut setup_size = boot_header.setup_sects as usize;
