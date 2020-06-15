@@ -91,6 +91,49 @@ impl BootConfigurator for PvhBootConfigurator {
     /// [`hvm_start_info`]: ../loader/elf/start_info/struct.hvm_start_info.html
     /// [`hvm_memmap_table_entry`]: ../loader/elf/start_info/struct.hvm_memmap_table_entry.html
     /// [`hvm_modlist_entry`]: ../loader/elf/start_info/struct.hvm_modlist_entry.html
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate vm_memory;
+    /// # use linux_loader::configurator::{BootConfigurator, BootParams};
+    /// # use linux_loader::configurator::pvh::PvhBootConfigurator;
+    /// # use linux_loader::loader::elf::start_info::{hvm_start_info, hvm_memmap_table_entry};
+    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # const XEN_HVM_START_MAGIC_VALUE: u32 = 0x336ec578;
+    /// # const MEM_SIZE: u64 = 0x100_0000;
+    /// # const E820_RAM: u32 = 1;
+    /// fn create_guest_memory() -> GuestMemoryMmap {
+    ///     GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
+    /// }
+    ///
+    /// fn build_boot_params() -> (hvm_start_info, Vec<hvm_memmap_table_entry>) {
+    ///     let mut start_info = hvm_start_info::default();
+    ///     let memmap_entry = hvm_memmap_table_entry {
+    ///         addr: 0x7000,
+    ///         size: 0,
+    ///         type_: E820_RAM,
+    ///         reserved: 0,
+    ///   };
+    ///   start_info.magic = XEN_HVM_START_MAGIC_VALUE;
+    ///   start_info.version = 1;
+    ///   start_info.nr_modules = 0;
+    ///   start_info.memmap_entries = 0;
+    ///   (start_info, vec![memmap_entry])
+    /// }
+    ///
+    /// fn main() {
+    ///     let guest_mem = create_guest_memory();
+    ///     let (mut start_info, memmap_entries) = build_boot_params();
+    ///     let start_info_addr = GuestAddress(0x6000);
+    ///     let memmap_addr = GuestAddress(0x7000);
+    ///     start_info.memmap_paddr = memmap_addr.raw_value();
+    ///
+    ///     let mut boot_params = BootParams::new::<hvm_start_info>(&start_info, start_info_addr);
+    ///     boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
+    ///     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(boot_params, &guest_mem).unwrap();
+    /// }
+    /// ```
     fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,

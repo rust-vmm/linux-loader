@@ -84,7 +84,9 @@ impl fmt::Display for Error {
     }
 }
 
-/// A specialized `Result` type for the boot configurator.
+/// Specialized [`Result`] type for the boot configurator.
+///
+/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Trait that defines interfaces for building (TBD) and configuring boot parameters.
