@@ -12,8 +12,7 @@
 
 #![cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
@@ -62,9 +61,9 @@ pub enum Error {
     InvalidPvhNote,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
             Error::BigEndianElfOnLittle => {
                 "Trying to load big-endian binary on little-endian machine"
             }
@@ -82,9 +81,13 @@ impl error::Error for Error {
             Error::SeekNoteHeader => "Unable to seek to note header",
             Error::ReadNoteHeader => "Unable to read note header",
             Error::InvalidPvhNote => "Invalid PVH note header",
-        }
+        };
+
+        write!(f, "Kernel Loader: {}", desc)
     }
 }
+
+impl std::error::Error for Error {}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 /// Availability of PVH entry point in the kernel, which allows the VMM
@@ -104,8 +107,8 @@ impl Default for PvhBootCapability {
     }
 }
 
-impl Display for PvhBootCapability {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> fmt::Result {
+impl fmt::Display for PvhBootCapability {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::PvhBootCapability::*;
         match self {
             PvhEntryPresent(pvh_entry_addr) => write!(
@@ -116,12 +119,6 @@ impl Display for PvhBootCapability {
             PvhEntryNotPresent => write!(f, "PVH entry point not present"),
             PvhEntryIgnored => write!(f, "PVH entry point ignored"),
         }
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
     }
 }
 

@@ -19,9 +19,8 @@
 
 extern crate vm_memory;
 
-use std::error::Error as StdError;
 use std::ffi::CStr;
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -71,27 +70,41 @@ pub enum Error {
 /// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type Result<T> = std::result::Result<T, Error>;
 
-impl StdError for Error {
-    fn description(&self) -> &str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Bzimage(ref e) => e.description(),
+            Error::Bzimage(ref _e) => "failed to load bzImage kernel image",
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Elf(ref e) => e.description(),
+            Error::Elf(ref _e) => "failed to load ELF kernel image",
             #[cfg(all(feature = "pe", target_arch = "aarch64"))]
-            Error::Pe(ref e) => e.description(),
+            Error::Pe(ref _e) => "failed to load PE kernel image",
 
-            Error::CommandLineCopy => "Failed writing command line to guest memory",
-            Error::CommandLineOverflow => "Command line overflowed guest memory",
-            Error::InvalidKernelStartAddress => "Invalid kernel start address",
-            Error::MemoryOverflow => "Memory to load kernel image is not enough",
-        }
+            Error::CommandLineCopy => "failed writing command line to guest memory",
+            Error::CommandLineOverflow => "command line overflowed guest memory",
+            Error::InvalidKernelStartAddress => "invalid kernel start address",
+            Error::MemoryOverflow => "memory to load kernel image is not enough",
+        };
+
+        write!(f, "Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", Error::description(self))
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
+            Error::Bzimage(ref e) => Some(e),
+            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            Error::Elf(ref e) => Some(e),
+            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            Error::Pe(ref e) => Some(e),
+
+            Error::CommandLineCopy => None,
+            Error::CommandLineOverflow => None,
+            Error::InvalidKernelStartAddress => None,
+            Error::MemoryOverflow => None,
+        }
     }
 }
 

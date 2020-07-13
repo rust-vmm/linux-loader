@@ -12,8 +12,7 @@
 
 #![cfg(feature = "pe")]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
@@ -53,29 +52,27 @@ pub enum Error {
     InvalidBaseAddrAlignment,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
-            Error::SeekImageEnd => "Unable to seek Image end",
-            Error::SeekImageHeader => "Unable to seek Image header",
-            Error::ReadImageHeader => "Unable to read Image header",
-            Error::ReadDtbImage => "Unable to read DTB image",
-            Error::SeekDtbStart => "Unable to seek DTB start",
-            Error::SeekDtbEnd => "Unable to seek DTB end",
-            Error::InvalidImage => "Invalid Image",
-            Error::InvalidImageMagicNumber => "Invalid Image magic number",
-            Error::DtbTooBig => "Device tree image too big",
-            Error::ReadKernelImage => "Unable to read kernel image",
-            Error::InvalidBaseAddrAlignment => "Base address not aligned to 2 MB",
-        }
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
+            Error::SeekImageEnd => "unable to seek Image end",
+            Error::SeekImageHeader => "unable to seek Image header",
+            Error::ReadImageHeader => "unable to read Image header",
+            Error::ReadDtbImage => "unable to read DTB image",
+            Error::SeekDtbStart => "unable to seek DTB start",
+            Error::SeekDtbEnd => "unable to seek DTB end",
+            Error::InvalidImage => "invalid Image",
+            Error::InvalidImageMagicNumber => "invalid Image magic number",
+            Error::DtbTooBig => "device tree image too big",
+            Error::ReadKernelImage => "unable to read kernel image",
+            Error::InvalidBaseAddrAlignment => "base address not aligned to 2 MB",
+        };
+
+        write!(f, "PE Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "PE Kernel Loader Error: {}", self.description())
-    }
-}
+impl std::error::Error for Error {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]

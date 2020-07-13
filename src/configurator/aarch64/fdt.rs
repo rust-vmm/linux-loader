@@ -6,7 +6,6 @@
 
 use vm_memory::{Bytes, GuestMemory};
 
-use std::error::Error as StdError;
 use std::fmt;
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
@@ -20,25 +19,19 @@ pub enum Error {
     WriteFDTToMemory,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
-        match self {
+        let desc = match self {
             FDTPastRamEnd => "FDT does not fit in guest memory.",
-            WriteFDTToMemory => "Error writing FDT in guest memory.",
-        }
+            WriteFDTToMemory => "error writing FDT in guest memory.",
+        };
+
+        write!(f, "Device Tree Boot Configurator: {}", desc)
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Device Tree Boot Configurator Error: {}",
-            StdError::description(self)
-        )
-    }
-}
+impl std::error::Error for Error {}
 
 impl From<Error> for BootConfiguratorError {
     fn from(err: Error) -> Self {
@@ -142,11 +135,11 @@ mod tests {
     fn test_error_messages() {
         assert_eq!(
             format!("{}", Error::FDTPastRamEnd),
-            "Device Tree Boot Configurator Error: FDT does not fit in guest memory."
+            "Device Tree Boot Configurator: FDT does not fit in guest memory."
         );
         assert_eq!(
             format!("{}", Error::WriteFDTToMemory),
-            "Device Tree Boot Configurator Error: Error writing FDT in guest memory."
+            "Device Tree Boot Configurator: error writing FDT in guest memory."
         );
     }
 }
