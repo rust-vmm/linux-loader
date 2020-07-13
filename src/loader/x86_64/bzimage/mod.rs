@@ -11,8 +11,7 @@
 
 #![cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
@@ -39,24 +38,22 @@ pub enum Error {
     SeekBzImageCompressedKernel,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
             Error::InvalidBzImage => "Invalid bzImage",
             Error::ReadBzImageHeader => "Unable to read bzImage header",
             Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
-        }
+        };
+
+        write!(f, "Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
-    }
-}
+impl std::error::Error for Error {}
 
 /// Big zImage (bzImage) kernel image support.
 pub struct BzImage;

@@ -16,7 +16,6 @@ use vm_memory::{Bytes, GuestMemory};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
-use std::error::Error as StdError;
 use std::fmt;
 
 /// Boot configurator for the Linux boot protocol.
@@ -31,25 +30,19 @@ pub enum Error {
     ZeroPageSetup,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
-        match self {
-            ZeroPagePastRamEnd => "The zero page extends past the end of guest memory.",
-            ZeroPageSetup => "Error writing to the zero page of guest memory.",
-        }
+        let desc = match self {
+            ZeroPagePastRamEnd => "the zero page extends past the end of guest memory.",
+            ZeroPageSetup => "error writing to the zero page of guest memory.",
+        };
+
+        write!(f, "Linux Boot Configurator: {}", desc,)
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Linux Boot Configurator Error: {}",
-            StdError::description(self)
-        )
-    }
-}
+impl std::error::Error for Error {}
 
 impl From<Error> for BootConfiguratorError {
     fn from(err: Error) -> Self {
@@ -183,11 +176,11 @@ mod tests {
     fn test_error_messages() {
         assert_eq!(
             format!("{}", Error::ZeroPagePastRamEnd),
-            "Linux Boot Configurator Error: The zero page extends past the end of guest memory."
+            "Linux Boot Configurator: the zero page extends past the end of guest memory."
         );
         assert_eq!(
             format!("{}", Error::ZeroPageSetup),
-            "Linux Boot Configurator Error: Error writing to the zero page of guest memory."
+            "Linux Boot Configurator: error writing to the zero page of guest memory."
         );
     }
 }

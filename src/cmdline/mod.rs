@@ -39,6 +39,8 @@ impl fmt::Display for Error {
     }
 }
 
+impl std::error::Error for Error {}
+
 /// Specialized [`Result`] type for command line operations.
 ///
 /// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
