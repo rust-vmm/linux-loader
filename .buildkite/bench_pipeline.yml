@@ -1,0 +1,26 @@
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+steps:
+  - label: "bench-x86_64"
+    commands:
+      - pytest rust-vmm-ci/integration_tests/test_benchmark.py -s
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          image: "rustvmm/dev:v5_bench"
+          always-pull: true
+
+  - label: "bench-aarch64"
+    commands:
+      - pytest rust-vmm-ci/integration_tests/test_benchmark.py -s
+    retry:
+      automatic: false
+    agents:
+      platform: arm.metal
+    plugins:
+      - docker#v3.0.1:
+          image: "rustvmm/dev:v5_bench"
+          always-pull: true
