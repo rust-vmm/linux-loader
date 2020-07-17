@@ -1,0 +1,14 @@
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+steps:
+  - label: "nop"
+    commands:
+     - true
+    retry:
+      automatic: false
+    agents:
+      platform: x86_64.metal
+    plugins:
+      - docker#v3.0.1:
+          image: "rustvmm/dev:v5"
+          always-pull: true
