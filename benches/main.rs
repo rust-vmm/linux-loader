@@ -4,6 +4,7 @@
 // found in the LICENSE-BSD-3-Clause file.
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
+
 extern crate criterion;
 extern crate linux_loader;
 extern crate vm_memory;
@@ -20,12 +21,35 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 use aarch64::*;
 
+pub fn criterion_benchmark_nop(_: &mut Criterion) {}
+
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(500);
     targets = criterion_benchmark
 }
 
+#[cfg(feature = "bzimage")]
+criterion_group! {
+    name = benches_bzimage;
+    // Only ~125 runs fit in 5 seconds. Either extend the duration, or reduce
+    // the number of iterations.
+    config = Criterion::default().sample_size(100);
+    targets = criterion_benchmark_bzimage
+}
+
+// NOP because the `criterion_main!` macro doesn't support cfg(feature)
+// macro expansions.
+#[cfg(not(feature = "bzimage"))]
+criterion_group! {
+    name = benches_bzimage;
+    // Sample size must be >= 10.
+    // https://github.com/bheisler/criterion.rs/blob/0.3.0/src/lib.rs#L757
+    config = Criterion::default().sample_size(10);
+    targets = criterion_benchmark_nop
+}
+
 criterion_main! {
-    benches
+    benches,
+    benches_bzimage
 }
