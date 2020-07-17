@@ -12,6 +12,8 @@ extern crate vm_memory;
 
 use linux_loader::configurator::pvh::PvhBootConfigurator;
 use linux_loader::configurator::{BootConfigurator, BootParams};
+#[cfg(feature = "bzimage")]
+use linux_loader::loader::bzimage::BzImage;
 use linux_loader::loader::elf::start_info::{hvm_memmap_table_entry, hvm_start_info};
 use linux_loader::loader::elf::Elf;
 use linux_loader::loader::KernelLoader;
@@ -65,6 +67,15 @@ fn build_pvh_boot_params() -> BootParams {
     boot_params
 }
 
+#[cfg(feature = "bzimage")]
+fn create_bzimage() -> Vec<u8> {
+    include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/loader/x86_64/bzimage/bzimage"
+    ))
+    .to_vec()
+}
+
 pub fn criterion_benchmark(c: &mut Criterion) {
     let guest_mem = create_guest_memory();
 
@@ -88,6 +99,24 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             black_box(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
                 pvh_boot_params.clone(),
                 &guest_mem,
+            ))
+            .unwrap();
+        })
+    });
+}
+
+#[cfg(feature = "bzimage")]
+pub fn criterion_benchmark_bzimage(c: &mut Criterion) {
+    let guest_mem = create_guest_memory();
+    let bzimage = create_bzimage();
+
+    c.bench_function("load_bzimage", |b| {
+        b.iter(|| {
+            black_box(BzImage::load(
+                &guest_mem,
+                None,
+                &mut Cursor::new(&bzimage),
+                None,
             ))
             .unwrap();
         })
