@@ -1,12 +1,12 @@
 #!/bin/bash
 
-DEB_NAME="linux-image-4.9.0-12-amd64_4.9.210-1_amd64.deb"
-DEB_URL="http://ftp.debian.org/debian/pool/main/l/linux/${DEB_NAME}"
+DEB_NAME="kernel-image-4.9.0-13-amd64-di_4.9.228-1_amd64.udeb"
+DEB_URL="http://ftp.us.debian.org/debian/pool/main/l/linux/${DEB_NAME}"
 
 REPO_PATH="${BUILDKITE_BUILD_CHECKOUT_PATH}"
 DEB_PATH="${REPO_PATH}/${DEB_NAME}"
 EXTRACT_PATH="${REPO_PATH}/src/bzimage-archive"
-BZIMAGE_PATH="${EXTRACT_PATH}/boot/vmlinuz-4.9.0-12-amd64"
+BZIMAGE_PATH="${EXTRACT_PATH}/boot/vmlinuz"
 
 mkdir -p ${EXTRACT_PATH}
 
