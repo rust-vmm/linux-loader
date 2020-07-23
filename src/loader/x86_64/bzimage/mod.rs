@@ -210,7 +210,7 @@ mod tests {
         assert_eq!(loader_result.setup_header.unwrap().header, 0x53726448);
         assert_eq!(loader_result.setup_header.unwrap().version, 0x20d);
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
-        assert_eq!(loader_result.kernel_end, 0x60c320);
+        assert_eq!(loader_result.kernel_end, 0x60D320);
 
         // load bzImage without kernel_offset
         loader_result = BzImage::load(
