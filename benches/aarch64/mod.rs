@@ -38,7 +38,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("configure_fdt", |b| {
         b.iter(|| {
             black_box(FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                fdt_boot_params.clone(),
+                &fdt_boot_params,
                 &guest_mem,
             ))
             .unwrap();

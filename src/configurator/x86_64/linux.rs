@@ -90,14 +90,14 @@ impl BootConfigurator for LinuxBootConfigurator {
     ///     let params = build_bootparams();
     ///     let mut bootparams = BootParams::new::<boot_params>(&params, zero_page_addr);
     ///     LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-    ///         bootparams,
+    ///         &bootparams,
     ///         &guest_memory,
     ///     ).unwrap();
     /// }
     /// ```
     ///
     /// [`boot_params`]: ../loader/bootparam/struct.boot_params.html
-    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
+    fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,
     {
@@ -155,18 +155,15 @@ mod tests {
         );
         let mut bootparams = BootParams::new::<boot_params>(&params, bad_zeropg_addr);
         assert_eq!(
-            LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                bootparams.clone(),
-                &guest_memory,
-            )
-            .err(),
+            LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(&bootparams, &guest_memory,)
+                .err(),
             Some(Error::ZeroPagePastRamEnd.into()),
         );
 
         // Success case.
         bootparams.header_start = zero_page_addr;
         assert!(LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-            bootparams,
+            &bootparams,
             &guest_memory,
         )
         .is_ok());

@@ -120,7 +120,7 @@ pub trait BootConfigurator {
     ///              sections and modules, and their associated addresses in guest memory. These
     ///              vary with the boot protocol used.
     /// * `guest_memory` - guest's physical memory.
-    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
+    fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory;
 }
