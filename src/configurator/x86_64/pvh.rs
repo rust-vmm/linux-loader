@@ -124,10 +124,10 @@ impl BootConfigurator for PvhBootConfigurator {
     ///
     ///     let mut boot_params = BootParams::new::<hvm_start_info>(&start_info, start_info_addr);
     ///     boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
-    ///     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(boot_params, &guest_mem).unwrap();
+    ///     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_mem).unwrap();
     /// }
     /// ```
-    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
+    fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,
     {
@@ -135,7 +135,7 @@ impl BootConfigurator for PvhBootConfigurator {
         // and has passed them on to this function.
         // The `hvm_start_info` will be written at `addr` and the memmap entries at
         // `start_info.0.memmap_paddr`.
-        let memmap = params.sections.ok_or(Error::MemmapTableMissing)?;
+        let memmap = params.sections.as_ref().ok_or(Error::MemmapTableMissing)?;
         let memmap_addr = params
             .sections_start
             .ok_or(Error::MemmapTableAddressMissing)?;
@@ -202,11 +202,8 @@ mod tests {
 
         // Error case: configure without memory map.
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::MemmapTableMissing.into())
         );
 
@@ -217,11 +214,8 @@ mod tests {
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
         boot_params.header_start = bad_start_info_addr;
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::StartInfoPastRamEnd.into())
         );
 
@@ -235,17 +229,14 @@ mod tests {
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, bad_memmap_addr);
 
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::MemmapTablePastRamEnd.into())
         );
 
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
         assert!(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-            boot_params,
+            &boot_params,
             &guest_memory,
         )
         .is_ok());

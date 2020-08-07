@@ -71,12 +71,12 @@ impl BootConfigurator for FdtBootConfigurator {
     /// let guest_memory = create_guest_memory();
     /// let (fdt, fdt_addr) = create_fdt(&guest_memory);
     /// FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-    ///     BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+    ///     &BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
     ///     &guest_memory,
     /// ).unwrap();
     /// # }
     /// ```
-    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
+    fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,
     {
@@ -116,7 +116,7 @@ mod tests {
         let fdt_addr = GuestAddress(guest_memory.last_addr().raw_value() - FDT_MAX_SIZE as u64 + 1);
         assert_eq!(
             FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+                &BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
                 &guest_memory,
             )
             .err(),
@@ -125,7 +125,7 @@ mod tests {
 
         let fdt_addr = GuestAddress(guest_memory.last_addr().raw_value() - FDT_MAX_SIZE as u64);
         assert!(FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-            BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
+            &BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
             &guest_memory,
         )
         .is_ok());

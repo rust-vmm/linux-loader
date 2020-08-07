@@ -97,7 +97,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("configure_pvh", |b| {
         b.iter(|| {
             black_box(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                pvh_boot_params.clone(),
+                &pvh_boot_params,
                 &guest_mem,
             ))
             .unwrap();
