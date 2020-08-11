@@ -1,9 +1,9 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 steps:
-  - label: "build-gnu-x86-bzimage"
+  - label: "bench-x86_64"
     commands:
-     - cargo build --release --features bzimage
+      - pytest rust-vmm-ci/integration_tests/test_benchmark.py -s
     retry:
       automatic: false
     agents:
@@ -12,15 +12,17 @@ steps:
       - docker#v3.0.1:
           image: "rustvmm/dev:v6"
           always-pull: true
+          propagate-environment: true
 
-  - label: "build-musl-x86-bzimage"
+  - label: "bench-aarch64"
     commands:
-     - cargo build --release --features bzimage --target x86_64-unknown-linux-musl
+      - pytest rust-vmm-ci/integration_tests/test_benchmark.py -s
     retry:
       automatic: false
     agents:
-      platform: x86_64.metal
+      platform: arm.metal
     plugins:
       - docker#v3.0.1:
           image: "rustvmm/dev:v6"
           always-pull: true
+          propagate-environment: true

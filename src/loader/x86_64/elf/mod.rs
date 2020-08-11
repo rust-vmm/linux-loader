@@ -1,3 +1,4 @@
+// Copyright © 2020, Oracle and/or its affiliates.
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -11,25 +12,15 @@
 
 #![cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
 use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
-use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
-
-#[allow(dead_code)]
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-#[allow(non_upper_case_globals)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
-mod elf;
-
-#[allow(missing_docs)]
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::all))]
-pub mod start_info;
+use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
+use crate::loader_gen::elf;
+pub use crate::loader_gen::start_info;
 
 unsafe impl ByteValued for elf::Elf64_Ehdr {}
 unsafe impl ByteValued for elf::Elf64_Nhdr {}
@@ -70,9 +61,9 @@ pub enum Error {
     InvalidPvhNote,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
             Error::BigEndianElfOnLittle => {
                 "Trying to load big-endian binary on little-endian machine"
             }
@@ -90,13 +81,44 @@ impl error::Error for Error {
             Error::SeekNoteHeader => "Unable to seek to note header",
             Error::ReadNoteHeader => "Unable to read note header",
             Error::InvalidPvhNote => "Invalid PVH note header",
-        }
+        };
+
+        write!(f, "Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
+impl std::error::Error for Error {}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+/// Availability of PVH entry point in the kernel, which allows the VMM
+/// to use the PVH boot protocol to start guests.
+pub enum PvhBootCapability {
+    /// PVH entry point is present
+    PvhEntryPresent(GuestAddress),
+    /// PVH entry point is not present
+    PvhEntryNotPresent,
+    /// PVH entry point is ignored, even if available
+    PvhEntryIgnored,
+}
+
+impl Default for PvhBootCapability {
+    fn default() -> Self {
+        PvhBootCapability::PvhEntryIgnored
+    }
+}
+
+impl fmt::Display for PvhBootCapability {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
+        use self::PvhBootCapability::*;
+        match self {
+            PvhEntryPresent(pvh_entry_addr) => write!(
+                f,
+                "PVH entry point present at guest address: {:#x}",
+                pvh_entry_addr.raw_value()
+            ),
+            PvhEntryNotPresent => write!(f, "PVH entry point not present"),
+            PvhEntryIgnored => write!(f, "PVH entry point ignored"),
+        }
     }
 }
 
@@ -130,12 +152,15 @@ impl Elf {
 impl KernelLoader for Elf {
     /// Loads a kernel from a vmlinux elf image into guest memory.
     ///
-    /// The kernel is loaded into guest memory at offset `phdr.p_paddr` specified by the elf image.
+    /// By default, the kernel is loaded into guest memory at offset `phdr.p_paddr` specified
+    /// by the elf image. When used, `kernel_offset` specifies a fixed offset from `phdr.p_paddr`
+    /// at which to load the kernel. If `kernel_offset` is requested, the `pvh_entry_addr` field
+    /// of the result will not be populated.
     ///
     /// # Arguments
     ///
     /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
-    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_offset`: Offset to be added to default kernel load address in guest memory.
     /// * `kernel_image` - Input vmlinux image.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
@@ -163,7 +188,7 @@ impl KernelLoader for Elf {
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -190,8 +215,8 @@ impl KernelLoader for Elf {
         let mut loader_result: KernelLoaderResult = Default::default();
 
         // Address where the kernel will be loaded.
-        loader_result.kernel_load = match kernel_start {
-            Some(start) => GuestAddress(start.raw_value() + (ehdr.e_entry as u64)),
+        loader_result.kernel_load = match kernel_offset {
+            Some(k_offset) => GuestAddress(k_offset.raw_value() + (ehdr.e_entry as u64)),
             None => GuestAddress(ehdr.e_entry as u64),
         };
 
@@ -213,8 +238,17 @@ impl KernelLoader for Elf {
         for phdr in phdrs {
             if phdr.p_type != elf::PT_LOAD || phdr.p_filesz == 0 {
                 if phdr.p_type == elf::PT_NOTE {
-                    // This segment describes a Note, check if PVH entry point is encoded.
-                    loader_result.pvh_entry_addr = parse_elf_note(&phdr, kernel_image)?;
+                    // The PVH boot protocol currently requires that the kernel is loaded at
+                    // the default kernel load address in guest memory (specified at kernel
+                    // build time by the value of CONFIG_PHYSICAL_START). Therefore, only
+                    // attempt to use PVH if an offset from the default load address has not
+                    // been requested using the kernel_offset parameter.
+                    if let Some(_offset) = kernel_offset {
+                        loader_result.pvh_boot_cap = PvhBootCapability::PvhEntryIgnored;
+                    } else {
+                        // If kernel_offset is not requested, check if PVH entry point is present
+                        loader_result.pvh_boot_cap = parse_elf_note(&phdr, kernel_image)?;
+                    }
                 }
                 continue;
             }
@@ -225,8 +259,8 @@ impl KernelLoader for Elf {
 
             // if the vmm does not specify where the kernel should be loaded, just
             // load it to the physical address p_paddr for each segment.
-            let mem_offset = match kernel_start {
-                Some(start) => start
+            let mem_offset = match kernel_offset {
+                Some(k_offset) => k_offset
                     .checked_add(phdr.p_paddr as u64)
                     .ok_or(Error::InvalidProgramHeaderAddress)?,
                 None => GuestAddress(phdr.p_paddr as u64),
@@ -257,9 +291,9 @@ const PVH_NOTE_STR_SZ: usize = 4;
 /// of type `XEN_ELFNOTE_PHYS32_ENTRY` (0x12). Notes of this type encode a physical 32-bit entry
 /// point address into the kernel, which is used when launching guests in 32-bit (protected) mode
 /// with paging disabled, as described by the PVH boot protocol.
-/// Returns the encoded entry point address, or `None` if no `XEN_ELFNOTE_PHYS32_ENTRY` entries are
-/// found in the note header.
-fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<Option<GuestAddress>>
+/// Returns the encoded entry point address, or `None` if no `XEN_ELFNOTE_PHYS32_ENTRY` entries
+/// are found in the note header.
+fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<PvhBootCapability>
 where
     F: Read + Seek,
 {
@@ -308,7 +342,7 @@ where
 
     if read_size >= phdr.p_filesz as usize {
         // PVH ELF note not found, nothing else to do.
-        return Ok(None);
+        return Ok(PvhBootCapability::PvhEntryNotPresent);
     }
 
     // Otherwise the correct note type was found.
@@ -333,7 +367,7 @@ where
         .read_exact(&mut pvh_addr_bytes)
         .map_err(|_| Error::ReadNoteHeader)?;
 
-    Ok(Some(GuestAddress(
+    Ok(PvhBootCapability::PvhEntryPresent(GuestAddress(
         u32::from_le_bytes(pvh_addr_bytes).into(),
     )))
 }
@@ -466,7 +500,23 @@ mod tests {
         let gm = create_guest_mem();
         let pvhnote_image = make_elfnote();
         let loader_result = Elf::load(&gm, None, &mut Cursor::new(&pvhnote_image), None).unwrap();
-        assert_eq!(loader_result.pvh_entry_addr.unwrap().raw_value(), 0x1e1fe1f);
+        assert_eq!(
+            loader_result.pvh_boot_cap,
+            PvhBootCapability::PvhEntryPresent(GuestAddress(0x1e1fe1f))
+        );
+
+        // Verify that PVH is ignored when kernel_start is requested
+        let loader_result = Elf::load(
+            &gm,
+            Some(GuestAddress(0x0020_0000)),
+            &mut Cursor::new(&pvhnote_image),
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            loader_result.pvh_boot_cap,
+            PvhBootCapability::PvhEntryIgnored
+        );
     }
 
     #[test]
@@ -474,7 +524,10 @@ mod tests {
         let gm = create_guest_mem();
         let dummynote_image = make_dummy_elfnote();
         let loader_result = Elf::load(&gm, None, &mut Cursor::new(&dummynote_image), None).unwrap();
-        assert!(loader_result.pvh_entry_addr.is_none());
+        assert_eq!(
+            loader_result.pvh_boot_cap,
+            PvhBootCapability::PvhEntryNotPresent
+        );
     }
 
     #[test]

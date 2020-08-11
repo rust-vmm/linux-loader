@@ -1,3 +1,4 @@
+// Copyright © 2020, Oracle and/or its affiliates.
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -11,8 +12,7 @@
 
 #![cfg(feature = "pe")]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
@@ -48,30 +48,31 @@ pub enum Error {
     InvalidImage,
     /// Invalid Image magic number.
     InvalidImageMagicNumber,
+    /// Invalid base address alignment
+    InvalidBaseAddrAlignment,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
-            Error::SeekImageEnd => "Unable to seek Image end",
-            Error::SeekImageHeader => "Unable to seek Image header",
-            Error::ReadImageHeader => "Unable to read Image header",
-            Error::ReadDtbImage => "Unable to read DTB image",
-            Error::SeekDtbStart => "Unable to seek DTB start",
-            Error::SeekDtbEnd => "Unable to seek DTB end",
-            Error::InvalidImage => "Invalid Image",
-            Error::InvalidImageMagicNumber => "Invalid Image magic number",
-            Error::DtbTooBig => "Device tree image too big",
-            Error::ReadKernelImage => "Unable to read kernel image",
-        }
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
+            Error::SeekImageEnd => "unable to seek Image end",
+            Error::SeekImageHeader => "unable to seek Image header",
+            Error::ReadImageHeader => "unable to read Image header",
+            Error::ReadDtbImage => "unable to read DTB image",
+            Error::SeekDtbStart => "unable to seek DTB start",
+            Error::SeekDtbEnd => "unable to seek DTB end",
+            Error::InvalidImage => "invalid Image",
+            Error::InvalidImageMagicNumber => "invalid Image magic number",
+            Error::DtbTooBig => "device tree image too big",
+            Error::ReadKernelImage => "unable to read kernel image",
+            Error::InvalidBaseAddrAlignment => "base address not aligned to 2 MB",
+        };
+
+        write!(f, "PE Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "PE Kernel Loader Error: {}", self.description())
-    }
-}
+impl std::error::Error for Error {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
@@ -96,7 +97,7 @@ impl KernelLoader for PE {
     /// # Arguments
     ///
     /// * `guest_mem` - The guest memory where the kernel image is loaded.
-    /// * `kernel_start` - The offset into 'guest_mem' at which to load the kernel.
+    /// * `kernel_offset` - 2MB-aligned base addres in guest memory at which to load the kernel.
     /// * `kernel_image` - Input Image format kernel image.
     /// * `highmem_start_address` - ignored on ARM64.
     ///
@@ -104,7 +105,7 @@ impl KernelLoader for PE {
     /// * KernelLoaderResult
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         _highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -135,7 +136,15 @@ impl KernelLoader for PE {
             text_offset = 0x80000;
         }
 
-        let mem_offset = kernel_start
+        // Validate that kernel_offset is 2 MB aligned, as required by the
+        // arm64 boot protocol
+        if let Some(kernel_offset) = kernel_offset {
+            if kernel_offset.raw_value() % 0x0020_0000 != 0 {
+                return Err(Error::InvalidBaseAddrAlignment.into());
+            }
+        }
+
+        let mem_offset = kernel_offset
             .unwrap_or(GuestAddress(0))
             .checked_add(text_offset)
             .ok_or(Error::InvalidImage)?;
@@ -217,6 +226,14 @@ mod tests {
             PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
         assert_eq!(loader_result.kernel_load.raw_value(), 0x280000);
         assert_eq!(loader_result.kernel_end, 0x281000);
+
+        // Attempt to load the kernel at an address that is not aligned to 2MB boundary
+        let kernel_offset = GuestAddress(0x0030_0000);
+        let loader_result = PE::load(&gm, Some(kernel_offset), &mut Cursor::new(&image), None);
+        assert_eq!(
+            loader_result,
+            Err(KernelLoaderError::Pe(Error::InvalidBaseAddrAlignment))
+        );
 
         image[0x39] = 0x0;
         let loader_result = PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None);

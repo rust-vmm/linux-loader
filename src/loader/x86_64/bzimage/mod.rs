@@ -11,8 +11,7 @@
 
 #![cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
 
-use std::error::{self, Error as StdError};
-use std::fmt::{self, Display};
+use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
@@ -39,24 +38,22 @@ pub enum Error {
     SeekBzImageCompressedKernel,
 }
 
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let desc = match self {
             Error::InvalidBzImage => "Invalid bzImage",
             Error::ReadBzImageHeader => "Unable to read bzImage header",
             Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
-        }
+        };
+
+        write!(f, "Kernel Loader: {}", desc)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kernel Loader Error: {}", self.description())
-    }
-}
+impl std::error::Error for Error {}
 
 /// Big zImage (bzImage) kernel image support.
 pub struct BzImage;
@@ -70,7 +67,7 @@ impl KernelLoader for BzImage {
     /// # Arguments
     ///
     /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
-    /// * `kernel_start`: Address in guest memory where the kernel is loaded.
+    /// * `kernel_offset`: Address in guest memory where the kernel is loaded.
     /// * `kernel_image` - Input bzImage image.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
@@ -98,7 +95,7 @@ impl KernelLoader for BzImage {
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
     fn load<F, M: GuestMemory>(
         guest_mem: &M,
-        kernel_start: Option<GuestAddress>,
+        kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
@@ -144,7 +141,7 @@ impl KernelLoader for BzImage {
             return Err(KernelLoaderError::InvalidKernelStartAddress);
         }
 
-        let mem_offset = match kernel_start {
+        let mem_offset = match kernel_offset {
             Some(start) => start,
             None => GuestAddress(u64::from(boot_header.code32_start)),
         };
@@ -197,13 +194,13 @@ mod tests {
     fn test_load_bzImage() {
         let gm = create_guest_mem();
         let image = make_bzimage();
-        let mut kernel_start = GuestAddress(0x200000);
+        let mut kernel_offset = GuestAddress(0x200000);
         let mut highmem_start_address = GuestAddress(0x0);
 
-        // load bzImage with good kernel_start and himem_start setting
+        // load bzImage with good kernel_offset and himem_start setting
         let mut loader_result = BzImage::load(
             &gm,
-            Some(kernel_start),
+            Some(kernel_offset),
             &mut Cursor::new(&image),
             Some(highmem_start_address),
         )
@@ -213,9 +210,9 @@ mod tests {
         assert_eq!(loader_result.setup_header.unwrap().header, 0x53726448);
         assert_eq!(loader_result.setup_header.unwrap().version, 0x20d);
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
-        assert_eq!(loader_result.kernel_end, 0x60c320);
+        assert_eq!(loader_result.kernel_end, 0x60D320);
 
-        // load bzImage without kernel_start
+        // load bzImage without kernel_offset
         loader_result = BzImage::load(
             &gm,
             None,
@@ -231,14 +228,14 @@ mod tests {
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
         // load bzImage with a bad himem setting
-        kernel_start = GuestAddress(0x1000);
+        kernel_offset = GuestAddress(0x1000);
         highmem_start_address = GuestAddress(0x200000);
 
         assert_eq!(
             Some(KernelLoaderError::InvalidKernelStartAddress),
             BzImage::load(
                 &gm,
-                Some(kernel_start),
+                Some(kernel_offset),
                 &mut Cursor::new(&image),
                 Some(highmem_start_address),
             )

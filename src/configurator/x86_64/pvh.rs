@@ -15,9 +15,8 @@
 use vm_memory::{ByteValued, Bytes, GuestMemory};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
-use crate::loader::elf::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, hvm_start_info};
+use crate::loader_gen::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, hvm_start_info};
 
-use std::error::Error as StdError;
 use std::fmt;
 
 /// Boot configurator for the PVH boot protocol.
@@ -40,33 +39,27 @@ pub enum Error {
     StartInfoSetup,
 }
 
-impl StdError for Error {
-    fn description(&self) -> &str {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
-        match self {
+        let desc = match self {
             MemmapTableAddressMissing => {
-                "The starting address for the memory map wasn't passed to the boot configurator."
+                "the starting address for the memory map wasn't passed to the boot configurator."
             }
-            MemmapTableMissing => "No memory map was passed to the boot configurator.",
-            MemmapTablePastRamEnd => "The memory map table extends past the end of guest memory.",
-            MemmapTableSetup => "Error writing memory map table to guest memory.",
+            MemmapTableMissing => "no memory map was passed to the boot configurator.",
+            MemmapTablePastRamEnd => "the memory map table extends past the end of guest memory.",
+            MemmapTableSetup => "error writing memory map table to guest memory.",
             StartInfoPastRamEnd => {
-                "The hvm_start_info structure extends past the end of guest memory."
+                "the hvm_start_info structure extends past the end of guest memory."
             }
-            StartInfoSetup => "Error writing hvm_start_info to guest memory.",
-        }
+            StartInfoSetup => "error writing hvm_start_info to guest memory.",
+        };
+
+        write!(f, "PVH Boot Configurator: {}", desc)
     }
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "PVH Boot Configurator Error: {}",
-            StdError::description(self)
-        )
-    }
-}
+impl std::error::Error for Error {}
 
 impl From<Error> for BootConfiguratorError {
     fn from(err: Error) -> Self {
@@ -131,10 +124,10 @@ impl BootConfigurator for PvhBootConfigurator {
     ///
     ///     let mut boot_params = BootParams::new::<hvm_start_info>(&start_info, start_info_addr);
     ///     boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
-    ///     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(boot_params, &guest_mem).unwrap();
+    ///     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_mem).unwrap();
     /// }
     /// ```
-    fn write_bootparams<M>(params: BootParams, guest_memory: &M) -> Result<()>
+    fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
         M: GuestMemory,
     {
@@ -142,7 +135,7 @@ impl BootConfigurator for PvhBootConfigurator {
         // and has passed them on to this function.
         // The `hvm_start_info` will be written at `addr` and the memmap entries at
         // `start_info.0.memmap_paddr`.
-        let memmap = params.sections.ok_or(Error::MemmapTableMissing)?;
+        let memmap = params.sections.as_ref().ok_or(Error::MemmapTableMissing)?;
         let memmap_addr = params
             .sections_start
             .ok_or(Error::MemmapTableAddressMissing)?;
@@ -209,11 +202,8 @@ mod tests {
 
         // Error case: configure without memory map.
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::MemmapTableMissing.into())
         );
 
@@ -224,11 +214,8 @@ mod tests {
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
         boot_params.header_start = bad_start_info_addr;
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::StartInfoPastRamEnd.into())
         );
 
@@ -242,17 +229,14 @@ mod tests {
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, bad_memmap_addr);
 
         assert_eq!(
-            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-                boot_params.clone(),
-                &guest_memory,
-            )
-            .err(),
+            PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_memory,)
+                .err(),
             Some(Error::MemmapTablePastRamEnd.into())
         );
 
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
         assert!(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-            boot_params,
+            &boot_params,
             &guest_memory,
         )
         .is_ok());
@@ -262,17 +246,20 @@ mod tests {
     fn test_error_messages() {
         assert_eq!(
             format!("{}", Error::MemmapTableMissing),
-            "PVH Boot Configurator Error: No memory map was passed to the boot configurator."
+            "PVH Boot Configurator: no memory map was passed to the boot configurator."
         );
-        assert_eq!(format!("{}", Error::MemmapTablePastRamEnd), "PVH Boot Configurator Error: The memory map table extends past the end of guest memory.");
+        assert_eq!(
+            format!("{}", Error::MemmapTablePastRamEnd),
+            "PVH Boot Configurator: the memory map table extends past the end of guest memory."
+        );
         assert_eq!(
             format!("{}", Error::MemmapTableSetup),
-            "PVH Boot Configurator Error: Error writing memory map table to guest memory."
+            "PVH Boot Configurator: error writing memory map table to guest memory."
         );
-        assert_eq!(format!("{}", Error::StartInfoPastRamEnd), "PVH Boot Configurator Error: The hvm_start_info structure extends past the end of guest memory.");
+        assert_eq!(format!("{}", Error::StartInfoPastRamEnd), "PVH Boot Configurator: the hvm_start_info structure extends past the end of guest memory.");
         assert_eq!(
             format!("{}", Error::StartInfoSetup),
-            "PVH Boot Configurator Error: Error writing hvm_start_info to guest memory."
+            "PVH Boot Configurator: error writing hvm_start_info to guest memory."
         );
     }
 }

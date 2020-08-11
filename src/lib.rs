@@ -93,4 +93,9 @@ pub mod cmdline;
 pub mod configurator;
 pub mod loader;
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+mod loader_gen;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use loader_gen::*;
+
 extern crate vm_memory;
