@@ -12,6 +12,8 @@ steps:
       - docker#v3.0.1:
           image: "rustvmm/dev:v6"
           always-pull: true
+          environment:
+            - "PYTHONIOENCODING=utf-8"
           propagate-environment: true
 
   - label: "bench-aarch64"
@@ -25,4 +27,6 @@ steps:
       - docker#v3.0.1:
           image: "rustvmm/dev:v6"
           always-pull: true
+          environment:
+            - "PYTHONIOENCODING=utf-8"
           propagate-environment: true
