@@ -5,7 +5,7 @@ The boot process is explained from the following two sides.
 ## Loader side
 
 It follows ELF standard which is specified in elf.rs.
-The entry header and program headers will be inerpreted, and PT_LOAD segments
+The entry header and program headers will be interpreted, and PT_LOAD segments
 will be loaded into guest memory.
 
 ### Where kernel is loaded
