@@ -11,31 +11,42 @@
 use std::fmt;
 use std::result;
 
+use vm_memory::{Address, GuestAddress, GuestUsize};
+
 /// The error type for command line building operations.
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// Operation would have resulted in a non-printable ASCII character.
     InvalidAscii,
+    /// Invalid device passed to the kernel command line builder.
+    InvalidDevice(String),
     /// Key/Value Operation would have had a space in it.
     HasSpace,
     /// Key/Value Operation would have had an equals sign in it.
     HasEquals,
+    /// 0-sized virtio MMIO device passed to the kernel command line builder.
+    MmioSize,
     /// Operation would have made the command line too large.
     TooLarge,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match *self {
-                Error::InvalidAscii => "String contains a non-printable ASCII character.",
-                Error::HasSpace => "String contains a space.",
-                Error::HasEquals => "String contains an equals sign.",
-                Error::TooLarge => "Inserting string would make command line too long.",
-            }
-        )
+        match *self {
+            Error::InvalidAscii => write!(f, "String contains a non-printable ASCII character."),
+            Error::InvalidDevice(ref dev) => write!(
+                f,
+                "Invalid device passed to the kernel command line builder: {}.",
+                dev
+            ),
+            Error::HasSpace => write!(f, "String contains a space."),
+            Error::HasEquals => write!(f, "String contains an equals sign."),
+            Error::MmioSize => write!(
+                f,
+                "0-sized virtio MMIO device passed to the kernel command line builder."
+            ),
+            Error::TooLarge => write!(f, "Inserting string would make command line too long."),
+        }
     }
 }
 
@@ -209,6 +220,75 @@ impl Cmdline {
     pub fn as_str(&self) -> &str {
         self.line.as_str()
     }
+
+    /// Adds a virtio MMIO device to the kernel command line.
+    ///
+    /// Multiple devices can be specified, with multiple `virtio_mmio.device=` options. This
+    /// function must be called once per device.
+    /// The function appends a string of the following format to the kernel command line:
+    /// `<size>@<baseaddr>:<irq>[:<id>]`.
+    /// For more details see the [documentation] (section `virtio_mmio.device=`).
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - size of the slot the device occupies on the MMIO bus.
+    /// * `baseaddr` - physical base address of the device.
+    /// * `irq` - interrupt number to be used by the device.
+    /// * `id` - optional platform device ID.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// # use std::ffi::CString;
+    /// # use vm_memory::{GuestAddress, GuestUsize};
+    /// let mut cl = Cmdline::new(100);
+    /// cl.add_virtio_mmio_device(1 << 12, GuestAddress(0x1000), 5, Some(42)).unwrap();
+    /// let cl_cstring = CString::new(cl).unwrap();
+    /// assert_eq!(cl_cstring.to_str().unwrap(), "virtio_mmio.device=4K@0x1000:5:42");
+    /// ```
+    ///
+    /// [documentation]: https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
+    pub fn add_virtio_mmio_device(
+        &mut self,
+        size: GuestUsize,
+        baseaddr: GuestAddress,
+        irq: u32,
+        id: Option<u32>,
+    ) -> Result<()> {
+        if size == 0 {
+            return Err(Error::MmioSize);
+        }
+
+        let mut device_str = format!(
+            "virtio_mmio.device={}@0x{:x?}:{}",
+            Self::guestusize_to_str(size),
+            baseaddr.raw_value(),
+            irq
+        );
+        if let Some(id) = id {
+            device_str.push_str(format!(":{}", id).as_str());
+        }
+        self.insert_str(&device_str)
+    }
+
+    // Converts a `GuestUsize` to a concise string representation, with multiplier suffixes.
+    fn guestusize_to_str(size: GuestUsize) -> String {
+        const KB_MULT: u64 = 1 << 10;
+        const MB_MULT: u64 = KB_MULT << 10;
+        const GB_MULT: u64 = MB_MULT << 10;
+
+        if size % GB_MULT == 0 {
+            return format!("{}G", size / GB_MULT);
+        }
+        if size % MB_MULT == 0 {
+            return format!("{}M", size / MB_MULT);
+        }
+        if size % KB_MULT == 0 {
+            return format!("{}K", size / KB_MULT);
+        }
+        size.to_string()
+    }
 }
 
 impl Into<Vec<u8>> for Cmdline {
@@ -295,5 +375,43 @@ mod tests {
         assert!(cl.insert("ab", "ba").is_ok()); // adds 5 length
         assert_eq!(cl.insert("c", "da"), Err(Error::TooLarge)); // adds 5 (including space) length
         assert!(cl.insert("c", "d").is_ok()); // adds 4 (including space) length
+    }
+
+    #[test]
+    fn test_add_virtio_mmio_device() {
+        let mut cl = Cmdline::new(5);
+        assert_eq!(
+            cl.add_virtio_mmio_device(0, GuestAddress(0), 0, None),
+            Err(Error::MmioSize)
+        );
+        assert_eq!(
+            cl.add_virtio_mmio_device(1, GuestAddress(0), 0, None),
+            Err(Error::TooLarge)
+        );
+
+        let mut cl = Cmdline::new(150);
+        assert!(cl
+            .add_virtio_mmio_device(1, GuestAddress(0), 1, None)
+            .is_ok());
+        let mut expected_str = "virtio_mmio.device=1@0x0:1".to_string();
+        assert_eq!(cl.as_str(), &expected_str);
+
+        assert!(cl
+            .add_virtio_mmio_device(2 << 10, GuestAddress(0x100), 2, None)
+            .is_ok());
+        expected_str.push_str(" virtio_mmio.device=2K@0x100:2");
+        assert_eq!(cl.as_str(), &expected_str);
+
+        assert!(cl
+            .add_virtio_mmio_device(3 << 20, GuestAddress(0x1000), 3, None)
+            .is_ok());
+        expected_str.push_str(" virtio_mmio.device=3M@0x1000:3");
+        assert_eq!(cl.as_str(), &expected_str);
+
+        assert!(cl
+            .add_virtio_mmio_device(4 << 30, GuestAddress(0x0001_0000), 4, Some(42))
+            .is_ok());
+        expected_str.push_str(" virtio_mmio.device=4G@0x10000:4:42");
+        assert_eq!(cl.as_str(), &expected_str);
     }
 }
