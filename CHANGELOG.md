@@ -4,6 +4,8 @@
 
 - Added functions for specifying virtio MMIO devices when building the kernel
   command line.
+- Added a function to specify multiple values in `key=values` pairs when
+  building the kernel command line.
 
 # [v0.2.0]
 

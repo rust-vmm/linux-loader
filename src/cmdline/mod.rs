@@ -24,6 +24,8 @@ pub enum Error {
     HasSpace,
     /// Key/Value Operation would have had an equals sign in it.
     HasEquals,
+    /// Key/Value Operation was not passed a value.
+    MissingVal(String),
     /// 0-sized virtio MMIO device passed to the kernel command line builder.
     MmioSize,
     /// Operation would have made the command line too large.
@@ -41,6 +43,7 @@ impl fmt::Display for Error {
             ),
             Error::HasSpace => write!(f, "String contains a space."),
             Error::HasEquals => write!(f, "String contains an equals sign."),
+            Error::MissingVal(ref k) => write!(f, "Missing value for key {}.", k),
             Error::MmioSize => write!(
                 f,
                 "0-sized virtio MMIO device passed to the kernel command line builder."
@@ -176,6 +179,46 @@ impl Cmdline {
         self.end_push();
 
         Ok(())
+    }
+
+    /// Validates and inserts a key-value1,...,valueN pair into this command line.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key to be inserted in the command line string.
+    /// * `vals` - Values corresponding to `key`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// # use std::ffi::CString;
+    /// let mut cl = Cmdline::new(100);
+    /// cl.insert_multiple("foo", &["bar", "baz"]);
+    /// let cl_cstring = CString::new(cl).unwrap();
+    /// assert_eq!(cl_cstring.to_str().unwrap(), "foo=bar,baz");
+    /// ```
+    pub fn insert_multiple<T: AsRef<str>>(&mut self, key: T, vals: &[T]) -> Result<()> {
+        let k = key.as_ref();
+
+        valid_element(k)?;
+        if vals.is_empty() {
+            return Err(Error::MissingVal(k.to_string()));
+        }
+
+        let kv_str = format!(
+            "{}={}",
+            k,
+            vals.iter()
+                .map(|v| -> Result<&str> {
+                    valid_element(v.as_ref())?;
+                    Ok(v.as_ref())
+                })
+                .collect::<Result<Vec<&str>>>()?
+                .join(",")
+        );
+
+        self.insert_str(kv_str)
     }
 
     /// Validates and inserts a string to the end of the current command line.
@@ -413,5 +456,33 @@ mod tests {
             .is_ok());
         expected_str.push_str(" virtio_mmio.device=4G@0x10000:4:42");
         assert_eq!(cl.as_str(), &expected_str);
+    }
+
+    #[test]
+    fn test_insert_kv() {
+        let mut cl = Cmdline::new(10);
+
+        let no_vals: Vec<&str> = vec![];
+        assert_eq!(cl.insert_multiple("foo=", &no_vals), Err(Error::HasEquals));
+        assert_eq!(
+            cl.insert_multiple("foo", &no_vals),
+            Err(Error::MissingVal("foo".to_string()))
+        );
+        assert_eq!(
+            cl.insert_multiple("foo", &vec!["bar "]),
+            Err(Error::HasSpace)
+        );
+        assert_eq!(
+            cl.insert_multiple("foo", &vec!["bar", "baz"]),
+            Err(Error::TooLarge)
+        );
+
+        let mut cl = Cmdline::new(100);
+        assert!(cl.insert_multiple("foo", &vec!["bar"]).is_ok());
+        assert_eq!(cl.as_str(), "foo=bar");
+
+        let mut cl = Cmdline::new(100);
+        assert!(cl.insert_multiple("foo", &vec!["bar", "baz"]).is_ok());
+        assert_eq!(cl.as_str(), "foo=bar,baz");
     }
 }
