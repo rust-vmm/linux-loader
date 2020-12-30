@@ -13,7 +13,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 mkdir -p ${EXTRACT_PATH}
 
-wget $DEB_URL -P ${TMP_PATH}
+curl $DEB_URL -o ${DEB_PATH}
 dpkg-deb -x ${DEB_PATH} ${EXTRACT_PATH}
 
 mv ${BZIMAGE_PATH} "${SCRIPTPATH}/../src/loader/x86_64/bzimage/bzimage"
