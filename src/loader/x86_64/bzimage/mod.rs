@@ -173,7 +173,9 @@ impl KernelLoader for BzImage {
 mod tests {
     use super::*;
 
+    use std::fs::File;
     use std::io::Cursor;
+    use std::process::Command;
     use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
     const MEM_SIZE: u64 = 0x100_0000;
@@ -182,9 +184,24 @@ mod tests {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
+    fn download_resources() {
+        let command = "./.buildkite/download_resources.sh";
+        let status = Command::new(command).status().unwrap();
+        if !status.success() {
+            panic!("Cannot run build script");
+        }
+    }
+
     fn make_bzimage() -> Vec<u8> {
+        download_resources();
         let mut v = Vec::new();
-        v.extend_from_slice(include_bytes!("bzimage"));
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/loader/x86_64/bzimage/bzimage"
+        );
+        let mut f = File::open(path).unwrap();
+        f.read_to_end(&mut v).unwrap();
+
         v
     }
 

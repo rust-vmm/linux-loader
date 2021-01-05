@@ -10,6 +10,9 @@
 extern crate linux_loader;
 extern crate vm_memory;
 
+use std::fs::File;
+use std::io::{Cursor, Read};
+
 use linux_loader::configurator::pvh::PvhBootConfigurator;
 use linux_loader::configurator::{BootConfigurator, BootParams};
 #[cfg(feature = "bzimage")]
@@ -18,8 +21,6 @@ use linux_loader::loader::elf::start_info::{hvm_memmap_table_entry, hvm_start_in
 use linux_loader::loader::elf::Elf;
 use linux_loader::loader::KernelLoader;
 use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
-
-use std::io::Cursor;
 
 use criterion::{black_box, Criterion};
 
@@ -68,12 +69,28 @@ fn build_pvh_boot_params() -> BootParams {
 }
 
 #[cfg(feature = "bzimage")]
+fn download_resources() {
+    use std::process::Command;
+
+    let command = "./.buildkite/download_resources.sh";
+    let status = Command::new(command).status().unwrap();
+    if !status.success() {
+        panic!("Cannot run build script");
+    }
+}
+
+#[cfg(feature = "bzimage")]
 fn create_bzimage() -> Vec<u8> {
-    include_bytes!(concat!(
+    download_resources();
+    let mut v = Vec::new();
+    let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/loader/x86_64/bzimage/bzimage"
-    ))
-    .to_vec()
+    );
+    let mut f = File::open(path).unwrap();
+    f.read_to_end(&mut v).unwrap();
+
+    v
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
