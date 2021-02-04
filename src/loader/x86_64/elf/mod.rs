@@ -223,7 +223,12 @@ impl KernelLoader for Elf {
 
         // Address where the kernel will be loaded.
         loader_result.kernel_load = match kernel_offset {
-            Some(k_offset) => GuestAddress(k_offset.raw_value() + (ehdr.e_entry as u64)),
+            Some(k_offset) => GuestAddress(
+                k_offset
+                    .raw_value()
+                    .checked_add(ehdr.e_entry as u64)
+                    .ok_or(Error::Overflow)?,
+            ),
             None => GuestAddress(ehdr.e_entry as u64),
         };
 
@@ -564,6 +569,22 @@ mod tests {
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::Align)),
             Elf::load(&gm, None, &mut Cursor::new(&bad_align_image), None).err()
+        );
+    }
+
+    #[test]
+    fn test_overflow_loadaddr() {
+        let gm = create_guest_mem();
+        let image = make_elf_bin();
+        assert_eq!(
+            Some(KernelLoaderError::Elf(Error::Overflow)),
+            Elf::load(
+                &gm,
+                Some(GuestAddress(u64::MAX)),
+                &mut Cursor::new(&image),
+                None
+            )
+            .err()
         );
     }
 }
