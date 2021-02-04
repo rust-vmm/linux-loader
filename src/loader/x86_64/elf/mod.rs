@@ -44,6 +44,8 @@ pub enum Error {
     InvalidProgramHeaderAddress,
     /// Invalid entry address.
     InvalidEntryAddress,
+    /// Overflow occurred during an arithmetic operation.
+    Overflow,
     /// Unable to read ELF header.
     ReadElfHeader,
     /// Unable to read kernel image.
@@ -76,6 +78,7 @@ impl fmt::Display for Error {
             Error::InvalidProgramHeaderOffset => "Invalid program header offset",
             Error::InvalidProgramHeaderAddress => "Invalid Program Header Address",
             Error::InvalidEntryAddress => "Invalid entry address",
+            Error::Overflow => "Overflow occurred during an arithmetic operation",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
             Error::ReadProgramHeader => "Unable to read program header",
@@ -335,9 +338,13 @@ where
         }
 
         // Skip the note header plus the size of its fields (with alignment).
-        read_size += nhdr_sz
-            + align_up(u64::from(nhdr.n_namesz), n_align)?
-            + align_up(u64::from(nhdr.n_descsz), n_align)?;
+        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), n_align)?;
+        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), n_align)?;
+        read_size = read_size
+            .checked_add(nhdr_sz)
+            .and_then(|read_size| read_size.checked_add(namesz_aligned))
+            .and_then(|read_size| read_size.checked_add(descsz_aligned))
+            .ok_or(Error::Overflow)?;
 
         kernel_image
             .seek(SeekFrom::Start(phdr.p_offset + read_size as u64))
