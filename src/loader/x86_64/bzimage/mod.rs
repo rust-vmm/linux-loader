@@ -270,4 +270,32 @@ mod tests {
             .err()
         );
     }
+
+    #[test]
+    fn test_invalid_bzimage_underflow() {
+        use super::super::super::Error as LoaderError;
+
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/loader/x86_64/bzimage/invalid_bzimage.bin"
+        );
+
+        let gm = create_guest_mem();
+        let mut image = File::open(path).unwrap();
+        let kernel_offset = GuestAddress(0x200000);
+        let highmem_start_address = GuestAddress(0x0);
+
+        // load bzImage with good kernel_offset and himem_start setting
+        let loader_result = BzImage::load(
+            &gm,
+            Some(kernel_offset),
+            &mut image,
+            Some(highmem_start_address),
+        );
+
+        assert_eq!(
+            loader_result.unwrap_err(),
+            LoaderError::Bzimage(Error::Underflow)
+        );
+    }
 }
