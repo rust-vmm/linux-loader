@@ -27,27 +27,25 @@
 //! This example shows how to prepare a VM for booting with an ELF kernel, following the PVH
 //! boot protocol.
 //!
-//! ```rust,ignore
+//! ```rust
+//!
 //! # extern crate linux_loader;
 //! # extern crate vm_memory;
-//! # use std::io::Cursor;
+//! # use std::{io::{Cursor, Read}, fs::File};
 //! # use linux_loader::configurator::{BootConfigurator, BootParams};
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! # use linux_loader::configurator::pvh::PvhBootConfigurator;
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! # use linux_loader::loader::elf::start_info::{hvm_memmap_table_entry, hvm_start_info};
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! # use linux_loader::loader::elf::Elf;
 //! # use linux_loader::loader::KernelLoader;
 //! # use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 //! # const E820_RAM: u32 = 1;
 //! # const MEM_SIZE: usize = 0x100_0000;
 //! # const XEN_HVM_START_MAGIC_VALUE: u32 = 0x336ec578;
-//! # fn create_guest_memory() -> GuestMemoryMmap {
-//! #   GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), MEM_SIZE)]).unwrap()
-//! # }
-//! # fn create_elf_pvh_image() -> Vec<u8> {
-//! #   include_bytes!(concat!(
-//! #     env!("CARGO_MANIFEST_DIR"), "/src/loader/x86_64/elf/test_elfnote.bin"
-//! #   )).to_vec()
-//! # }
+//!
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! fn build_boot_params() -> (hvm_start_info, Vec<hvm_memmap_table_entry>) {
 //!   let mut start_info = hvm_start_info::default();
 //!   let memmap_entry = hvm_memmap_table_entry {
@@ -63,9 +61,16 @@
 //!   (start_info, vec![memmap_entry])
 //! }
 //!
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! fn main() {
-//!   let guest_mem = create_guest_memory();
-//!   let elf_pvh_image = create_elf_pvh_image();
+//!   let guest_mem =
+//!     GuestMemoryMmap::from_ranges( &[(GuestAddress(0x0), MEM_SIZE)]) .unwrap();
+//!
+//!   let mut elf_pvh_image = Vec::new();
+//!   let path = concat!(env!("CARGO_MANIFEST_DIR"), "/src/loader/x86_64/elf/test_elfnote.bin");
+//!   let mut file = File::open(path).unwrap();
+//!   file.read_to_end(&mut elf_pvh_image).unwrap();
+//!
 //!   // Load the kernel image.
 //!   let loader_result = Elf::load(
 //!       &guest_mem, None, &mut Cursor::new(&elf_pvh_image), None
@@ -82,8 +87,12 @@
 //!   // Write boot parameters in guest memory.
 //!   let mut boot_params = BootParams::new::<hvm_start_info>(&start_info, start_info_addr);
 //!   boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
-//!   PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(boot_params, &guest_mem).unwrap();
+//!   PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_mem).unwrap();
 //! }
+//!
+//! # #[cfg(target_arch = "aarch64")]
+//! # fn main() {}
+//!
 //! ```
 //!
 //! [`BootConfigurator`]: trait.BootConfigurator.html
