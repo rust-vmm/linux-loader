@@ -1,4 +1,13 @@
-# [Unreleased]
+# [v0.3.0]
+
+## Fixed
+
+- Replaced panic condition in `align_up` with returning an Error.
+- Fixed potential hang condition in Elf::load caused by arithmetic overflow.
+- Disallow overflow when computing the kernel load address when loading ELF.
+- Fix unchecked arithmetic in BzImage::load that could lead to undefined
+  behavior.
+
 
 ## Added
 
