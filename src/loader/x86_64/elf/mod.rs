@@ -15,6 +15,7 @@
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
+use std::result;
 
 use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
@@ -29,9 +30,11 @@ unsafe impl ByteValued for elf::Elf64_Phdr {}
 #[derive(Debug, PartialEq)]
 /// Elf kernel loader errors.
 pub enum Error {
+    /// Invalid alignment.
+    Align,
     /// Loaded big endian binary on a little endian platform.
     BigEndianElfOnLittle,
-    /// Invalid ELF magic number
+    /// Invalid ELF magic number.
     InvalidElfMagicNumber,
     /// Invalid program header size.
     InvalidProgramHeaderSize,
@@ -41,6 +44,8 @@ pub enum Error {
     InvalidProgramHeaderAddress,
     /// Invalid entry address.
     InvalidEntryAddress,
+    /// Overflow occurred during an arithmetic operation.
+    Overflow,
     /// Unable to read ELF header.
     ReadElfHeader,
     /// Unable to read kernel image.
@@ -64,6 +69,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let desc = match self {
+            Error::Align => "Invalid alignment",
             Error::BigEndianElfOnLittle => {
                 "Trying to load big-endian binary on little-endian machine"
             }
@@ -72,6 +78,7 @@ impl fmt::Display for Error {
             Error::InvalidProgramHeaderOffset => "Invalid program header offset",
             Error::InvalidProgramHeaderAddress => "Invalid Program Header Address",
             Error::InvalidEntryAddress => "Invalid entry address",
+            Error::Overflow => "Overflow occurred during an arithmetic operation",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
             Error::ReadProgramHeader => "Unable to read program header",
@@ -216,7 +223,12 @@ impl KernelLoader for Elf {
 
         // Address where the kernel will be loaded.
         loader_result.kernel_load = match kernel_offset {
-            Some(k_offset) => GuestAddress(k_offset.raw_value() + (ehdr.e_entry as u64)),
+            Some(k_offset) => GuestAddress(
+                k_offset
+                    .raw_value()
+                    .checked_add(ehdr.e_entry as u64)
+                    .ok_or(Error::Overflow)?,
+            ),
             None => GuestAddress(ehdr.e_entry as u64),
         };
 
@@ -331,9 +343,13 @@ where
         }
 
         // Skip the note header plus the size of its fields (with alignment).
-        read_size += nhdr_sz
-            + align_up(u64::from(nhdr.n_namesz), n_align)
-            + align_up(u64::from(nhdr.n_descsz), n_align);
+        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), n_align)?;
+        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), n_align)?;
+        read_size = read_size
+            .checked_add(nhdr_sz)
+            .and_then(|read_size| read_size.checked_add(namesz_aligned))
+            .and_then(|read_size| read_size.checked_add(descsz_aligned))
+            .ok_or(Error::Overflow)?;
 
         kernel_image
             .seek(SeekFrom::Start(phdr.p_offset + read_size as u64))
@@ -350,7 +366,7 @@ where
     // just skip the name field contents.
     kernel_image
         .seek(SeekFrom::Current(
-            align_up(u64::from(nhdr.n_namesz), n_align) as i64 - PVH_NOTE_STR_SZ as i64,
+            align_up(u64::from(nhdr.n_namesz), n_align)? as i64 - PVH_NOTE_STR_SZ as i64,
         ))
         .map_err(|_| Error::SeekNoteHeader)?;
 
@@ -372,18 +388,20 @@ where
     )))
 }
 
-/// Align address upwards. Taken from x86_64 crate:
-/// https://docs.rs/x86_64/latest/x86_64/fn.align_up.html
+/// Align address upwards. Adapted from x86_64 crate:
+/// https://docs.rs/x86_64/latest/x86_64/addr/fn.align_up.html
 ///
-/// Returns the smallest x with alignment `align` so that x >= addr. The alignment must be
-/// a power of 2.
-fn align_up(addr: u64, align: u64) -> usize {
-    assert!(align.is_power_of_two(), "`align` must be a power of two");
+/// Returns the smallest x with alignment `align` so that x >= addr if the alignment is a power of
+/// 2, or an error otherwise.
+fn align_up(addr: u64, align: u64) -> result::Result<usize, Error> {
+    if !align.is_power_of_two() {
+        return Err(Error::Align);
+    }
     let align_mask = align - 1;
     if addr & align_mask == 0 {
-        addr as usize // already aligned
+        Ok(addr as usize) // already aligned
     } else {
-        ((addr | align_mask) + 1) as usize
+        Ok(((addr | align_mask) + 1) as usize)
     }
 }
 
@@ -415,6 +433,10 @@ mod tests {
 
     fn make_bad_elfnote() -> Vec<u8> {
         include_bytes!("test_badnote.bin").to_vec()
+    }
+
+    fn make_bad_align() -> Vec<u8> {
+        include_bytes!("test_align.bin").to_vec()
     }
 
     #[test]
@@ -537,6 +559,32 @@ mod tests {
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::InvalidPvhNote)),
             Elf::load(&gm, None, &mut Cursor::new(&badnote_image), None).err()
+        );
+    }
+
+    #[test]
+    fn test_bad_align() {
+        let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x10_000_000usize))]).unwrap();
+        let bad_align_image = make_bad_align();
+        assert_eq!(
+            Some(KernelLoaderError::Elf(Error::Align)),
+            Elf::load(&gm, None, &mut Cursor::new(&bad_align_image), None).err()
+        );
+    }
+
+    #[test]
+    fn test_overflow_loadaddr() {
+        let gm = create_guest_mem();
+        let image = make_elf_bin();
+        assert_eq!(
+            Some(KernelLoaderError::Elf(Error::Overflow)),
+            Elf::load(
+                &gm,
+                Some(GuestAddress(u64::MAX)),
+                &mut Cursor::new(&image),
+                None
+            )
+            .err()
         );
     }
 }

@@ -26,6 +26,8 @@ use super::super::{
 pub enum Error {
     /// Invalid bzImage binary.
     InvalidBzImage,
+    /// Overflow occurred during an arithmetic operation.
+    Overflow,
     /// Unable to read bzImage header.
     ReadBzImageHeader,
     /// Unable to read bzImage compressed image.
@@ -36,17 +38,21 @@ pub enum Error {
     SeekBzImageHeader,
     /// Unable to seek to bzImage compressed kernel.
     SeekBzImageCompressedKernel,
+    /// Underflow occurred during an arithmetic operation.
+    Underflow,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let desc = match self {
             Error::InvalidBzImage => "Invalid bzImage",
+            Error::Overflow => "Overflow occurred during an arithmetic operation",
             Error::ReadBzImageHeader => "Unable to read bzImage header",
             Error::ReadBzImageCompressedKernel => "Unable to read bzImage compressed kernel",
             Error::SeekBzImageEnd => "Unable to seek bzImage end",
             Error::SeekBzImageHeader => "Unable to seek bzImage header",
             Error::SeekBzImageCompressedKernel => "Unable to seek bzImage compressed kernel",
+            Error::Underflow => "Underflow occurred during an arithmetic operation",
         };
 
         write!(f, "Kernel Loader: {}", desc)
@@ -130,8 +136,13 @@ impl KernelLoader for BzImage {
         if setup_size == 0 {
             setup_size = 4;
         }
-        setup_size = (setup_size + 1) * 512;
-        kernel_size -= setup_size;
+        setup_size = setup_size
+            .checked_add(1)
+            .and_then(|setup_size| setup_size.checked_mul(512))
+            .ok_or(Error::Overflow)?;
+        kernel_size = kernel_size
+            .checked_sub(setup_size)
+            .ok_or(Error::Underflow)?;
 
         // Check that `code32_start`, the default address of the kernel, is not lower than high
         // memory.
@@ -257,6 +268,34 @@ mod tests {
                 Some(highmem_start_address),
             )
             .err()
+        );
+    }
+
+    #[test]
+    fn test_invalid_bzimage_underflow() {
+        use super::super::super::Error as LoaderError;
+
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/loader/x86_64/bzimage/invalid_bzimage.bin"
+        );
+
+        let gm = create_guest_mem();
+        let mut image = File::open(path).unwrap();
+        let kernel_offset = GuestAddress(0x200000);
+        let highmem_start_address = GuestAddress(0x0);
+
+        // load bzImage with good kernel_offset and himem_start setting
+        let loader_result = BzImage::load(
+            &gm,
+            Some(kernel_offset),
+            &mut image,
+            Some(highmem_start_address),
+        );
+
+        assert_eq!(
+            loader_result.unwrap_err(),
+            LoaderError::Bzimage(Error::Underflow)
         );
     }
 }
