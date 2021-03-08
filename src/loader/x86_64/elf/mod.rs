@@ -313,8 +313,6 @@ where
     // the PVH boot protocol.
     const XEN_ELFNOTE_PHYS32_ENTRY: u32 = 18;
 
-    let n_align = phdr.p_align;
-
     // Seek to the beginning of the note segment.
     kernel_image
         .seek(SeekFrom::Start(phdr.p_offset))
@@ -343,15 +341,26 @@ where
         }
 
         // Skip the note header plus the size of its fields (with alignment).
-        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), n_align)?;
-        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), n_align)?;
+        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), phdr.p_align)?;
+        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), phdr.p_align)?;
+
+        // `namesz` and `descsz` are both `u32`s. We need to also verify for overflow, to be sure
+        // we do not lose information.
+        if namesz_aligned > u32::MAX.into() || descsz_aligned > u32::MAX.into() {
+            return Err(Error::Overflow.into());
+        }
+
         read_size = read_size
-            .checked_add(nhdr_sz)
-            .and_then(|read_size| read_size.checked_add(namesz_aligned))
-            .and_then(|read_size| read_size.checked_add(descsz_aligned))
+            .checked_add(nhdr_sz) // Skip the ELF_NOTE known sized fields.
+            // Safe to truncate or change the type to `usize` (4 or 8 bytes depending on the
+            // architecture 32/64 bits) since we validated that we do not lose information.
+            .and_then(|read_size| read_size.checked_add(namesz_aligned as usize))
+            .and_then(|read_size| read_size.checked_add(descsz_aligned as usize))
             .ok_or(Error::Overflow)?;
 
         kernel_image
+            // The conversion here does not truncate, since `read_size` is of `usize` type, which
+            // can be at maximum 8 bytes long.
             .seek(SeekFrom::Start(phdr.p_offset + read_size as u64))
             .map_err(|_| Error::SeekNoteHeader)?;
     }
@@ -366,7 +375,8 @@ where
     // just skip the name field contents.
     kernel_image
         .seek(SeekFrom::Current(
-            align_up(u64::from(nhdr.n_namesz), n_align)? as i64 - PVH_NOTE_STR_SZ as i64,
+            // Safe conversion since it is not losing data.
+            align_up(u64::from(nhdr.n_namesz), phdr.p_align)? as i64 - PVH_NOTE_STR_SZ as i64,
         ))
         .map_err(|_| Error::SeekNoteHeader)?;
 
@@ -393,15 +403,17 @@ where
 ///
 /// Returns the smallest x with alignment `align` so that x >= addr if the alignment is a power of
 /// 2, or an error otherwise.
-fn align_up(addr: u64, align: u64) -> result::Result<usize, Error> {
+fn align_up(addr: u64, align: u64) -> result::Result<u64, Error> {
     if !align.is_power_of_two() {
         return Err(Error::Align);
     }
     let align_mask = align - 1;
     if addr & align_mask == 0 {
-        Ok(addr as usize) // already aligned
+        Ok(addr) // already aligned
     } else {
-        Ok(((addr | align_mask) + 1) as usize)
+        // Safe to unchecked add because this can be at maximum `2^64` - 1, which is not
+        // overflowing.
+        Ok((addr | align_mask) + 1)
     }
 }
 
