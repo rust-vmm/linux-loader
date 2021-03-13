@@ -19,7 +19,6 @@
 
 extern crate vm_memory;
 
-use std::ffi::CStr;
 use std::fmt;
 use std::io::{Read, Seek};
 
@@ -29,6 +28,8 @@ use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use crate::loader_gen::bootparam;
+
+pub use crate::cmdline::Cmdline;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86_64;
@@ -198,7 +199,8 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// # use std::ffi::CStr;
 /// let mem_size: usize = 0x1000000;
 /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
-/// let cl = CStr::from_bytes_with_nul(b"foo=bar\0").unwrap();
+/// let mut cl = Cmdline::new(10);
+/// cl.insert("foo", "bar");
 /// let mut buf = vec![0u8;8];
 /// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
 /// gm.read_slice(buf.as_mut_slice(), GuestAddress(0x1000)).unwrap();
@@ -207,9 +209,9 @@ unsafe impl ByteValued for bootparam::boot_params {}
 pub fn load_cmdline<M: GuestMemory>(
     guest_mem: &M,
     guest_addr: GuestAddress,
-    cmdline: &CStr,
+    cmdline: &Cmdline,
 ) -> Result<()> {
-    let len = cmdline.to_bytes().len();
+    let len = cmdline.as_str().len();
     if len == 0 {
         return Ok(());
     }
@@ -222,7 +224,7 @@ pub fn load_cmdline<M: GuestMemory>(
     }
 
     guest_mem
-        .write_slice(cmdline.to_bytes_with_nul(), guest_addr)
+        .write_slice(cmdline.as_str().as_bytes(), guest_addr)
         .map_err(|_| Error::CommandLineCopy)?;
 
     Ok(())
@@ -243,13 +245,11 @@ mod tests {
     fn test_cmdline_overflow() {
         let gm = create_guest_mem();
         let cmdline_address = GuestAddress(MEM_SIZE - 5);
+        let mut cl = Cmdline::new(10);
+        cl.insert_str("12345").unwrap();
         assert_eq!(
             Err(Error::CommandLineOverflow),
-            load_cmdline(
-                &gm,
-                cmdline_address,
-                CStr::from_bytes_with_nul(b"12345\0").unwrap()
-            )
+            load_cmdline(&gm, cmdline_address, &cl)
         );
     }
 
@@ -257,14 +257,9 @@ mod tests {
     fn test_cmdline_write_end() {
         let gm = create_guest_mem();
         let mut cmdline_address = GuestAddress(45);
-        assert_eq!(
-            Ok(()),
-            load_cmdline(
-                &gm,
-                cmdline_address,
-                CStr::from_bytes_with_nul(b"1234\0").unwrap()
-            )
-        );
+        let mut cl = Cmdline::new(10);
+        cl.insert_str("1234").unwrap();
+        assert_eq!(Ok(()), load_cmdline(&gm, cmdline_address, &cl));
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
         assert_eq!(val, '1' as u8);
         cmdline_address = cmdline_address.unchecked_add(1);
