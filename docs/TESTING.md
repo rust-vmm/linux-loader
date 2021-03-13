@@ -11,7 +11,7 @@ Each individual test runs in a container. To reproduce a test locally, you can
 use the dev-container on both x86 and arm64.
 
 ```bash
-container_version=5
+container_version=11
 docker run -it \
            --security-opt seccomp=unconfined \
            --volume $(pwd):/linux-loader \
@@ -34,7 +34,7 @@ cd linux-stable
 make bzImage
 cp linux-stable/arch/x86/boot/bzImage ${LINUX_LOADER}/linux-loader/src/loader/
 cd ${LINUX_LOADER}/linux-loader
-container_version=5
+container_version=11
 docker run -it \
            --security-opt seccomp=unconfined \
            --volume $(pwd):/linux-loader \
