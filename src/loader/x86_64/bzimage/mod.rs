@@ -277,7 +277,7 @@ mod tests {
 
         let path = concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/loader/x86_64/bzimage/invalid_bzimage.bin"
+            "/src/loader/x86_64/bzimage/fuzz_invalid_bzimage.bin"
         );
 
         let gm = create_guest_mem();
