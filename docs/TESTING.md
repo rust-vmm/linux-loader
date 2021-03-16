@@ -31,7 +31,7 @@ The kernel images used in the unit tests fall into 3 categories:
 - generated images (either by building the Linux kernel, or by using other
   tools such as [ELFIO](https://github.com/serge1/ELFIO)).
 
-### Building the PE image
+### Building the `PE` image
 
 The PE image used by the linux-loader unit tests is built on an `aarch64`
 machine using the following commands:
@@ -45,4 +45,30 @@ git checkout v4.20
 make allnoconfig
 make Image
 head -c 4096 arch/arm64/boot/Image > test_image.bin
+```
+
+### Generating `ELF` images with [ELFIO](https://github.com/serge1/ELFIO)
+
+All the ELF files used in `linux-loader` are generated using the `ELFIO` tool.
+The [`.cpp` source files](elfio_files) are created from the ELFIO `writer`
+example, with minimal changes on top.
+
+| Source File | Generated Binary File |
+|-------------|-----------------------|
+| bad_align_writer.cpp | test_bad_align.bin |
+
+#### Example for generating `test_bad_align.bin`
+
+```bash
+git clone git@github.com:serge1/ELFIO.git
+
+# Copy the bad_align_writer.cpp file from this repo to the ELFIO path.
+cp "${LINUX_LOADER_PATH}/docs/elfio_files/bad_align_writer.cpp" "${ELFIO_PATH}"
+cd "${ELFIO_PATH}"
+# The images in this repo were built from the`57e614a` commit.
+git checkout 57e614a
+
+g++ bad_align_writer.cpp -o bad_align_writer -I. -std=c++11
+./bad_align_writer
+cp test_bad_align.bin "${LINUX_LOADER_PATH}/src/loader/x86_64/elf/"
 ```
