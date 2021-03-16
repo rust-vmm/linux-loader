@@ -448,7 +448,7 @@ mod tests {
     }
 
     fn make_bad_align() -> Vec<u8> {
-        include_bytes!("test_align.bin").to_vec()
+        include_bytes!("test_bad_align.bin").to_vec()
     }
 
     #[test]
