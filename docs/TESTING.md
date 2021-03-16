@@ -30,3 +30,19 @@ The kernel images used in the unit tests fall into 3 categories:
   are named with `fuzz_` so that they are easy to identify.
 - generated images (either by building the Linux kernel, or by using other
   tools such as [ELFIO](https://github.com/serge1/ELFIO)).
+
+### Building the PE image
+
+The PE image used by the linux-loader unit tests is built on an `aarch64`
+machine using the following commands:
+
+```bash
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+git checkout v4.20
+
+# To be able to run the following command, you'll need to install
+# flex and bison.
+make allnoconfig
+make Image
+head -c 4096 arch/arm64/boot/Image > test_image.bin
+```
