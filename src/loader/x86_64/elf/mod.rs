@@ -440,7 +440,7 @@ mod tests {
     }
 
     fn make_dummy_elfnote() -> Vec<u8> {
-        include_bytes!("test_dummynote.bin").to_vec()
+        include_bytes!("test_dummy_note.bin").to_vec()
     }
 
     fn make_invalid_pvh_note() -> Vec<u8> {
