@@ -443,8 +443,8 @@ mod tests {
         include_bytes!("test_dummynote.bin").to_vec()
     }
 
-    fn make_bad_elfnote() -> Vec<u8> {
-        include_bytes!("test_badnote.bin").to_vec()
+    fn make_invalid_pvh_note() -> Vec<u8> {
+        include_bytes!("test_invalid_pvh_note.bin").to_vec()
     }
 
     fn make_bad_align() -> Vec<u8> {
@@ -567,7 +567,7 @@ mod tests {
     #[test]
     fn test_bad_elfnote() {
         let gm = create_guest_mem();
-        let badnote_image = make_bad_elfnote();
+        let badnote_image = make_invalid_pvh_note();
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::InvalidPvhNote)),
             Elf::load(&gm, None, &mut Cursor::new(&badnote_image), None).err()

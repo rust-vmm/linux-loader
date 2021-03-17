@@ -56,6 +56,7 @@ example, with minimal changes on top.
 | Source File | Generated Binary File |
 |-------------|-----------------------|
 | bad_align_writer.cpp | test_bad_align.bin |
+| invalid_pvh_note_writer.cpp | test_invalid_pvh_note.bin |
 
 #### Example for generating `test_bad_align.bin`
 
