@@ -464,10 +464,10 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x300000);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
 
         loader_result = Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x300000);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
 
         loader_result = Elf::load(
             &gm,
@@ -476,7 +476,7 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x400);
 
         highmem_start_address = GuestAddress(0xa00000);
         assert_eq!(
