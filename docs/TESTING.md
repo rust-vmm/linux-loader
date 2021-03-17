@@ -53,12 +53,16 @@ All the ELF files used in `linux-loader` are generated using the `ELFIO` tool.
 The [`.cpp` source files](elfio_files) are created from the ELFIO `writer`
 example, with minimal changes on top.
 
+The next section includes an example of how to use the source files to generate
+the binaries used in the unit tests.
+
 | Source File | Generated Binary File |
 |-------------|-----------------------|
 | bad_align_writer.cpp | test_bad_align.bin |
 | invalid_pvh_note_writer.cpp | test_invalid_pvh_note.bin |
 | dummy_note.cpp | test_dummy_note.bin |
 | basic_elf.cpp | test_elf.bin |
+| pvh_note.cpp | test_elfnote.bin |
 
 #### Example for generating `test_bad_align.bin`
 
