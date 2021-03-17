@@ -57,6 +57,7 @@ example, with minimal changes on top.
 |-------------|-----------------------|
 | bad_align_writer.cpp | test_bad_align.bin |
 | invalid_pvh_note_writer.cpp | test_invalid_pvh_note.bin |
+| dummy_note.cpp | test_dummy_note.bin |
 
 #### Example for generating `test_bad_align.bin`
 
