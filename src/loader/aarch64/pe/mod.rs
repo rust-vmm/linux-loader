@@ -50,6 +50,14 @@ pub enum Error {
     InvalidImageMagicNumber,
     /// Invalid base address alignment
     InvalidBaseAddrAlignment,
+    /// Unable to seek to UEFI image start.
+    SeekUefiStart,
+    /// Unable to seek to UEFI image end.
+    SeekUefiEnd,
+    /// UEFI image too big.
+    UefiTooBig,
+    /// Unable to read UEFI image
+    ReadUefiImage,
 }
 
 impl fmt::Display for Error {
@@ -61,9 +69,13 @@ impl fmt::Display for Error {
             Error::ReadDtbImage => "unable to read DTB image",
             Error::SeekDtbStart => "unable to seek DTB start",
             Error::SeekDtbEnd => "unable to seek DTB end",
+            Error::ReadUefiImage => "unable to read UEFI image",
+            Error::SeekUefiStart => "unable to seek UEFI start",
+            Error::SeekUefiEnd => "unable to seek UEFI end",
             Error::InvalidImage => "invalid Image",
             Error::InvalidImageMagicNumber => "invalid Image magic number",
             Error::DtbTooBig => "device tree image too big",
+            Error::UefiTooBig => "UEFI image too big",
             Error::ReadKernelImage => "unable to read kernel image",
             Error::InvalidBaseAddrAlignment => "base address not aligned to 2 MB",
         };
@@ -168,6 +180,38 @@ impl KernelLoader for PE {
     }
 }
 
+/// Load UEFI image in guest memory
+///
+/// # Arguments
+///
+/// * `guest_mem` - Guest memory address where UEFI should be loaded.
+/// * `guest_addr` - The offset in guest_mem from which the UEFI image will be loaded.
+/// * `uefi_image` - The UEFI image
+#[cfg(target_arch = "aarch64")]
+pub fn load_uefi<F, M: GuestMemory>(
+    guest_mem: &M,
+    guest_addr: GuestAddress,
+    uefi_image: &mut F,
+) -> Result<()>
+where
+    F: Read + Seek,
+{
+    let uefi_size = uefi_image
+        .seek(SeekFrom::End(0))
+        .map_err(|_| Error::SeekUefiEnd)? as usize;
+
+    // edk2 image on virtual platform does not larger than 3M
+    if uefi_size > 0x300000 {
+        return Err(Error::UefiTooBig.into());
+    }
+    uefi_image
+        .seek(SeekFrom::Start(0))
+        .map_err(|_| Error::SeekUefiStart)?;
+    guest_mem
+        .read_exact_from(guest_addr, uefi_image, uefi_size)
+        .map_err(|_| Error::ReadUefiImage.into())
+}
+
 /// Writes the device tree to the given memory slice.
 ///
 /// # Arguments
@@ -241,5 +285,20 @@ mod tests {
             loader_result,
             Err(KernelLoaderError::Pe(Error::InvalidImageMagicNumber))
         );
+    }
+
+    #[test]
+    fn load_uefi_image() {
+        let gm = create_guest_mem();
+        let mut image = make_image_bin();
+        let kernel_addr = GuestAddress(0);
+
+        let loader_result = load_uefi(&gm, kernel_addr, &mut Cursor::new(&image));
+        assert_eq!(loader_result, Ok(()));
+
+        // Try to load a file larger than 3M
+        image.resize(0x400000, 0);
+        let loader_result = load_uefi(&gm, kernel_addr, &mut Cursor::new(&image));
+        assert_eq!(loader_result, Err(KernelLoaderError::Pe(Error::UefiTooBig)));
     }
 }
