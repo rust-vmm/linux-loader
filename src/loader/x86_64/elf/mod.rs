@@ -219,17 +219,17 @@ impl KernelLoader for Elf {
             }
         }
 
-        let mut loader_result: KernelLoaderResult = Default::default();
-
-        // Address where the kernel will be loaded.
-        loader_result.kernel_load = match kernel_offset {
-            Some(k_offset) => GuestAddress(
-                k_offset
-                    .raw_value()
-                    .checked_add(ehdr.e_entry as u64)
-                    .ok_or(Error::Overflow)?,
-            ),
-            None => GuestAddress(ehdr.e_entry as u64),
+        let mut loader_result = KernelLoaderResult {
+            kernel_load: match kernel_offset {
+                Some(k_offset) => GuestAddress(
+                    k_offset
+                        .raw_value()
+                        .checked_add(ehdr.e_entry as u64)
+                        .ok_or(Error::Overflow)?,
+                ),
+                None => GuestAddress(ehdr.e_entry as u64),
+            },
+            ..Default::default()
         };
 
         kernel_image
