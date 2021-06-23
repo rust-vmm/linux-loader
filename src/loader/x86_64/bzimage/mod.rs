@@ -159,9 +159,11 @@ impl KernelLoader for BzImage {
 
         boot_header.code32_start = mem_offset.raw_value() as u32;
 
-        let mut loader_result: KernelLoaderResult = Default::default();
-        loader_result.setup_header = Some(boot_header);
-        loader_result.kernel_load = mem_offset;
+        let mut loader_result = KernelLoaderResult {
+            setup_header: Some(boot_header),
+            kernel_load: mem_offset,
+            ..Default::default()
+        };
 
         // Seek the compressed `vmlinux.bin` and read it to memory.
         kernel_image
