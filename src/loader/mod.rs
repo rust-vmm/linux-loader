@@ -193,10 +193,11 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// # Examples
 ///
 /// ```rust
+/// # use std::ffi::CStr;
 /// # extern crate vm_memory;
 /// # use linux_loader::loader::*;
-/// # use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
-/// # use std::ffi::CStr;
+/// # use vm_memory::{Bytes, GuestAddress};
+/// # type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 /// let mem_size: usize = 0x1000000;
 /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
 /// let mut cl = Cmdline::new(10);
@@ -233,7 +234,8 @@ pub fn load_cmdline<M: GuestMemory>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Address, GuestAddress};
+    type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 
     const MEM_SIZE: u64 = 0x100_0000;
 

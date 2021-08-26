@@ -175,9 +175,10 @@ impl KernelLoader for Elf {
     ///
     /// ```rust
     /// # extern crate vm_memory;
-    /// # use linux_loader::loader::*;
-    /// # use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
     /// # use std::io::Cursor;
+    /// # use linux_loader::loader::*;
+    /// # use vm_memory::{Address, GuestAddress};
+    /// # type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
     /// let mem_size: usize = 0x1000000;
     /// let himem_start = GuestAddress(0x0);
     /// let kernel_addr = GuestAddress(0x200000);
@@ -421,7 +422,8 @@ fn align_up(addr: u64, align: u64) -> result::Result<u64, Error> {
 mod tests {
     use super::*;
     use std::io::Cursor;
-    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Address, GuestAddress};
+    type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 
     const MEM_SIZE: u64 = 0x100_0000;
 

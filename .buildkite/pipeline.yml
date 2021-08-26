@@ -9,8 +9,8 @@ steps:
     agents:
       platform: x86_64.metal
     plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v6"
+      - docker#v3.8.0:
+          image: "rustvmm/dev:v12"
           always-pull: true
 
   - label: "build-musl-x86-bzimage"
@@ -21,6 +21,6 @@ steps:
     agents:
       platform: x86_64.metal
     plugins:
-      - docker#v3.0.1:
-          image: "rustvmm/dev:v6"
+      - docker#v3.8.0:
+          image: "rustvmm/dev:v12"
           always-pull: true
