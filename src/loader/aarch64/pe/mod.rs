@@ -149,8 +149,10 @@ impl KernelLoader for PE {
             .checked_add(text_offset)
             .ok_or(Error::InvalidImage)?;
 
-        let mut loader_result: KernelLoaderResult = Default::default();
-        loader_result.kernel_load = mem_offset;
+        let mut loader_result = KernelLoaderResult {
+            kernel_load: mem_offset,
+            ..Default::default()
+        };
 
         kernel_image
             .seek(SeekFrom::Start(0))
