@@ -202,7 +202,8 @@ where
 mod tests {
     use super::*;
     use std::io::Cursor;
-    use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Address, GuestAddress};
+    type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 
     const MEM_SIZE: u64 = 0x100_0000;
 
