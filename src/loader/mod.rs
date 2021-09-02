@@ -263,18 +263,18 @@ mod tests {
         cl.insert_str("1234").unwrap();
         assert_eq!(Ok(()), load_cmdline(&gm, cmdline_address, &cl));
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, '1' as u8);
+        assert_eq!(val, b'1');
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, '2' as u8);
+        assert_eq!(val, b'2');
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, '3' as u8);
+        assert_eq!(val, b'3');
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, '4' as u8);
+        assert_eq!(val, b'4');
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, '\0' as u8);
+        assert_eq!(val, b'\0');
     }
 }
