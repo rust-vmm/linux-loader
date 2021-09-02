@@ -465,21 +465,18 @@ mod tests {
             cl.insert_multiple("foo", &no_vals),
             Err(Error::MissingVal("foo".to_string()))
         );
+        assert_eq!(cl.insert_multiple("foo", &["bar "]), Err(Error::HasSpace));
         assert_eq!(
-            cl.insert_multiple("foo", &vec!["bar "]),
-            Err(Error::HasSpace)
-        );
-        assert_eq!(
-            cl.insert_multiple("foo", &vec!["bar", "baz"]),
+            cl.insert_multiple("foo", &["bar", "baz"]),
             Err(Error::TooLarge)
         );
 
         let mut cl = Cmdline::new(100);
-        assert!(cl.insert_multiple("foo", &vec!["bar"]).is_ok());
+        assert!(cl.insert_multiple("foo", &["bar"]).is_ok());
         assert_eq!(cl.as_str(), "foo=bar");
 
         let mut cl = Cmdline::new(100);
-        assert!(cl.insert_multiple("foo", &vec!["bar", "baz"]).is_ok());
+        assert!(cl.insert_multiple("foo", &["bar", "baz"]).is_ok());
         assert_eq!(cl.as_str(), "foo=bar,baz");
     }
 }

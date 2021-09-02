@@ -520,13 +520,13 @@ mod tests {
     fn test_bootparam_list_addition() {
         let mut accumulator: Vec<u8> = vec![];
         let start = GuestAddress(0x1000);
-        let foo = Foobar::default();
+        let element = Foobar::default();
 
         // Error case: start address not specified.
         assert_eq!(
             format!(
                 "{:?}",
-                BootParams::add_boot_parameter_to_list(&foo, None, &mut accumulator, &mut None)
+                BootParams::add_boot_parameter_to_list(&element, None, &mut accumulator, &mut None)
                     .err()
             ),
             "Some(MissingStartAddress)"
@@ -534,17 +534,22 @@ mod tests {
 
         // Success case: start address is set, element address not specified - will be appended.
         assert_eq!(
-            BootParams::add_boot_parameter_to_list(&foo, None, &mut accumulator, &mut Some(start))
-                .unwrap(),
+            BootParams::add_boot_parameter_to_list(
+                &element,
+                None,
+                &mut accumulator,
+                &mut Some(start)
+            )
+            .unwrap(),
             start
         );
-        assert_eq!(accumulator, foo.as_slice().to_vec());
+        assert_eq!(accumulator, element.as_slice().to_vec());
 
         // Success case: start address is unset, element address is specified.
         let mut list_start_opt: Option<GuestAddress> = None;
         assert_eq!(
             BootParams::add_boot_parameter_to_list(
-                &foo,
+                &element,
                 Some(start),
                 &mut accumulator,
                 &mut list_start_opt
@@ -553,14 +558,14 @@ mod tests {
             start
         );
         assert_eq!(list_start_opt, Some(start));
-        assert_eq!(accumulator, foo.as_slice().to_vec());
+        assert_eq!(accumulator, element.as_slice().to_vec());
 
         // Error case: start address is set, element address is specified, but precedes start.
         assert_eq!(
             format!(
                 "{:?}",
                 BootParams::add_boot_parameter_to_list(
-                    &foo,
+                    &element,
                     Some(start.unchecked_sub(0x100)),
                     &mut accumulator,
                     &mut list_start_opt
@@ -576,7 +581,7 @@ mod tests {
         accumulator.clear();
         // Start by adding 2 elements.
         assert!(BootParams::add_boot_parameter_to_list(
-            &foo,
+            &element,
             None,
             &mut accumulator,
             &mut list_start_opt
