@@ -578,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_bad_align() {
-        let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x10_000_000usize))]).unwrap();
+        let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x1000_0000_usize))]).unwrap();
         let bad_align_image = make_bad_align();
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::Align)),
