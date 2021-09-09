@@ -98,6 +98,13 @@ fn valid_element(s: &str) -> Result<()> {
 /// ```
 pub struct Cmdline {
     line: String,
+    // The commandline is split into two regions (as per the documentation:
+    // https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html):
+    // * the first region contains the regular parameters
+    // * the last regions contains the init parameters
+    // We need this so that we can ensure that the init parameters always stay at the end
+    // of the commandline.
+    region_delim: usize,
     capacity: usize,
 }
 
@@ -119,23 +126,55 @@ impl Cmdline {
         assert_ne!(capacity, 0);
         Cmdline {
             line: String::with_capacity(capacity),
+            region_delim: 0,
             capacity,
         }
     }
 
+    fn regular_needed_space(&self) -> usize {
+        // We calculate how much space we need for altering the regular params region
+        // of the commandline. We only need to account for the need of a space before
+        // upon inserting another regular param.
+        if self.region_delim == 0 {
+            0
+        } else {
+            1
+        }
+    }
+
+    fn init_needed_space(&self) -> usize {
+        // We calculate how much space we need for altering the init params region
+        // of the commandline. We also need to take into account the presence of "--".
+
+        // Since the init params lies in the second region of
+        // the commandline, we always need a space.
+        let mut space_needed = 1;
+        if !self.line.contains("--") {
+            space_needed += 3;
+        }
+        space_needed
+    }
+
     fn has_capacity(&self, more: usize) -> Result<()> {
-        let needs_space = if self.line.is_empty() { 0 } else { 1 };
-        if self.line.len() + more + needs_space < self.capacity {
+        if self.line.len() + more < self.capacity {
             Ok(())
         } else {
             Err(Error::TooLarge)
         }
     }
 
-    fn start_push(&mut self) {
-        if !self.line.is_empty() {
-            self.line.push(' ');
+    fn start_regular_push(&mut self) {
+        if self.region_delim > 0 {
+            self.line.insert(self.region_delim, ' ');
+            self.region_delim += 1;
         }
+    }
+
+    fn start_init_push(&mut self) {
+        if !self.line.contains("--") {
+            self.line.push_str(" --");
+        }
+        self.line.push(' ');
     }
 
     fn end_push(&mut self) {
@@ -167,13 +206,15 @@ impl Cmdline {
 
         valid_element(k)?;
         valid_element(v)?;
-        self.has_capacity(k.len() + v.len() + 1)?;
+        let pair = format!("{}={}", k, v);
 
-        self.start_push();
-        self.line.push_str(k);
-        self.line.push('=');
-        self.line.push_str(v);
+        self.has_capacity(pair.len() + self.regular_needed_space())?;
+
+        self.start_regular_push();
+        self.line.insert_str(self.region_delim, &pair);
         self.end_push();
+
+        self.region_delim += pair.len();
 
         Ok(())
     }
@@ -238,9 +279,41 @@ impl Cmdline {
         let s = slug.as_ref();
         valid_str(s)?;
 
-        self.has_capacity(s.len())?;
+        self.has_capacity(s.len() + self.regular_needed_space())?;
 
-        self.start_push();
+        self.start_regular_push();
+        self.line.insert_str(self.region_delim, s);
+        self.end_push();
+
+        self.region_delim += s.len();
+
+        Ok(())
+    }
+
+    /// Validates and inserts a string to the init params region of the command line.
+    ///
+    /// # Arguments
+    ///
+    /// * `slug` - String to be appended to the command line.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use linux_loader::cmdline::*;
+    /// # use std::ffi::CString;
+    /// let mut cl = Cmdline::new(100);
+    /// cl.insert_str("/bin/ls");
+    /// cl.insert_init_args("/etc/shadow");
+    /// let cl_cstring = CString::new(cl).unwrap();
+    /// assert_eq!(cl_cstring.to_str().unwrap(), "/bin/ls -- /etc/shadow");
+    /// ```
+    pub fn insert_init_args<T: AsRef<str>>(&mut self, slug: T) -> Result<()> {
+        let s = slug.as_ref();
+        valid_str(s)?;
+
+        self.has_capacity(s.len() + self.init_needed_space())?;
+
+        self.start_init_push();
         self.line.push_str(s);
         self.end_push();
 
@@ -415,6 +488,24 @@ mod tests {
         assert!(cl.insert("ab", "ba").is_ok()); // adds 5 length
         assert_eq!(cl.insert("c", "da"), Err(Error::TooLarge)); // adds 5 (including space) length
         assert!(cl.insert("c", "d").is_ok()); // adds 4 (including space) length
+    }
+
+    #[test]
+    fn test_insert_init_args() {
+        let mut cl = Cmdline::new(100);
+        assert!(cl.insert("init", "/bin/ls").is_ok());
+        assert!(cl.insert_init_args("/etc/passwd").is_ok());
+        assert_eq!(cl.as_str(), "init=/bin/ls -- /etc/passwd");
+        assert!(cl.insert_str("pci").is_ok());
+        assert_eq!(cl.as_str(), "init=/bin/ls pci -- /etc/passwd");
+
+        assert!(cl.insert("root", "/dev/vda").is_ok());
+        assert_eq!(cl.as_str(), "init=/bin/ls pci root=/dev/vda -- /etc/passwd");
+        assert!(cl.insert_init_args("/etc/profile").is_ok());
+        assert_eq!(
+            cl.as_str(),
+            "init=/bin/ls pci root=/dev/vda -- /etc/passwd /etc/profile"
+        );
     }
 
     #[test]
