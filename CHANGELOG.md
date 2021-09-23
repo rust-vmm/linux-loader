@@ -1,3 +1,25 @@
+# [v0.4.0]
+
+## Fixed
+
+- [[#66]](https://github.com/rust-vmm/linux-loader/issues/66) Fixed potential
+  overflow in calls to `align_up`.
+
+## Changed
+
+- [[#62]](https://github.com/rust-vmm/linux-loader/issues/62) The
+  `load_cmdline` function now takes as a parameter the crate defined
+  `Cmdline` object instead of `Cstr`. This means that customers don't need to
+  convert the object before calling into `load_cmdline`.
+- [[#83]](https://github.com/rust-vmm/linux-loader/issues/83) Updated the
+  vm-memory dependency requirement to the latest version (0.6.0).
+
+## Added
+
+- [[#79]](https://github.com/rust-vmm/linux-loader/pull/79) Implemented
+  `From<Cmdline>` for `Vec<u8>`. This replaces the obsolete `Into`
+  implementation.
+
 # [v0.3.0]
 
 ## Fixed
