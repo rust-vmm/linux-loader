@@ -96,6 +96,7 @@ fn valid_element(s: &str) -> Result<()> {
 /// let cl_cstring = CString::new(cl).unwrap();
 /// assert_eq!(cl_cstring.to_str().unwrap(), "");
 /// ```
+#[derive(Debug)]
 pub struct Cmdline {
     line: String,
     capacity: usize,
@@ -337,6 +338,12 @@ impl From<Cmdline> for Vec<u8> {
     }
 }
 
+impl PartialEq for Cmdline {
+    fn eq(&self, other: &Self) -> bool {
+        self.line == other.line
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -478,5 +485,19 @@ mod tests {
         let mut cl = Cmdline::new(100);
         assert!(cl.insert_multiple("foo", &["bar", "baz"]).is_ok());
         assert_eq!(cl.as_str(), "foo=bar,baz");
+    }
+
+    #[test]
+    fn test_partial_eq() {
+        let mut c1 = Cmdline::new(20);
+        let mut c2 = Cmdline::new(30);
+
+        c1.insert_str("hello world!").unwrap();
+        c2.insert_str("hello").unwrap();
+        assert_ne!(c1, c2);
+
+        // `insert_str` also adds a whitespace before the string being inserted.
+        c2.insert_str("world!").unwrap();
+        assert_eq!(c1, c2);
     }
 }
