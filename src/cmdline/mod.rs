@@ -96,7 +96,7 @@ fn valid_element(s: &str) -> Result<()> {
 /// let cl_cstring = CString::new(cl).unwrap();
 /// assert_eq!(cl_cstring.to_str().unwrap(), "");
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Cmdline {
     line: String,
     capacity: usize,
