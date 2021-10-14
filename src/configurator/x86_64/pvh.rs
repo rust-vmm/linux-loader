@@ -107,12 +107,12 @@ impl BootConfigurator for PvhBootConfigurator {
     ///         size: 0,
     ///         type_: E820_RAM,
     ///         reserved: 0,
-    ///   };
-    ///   start_info.magic = XEN_HVM_START_MAGIC_VALUE;
-    ///   start_info.version = 1;
-    ///   start_info.nr_modules = 0;
-    ///   start_info.memmap_entries = 0;
-    ///   (start_info, vec![memmap_entry])
+    ///     };
+    ///     start_info.magic = XEN_HVM_START_MAGIC_VALUE;
+    ///     start_info.version = 1;
+    ///     start_info.nr_modules = 0;
+    ///     start_info.memmap_entries = 0;
+    ///     (start_info, vec![memmap_entry])
     /// }
     ///
     /// fn main() {

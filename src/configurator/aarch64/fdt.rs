@@ -73,7 +73,8 @@ impl BootConfigurator for FdtBootConfigurator {
     /// FdtBootConfigurator::write_bootparams::<GuestMemoryMmap>(
     ///     &BootParams::new::<FdtPlaceholder>(&fdt, fdt_addr),
     ///     &guest_memory,
-    /// ).unwrap();
+    /// )
+    /// .unwrap();
     /// # }
     /// ```
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>

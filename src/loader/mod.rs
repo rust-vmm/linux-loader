@@ -206,7 +206,6 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
 /// gm.read_slice(buf.as_mut_slice(), GuestAddress(0x1000)).unwrap();
 /// assert_eq!(buf.as_slice(), "foo=bar\0".as_bytes());
-///
 pub fn load_cmdline<M: GuestMemory>(
     guest_mem: &M,
     guest_addr: GuestAddress,

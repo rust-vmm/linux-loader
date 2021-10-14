@@ -248,19 +248,20 @@ impl BootParams {
     /// // Sections start address needs to be configured first.
     /// assert!(boot_params.add_section::<Section>(&section, None).is_err());
     /// let sections_start = GuestAddress(0x2000);
-    /// assert!(boot_params.add_section::<Section>(
-    ///     &section, Some(sections_start)
-    /// ).is_ok());
+    /// assert!(boot_params
+    ///     .add_section::<Section>(&section, Some(sections_start))
+    ///     .is_ok());
     /// // It can be overwritten...
-    /// assert_eq!(boot_params.add_section::<Section>(
-    ///     &section,
-    ///     Some(sections_start)
-    /// ).unwrap(), sections_start);
+    /// assert_eq!(
+    ///     boot_params
+    ///         .add_section::<Section>(&section, Some(sections_start))
+    ///         .unwrap(),
+    ///     sections_start
+    /// );
     /// // But only if the address is valid.
-    /// assert!(boot_params.add_section::<Section>(
-    ///     &section,
-    ///     Some(sections_start.unchecked_sub(0x100))
-    /// ).is_err());
+    /// assert!(boot_params
+    ///     .add_section::<Section>(&section, Some(sections_start.unchecked_sub(0x100)))
+    ///     .is_err());
     /// // Or appended...
     /// assert_eq!(
     ///     boot_params.add_section::<Section>(&section, None).unwrap(),
@@ -356,19 +357,20 @@ impl BootParams {
     /// // Modules start address needs to be configured first.
     /// assert!(boot_params.add_module::<Module>(&module, None).is_err());
     /// let modules_start = GuestAddress(0x2000);
-    /// assert!(boot_params.add_module::<Module>(
-    ///     &module, Some(modules_start)
-    /// ).is_ok());
+    /// assert!(boot_params
+    ///     .add_module::<Module>(&module, Some(modules_start))
+    ///     .is_ok());
     /// // It can be overwritten...
-    /// assert_eq!(boot_params.add_module::<Module>(
-    ///     &module,
-    ///     Some(modules_start)
-    /// ).unwrap(), modules_start);
+    /// assert_eq!(
+    ///     boot_params
+    ///         .add_module::<Module>(&module, Some(modules_start))
+    ///         .unwrap(),
+    ///     modules_start
+    /// );
     /// // But only if the address is valid.
-    /// assert!(boot_params.add_module::<Module>(
-    ///     &module,
-    ///     Some(modules_start.unchecked_sub(0x100))
-    /// ).is_err());
+    /// assert!(boot_params
+    ///     .add_module::<Module>(&module, Some(modules_start.unchecked_sub(0x100)))
+    ///     .is_err());
     /// // Or appended...
     /// assert_eq!(
     ///     boot_params.add_module::<Module>(&module, None).unwrap(),

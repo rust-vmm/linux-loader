@@ -284,9 +284,13 @@ impl Cmdline {
     /// # use std::ffi::CString;
     /// # use vm_memory::{GuestAddress, GuestUsize};
     /// let mut cl = Cmdline::new(100);
-    /// cl.add_virtio_mmio_device(1 << 12, GuestAddress(0x1000), 5, Some(42)).unwrap();
+    /// cl.add_virtio_mmio_device(1 << 12, GuestAddress(0x1000), 5, Some(42))
+    ///     .unwrap();
     /// let cl_cstring = CString::new(cl).unwrap();
-    /// assert_eq!(cl_cstring.to_str().unwrap(), "virtio_mmio.device=4K@0x1000:5:42");
+    /// assert_eq!(
+    ///     cl_cstring.to_str().unwrap(),
+    ///     "virtio_mmio.device=4K@0x1000:5:42"
+    /// );
     /// ```
     ///
     /// [documentation]: https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
