@@ -89,10 +89,8 @@ impl BootConfigurator for LinuxBootConfigurator {
     ///     let guest_memory = create_guest_memory();
     ///     let params = build_bootparams();
     ///     let mut bootparams = BootParams::new::<boot_params>(&params, zero_page_addr);
-    ///     LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(
-    ///         &bootparams,
-    ///         &guest_memory,
-    ///     ).unwrap();
+    ///     LinuxBootConfigurator::write_bootparams::<GuestMemoryMmap>(&bootparams, &guest_memory)
+    ///         .unwrap();
     /// }
     /// ```
     ///

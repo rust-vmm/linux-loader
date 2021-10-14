@@ -190,7 +190,8 @@ impl KernelLoader for Elf {
     ///     Some(kernel_addr),
     ///     &mut Cursor::new(&kernel_image),
     ///     Some(himem_start),
-    /// ).unwrap();
+    /// )
+    /// .unwrap();
     /// ```
     ///
     /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
