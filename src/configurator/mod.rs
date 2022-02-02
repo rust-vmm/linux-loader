@@ -278,7 +278,7 @@ impl BootParams {
         Self::add_boot_parameter_to_list(
             section,
             section_addr,
-            &mut self.sections.get_or_insert(vec![]),
+            self.sections.get_or_insert(vec![]),
             &mut self.sections_start,
         )
     }
@@ -387,7 +387,7 @@ impl BootParams {
         Self::add_boot_parameter_to_list(
             module,
             module_addr,
-            &mut self.modules.get_or_insert(vec![]),
+            self.modules.get_or_insert(vec![]),
             &mut self.modules_start,
         )
     }

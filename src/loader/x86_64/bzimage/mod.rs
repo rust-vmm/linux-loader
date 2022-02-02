@@ -221,7 +221,7 @@ mod tests {
         v
     }
 
-    #[allow(safe_packed_borrows)]
+    #[allow(unaligned_references)]
     #[allow(non_snake_case)]
     #[test]
     fn test_load_bzImage() {
