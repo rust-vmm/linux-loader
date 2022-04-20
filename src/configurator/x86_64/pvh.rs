@@ -12,6 +12,8 @@
 //! Traits and structs for configuring and loading boot parameters on `x86_64` using the PVH boot
 //! protocol.
 
+#![cfg(any(feature = "elf", feature = "bzimage"))]
+
 use vm_memory::{ByteValued, Bytes, GuestMemory};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};

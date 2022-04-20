@@ -16,6 +16,8 @@
 //! - [PvhBootConfigurator](pvh/struct.PvhBootConfigurator.html): PVH boot protocol parameters
 //!   configurator.
 
+#![cfg(any(feature = "elf", feature = "pe", feature = "bzimage"))]
+
 use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory};
 
 use std::fmt;
