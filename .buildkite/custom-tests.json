@@ -13,6 +13,14 @@
             "platform": [
                 "x86_64"
             ]
+        },
+        {
+            "test_name": "build-no-default-features",
+            "command": "cargo build --release --no-default-features",
+            "platform": [
+                "x86_64",
+                "aarch64"
+            ]
         }
     ]
 }
