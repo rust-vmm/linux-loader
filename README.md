@@ -1,5 +1,8 @@
 # Linux-loader
 
+[![crates.io](https://img.shields.io/crates/v/linux-loader)](https://crates.io/crates/linux-loader)
+[![docs.rs](https://img.shields.io/docsrs/linux-loader)](https://docs.rs/linux-loader/)
+
 The `linux-loader` crate offers support for loading raw ELF (`vmlinux`) and
 compressed big zImage (`bzImage`) format kernel images on `x86_64` and PE
 (`Image`) kernel images on `aarch64`. ELF support includes the
