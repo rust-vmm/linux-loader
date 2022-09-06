@@ -1,3 +1,19 @@
+# [v0.5.0]
+
+## Fixed
+- [[#104]](https://github.com/rust-vmm/linux-loader/issues/104) Fixed
+  the `--no-default-features` not working.
+
+## Changed
+- [[#111]](https://github.com/rust-vmm/linux-loader/pull/111) Use
+  caret requirements for dependencies.
+
+## Added
+- [[#99]](https://github.com/rust-vmm/linux-loader/pull/99) Implement
+   `Debug` and `PartialEq` for `CmdLine`.
+- [[#100]](https://github.com/rust-vmm/linux-loader/pull/100) Added
+   `Clone` derive for `CmdLine`.
+
 # [v0.4.0]
 
 ## Fixed
