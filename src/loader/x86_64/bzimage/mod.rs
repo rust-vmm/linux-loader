@@ -21,7 +21,7 @@ use super::super::{
     bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// Bzimage kernel loader errors.
 pub enum Error {
     /// Invalid bzImage binary.

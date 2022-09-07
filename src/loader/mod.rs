@@ -41,7 +41,7 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 pub use aarch64::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// Kernel loader errors.
 pub enum Error {
     /// Failed to load bzimage.

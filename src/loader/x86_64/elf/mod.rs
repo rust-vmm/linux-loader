@@ -27,7 +27,7 @@ unsafe impl ByteValued for elf::Elf64_Ehdr {}
 unsafe impl ByteValued for elf::Elf64_Nhdr {}
 unsafe impl ByteValued for elf::Elf64_Phdr {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// Elf kernel loader errors.
 pub enum Error {
     /// Invalid alignment.
@@ -96,7 +96,7 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Availability of PVH entry point in the kernel, which allows the VMM
 /// to use the PVH boot protocol to start guests.
 pub enum PvhBootCapability {
