@@ -11,7 +11,7 @@ use std::fmt;
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
 /// Errors specific to the device tree boot protocol configuration.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// FDT does not fit in guest memory.
     FDTPastRamEnd,

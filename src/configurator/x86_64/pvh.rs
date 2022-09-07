@@ -25,7 +25,7 @@ use std::fmt;
 pub struct PvhBootConfigurator {}
 
 /// Errors specific to the PVH boot protocol configuration.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// The starting address for the memory map wasn't passed to the boot configurator.
     MemmapTableAddressMissing,

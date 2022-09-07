@@ -22,7 +22,7 @@ use std::fmt;
 pub struct LinuxBootConfigurator {}
 
 /// Errors specific to the Linux boot protocol configuration.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// The zero page extends past the end of guest memory.
     ZeroPagePastRamEnd,

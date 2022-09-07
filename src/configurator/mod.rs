@@ -35,7 +35,7 @@ use std::cmp::max;
 use std::mem::size_of;
 
 /// Errors specific to boot protocol configuration.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Errors specific to the Linux boot protocol configuration.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -433,28 +433,28 @@ mod tests {
 
     unsafe impl ByteValued for Foobar {}
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     struct DummyHeader {
         _dummy: u64,
     }
 
     unsafe impl ByteValued for DummyHeader {}
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     struct DummySection {
         _dummy: u64,
     }
 
     unsafe impl ByteValued for DummySection {}
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     struct DummyModule {
         _dummy: u64,
     }
 
     unsafe impl ByteValued for DummyModule {}
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     struct OtherDummyModule {
         _dummy: u64,
     }
