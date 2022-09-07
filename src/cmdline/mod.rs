@@ -14,7 +14,7 @@ use std::result;
 use vm_memory::{Address, GuestAddress, GuestUsize};
 
 /// The error type for command line building operations.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Operation would have resulted in a non-printable ASCII character.
     InvalidAscii,

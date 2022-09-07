@@ -25,7 +25,7 @@ pub struct PE;
 
 unsafe impl ByteValued for arm64_image_header {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// PE kernel loader errors.
 pub enum Error {
     /// Unable to seek to Image end.
