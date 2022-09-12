@@ -1,3 +1,20 @@
+# [Unreleased]
+
+## Added
+- Added `NoBootArgsInserted` error type used when calling `as_cstring` on a `Cmdline`
+  containing only init args.
+- Added `InvalidCapacity` error type used when trying to create a `Cmdline`
+  either with zero capacity (using `new` or `try_from`) or with smaller capacity
+  than required for arguments (using `try_from`).
+- Added `insert_init_args` method allowing insertion of init arguments into `Cmdline`.
+
+## Changed
+- Removed `InvalidDevice` error type (it wasn't used anywhere).
+- Replaced `From` with `TryFrom<Cmdline>` for `Vec<u8>` to be able
+  to propagate errors returned by `as_cstring` when converting a `Cmdline` to `Vec<u8>`.
+- Support added for both boot and init arguments in `try_from`.
+- Changed `new` to return `Result` for invalid command line capacity handling.
+
 # [v0.6.0]
 
 ## Changed

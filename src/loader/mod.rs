@@ -204,7 +204,7 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// # type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 /// let mem_size: usize = 0x1000000;
 /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
-/// let mut cl = Cmdline::new(10);
+/// let mut cl = Cmdline::new(10).unwrap();
 /// cl.insert("foo", "bar");
 /// let mut buf = vec![0u8;8];
 /// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn test_cmdline_overflow() {
         let gm = create_guest_mem();
-        let mut cl = Cmdline::new(10);
+        let mut cl = Cmdline::new(10).unwrap();
         cl.insert_str("12345").unwrap();
 
         let cmdline_address = GuestAddress(u64::MAX - 5);
@@ -282,7 +282,7 @@ mod tests {
         // Fill in guest memory with non zero bytes
         gm.write(sample_buf, cmdline_address).unwrap();
 
-        let mut cl = Cmdline::new(10);
+        let mut cl = Cmdline::new(10).unwrap();
 
         // Test loading an empty cmdline
         load_cmdline(&gm, cmdline_address, &cl).unwrap();
