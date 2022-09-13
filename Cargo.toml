@@ -2,7 +2,7 @@
 name = "linux-loader"
 version = "0.5.0"
 authors = ["Cathy Zhang <cathy.zhang@intel.com>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0 AND BSD-3-Clause"
 description = "A Linux kernel image loading crate."
 keywords = ["kernel"]
