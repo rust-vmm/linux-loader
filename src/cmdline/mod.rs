@@ -8,6 +8,7 @@
 //
 //! Helper for creating valid kernel command line strings.
 
+use std::ffi::CString;
 use std::fmt;
 use std::result;
 
@@ -16,6 +17,8 @@ use vm_memory::{Address, GuestAddress, GuestUsize};
 /// The error type for command line building operations.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
+    /// Null terminator identified in the command line.
+    NullTerminator,
     /// Operation would have resulted in a non-printable ASCII character.
     InvalidAscii,
     /// Invalid device passed to the kernel command line builder.
@@ -35,6 +38,9 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::NullTerminator => {
+                write!(f, "Null terminator detected in the command line structure.")
+            }
             Error::InvalidAscii => write!(f, "String contains a non-printable ASCII character."),
             Error::InvalidDevice(ref dev) => write!(
                 f,
@@ -156,11 +162,9 @@ impl Cmdline {
     ///
     /// ```rust
     /// # use linux_loader::cmdline::*;
-    /// # use std::ffi::CString;
     /// let mut cl = Cmdline::new(100);
     /// cl.insert("foo", "bar");
-    /// let cl_cstring = CString::new(cl).unwrap();
-    /// assert_eq!(cl_cstring.to_str().unwrap(), "foo=bar");
+    /// assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"foo=bar\0");
     /// ```
     pub fn insert<T: AsRef<str>>(&mut self, key: T, val: T) -> Result<()> {
         let k = key.as_ref();
@@ -248,7 +252,12 @@ impl Cmdline {
         Ok(())
     }
 
-    /// Returns the string representation of the command line without the nul terminator.
+    /// Returns a C compatible representation of the command line
+    /// The Linux kernel expects a null terminated cmdline according to the source:
+    /// https://elixir.bootlin.com/linux/v5.10.139/source/kernel/params.c#L179
+    ///
+    /// To get bytes of the cmdline to be written in guest's memory (including the
+    /// null terminator) from this representation, use CString::as_bytes_with_nul()
     ///
     /// # Examples
     ///
@@ -256,10 +265,10 @@ impl Cmdline {
     /// # use linux_loader::cmdline::*;
     /// let mut cl = Cmdline::new(10);
     /// cl.insert_str("foobar");
-    /// assert_eq!(cl.as_str(), "foobar");
+    /// assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"foobar\0");
     /// ```
-    pub fn as_str(&self) -> &str {
-        self.line.as_str()
+    pub fn as_cstring(&self) -> Result<CString> {
+        CString::new(self.line.to_string()).map_err(|_| Error::NullTerminator)
     }
 
     /// Adds a virtio MMIO device to the kernel command line.
@@ -356,9 +365,12 @@ mod tests {
     #[test]
     fn test_insert_hello_world() {
         let mut cl = Cmdline::new(100);
-        assert_eq!(cl.as_str(), "");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
         assert!(cl.insert("hello", "world").is_ok());
-        assert_eq!(cl.as_str(), "hello=world");
+        assert_eq!(
+            cl.as_cstring().unwrap().as_bytes_with_nul(),
+            b"hello=world\0"
+        );
 
         let s = CString::new(cl).expect("failed to create CString from Cmdline");
         assert_eq!(s, CString::new("hello=world").unwrap());
@@ -369,7 +381,10 @@ mod tests {
         let mut cl = Cmdline::new(100);
         assert!(cl.insert("hello", "world").is_ok());
         assert!(cl.insert("foo", "bar").is_ok());
-        assert_eq!(cl.as_str(), "hello=world foo=bar");
+        assert_eq!(
+            cl.as_cstring().unwrap().as_bytes_with_nul(),
+            b"hello=world foo=bar\0"
+        );
     }
 
     #[test]
@@ -379,7 +394,7 @@ mod tests {
         assert_eq!(cl.insert("a", "b "), Err(Error::HasSpace));
         assert_eq!(cl.insert("a ", "b "), Err(Error::HasSpace));
         assert_eq!(cl.insert(" a", "b"), Err(Error::HasSpace));
-        assert_eq!(cl.as_str(), "");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
     }
 
     #[test]
@@ -390,7 +405,7 @@ mod tests {
         assert_eq!(cl.insert("a=", "b "), Err(Error::HasEquals));
         assert_eq!(cl.insert("=a", "b"), Err(Error::HasEquals));
         assert_eq!(cl.insert("a", "=b"), Err(Error::HasEquals));
-        assert_eq!(cl.as_str(), "");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
     }
 
     #[test]
@@ -398,17 +413,20 @@ mod tests {
         let mut cl = Cmdline::new(100);
         assert_eq!(cl.insert("heart", "💖"), Err(Error::InvalidAscii));
         assert_eq!(cl.insert("💖", "love"), Err(Error::InvalidAscii));
-        assert_eq!(cl.as_str(), "");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
     }
 
     #[test]
     fn test_insert_string() {
         let mut cl = Cmdline::new(13);
-        assert_eq!(cl.as_str(), "");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
         assert!(cl.insert_str("noapic").is_ok());
-        assert_eq!(cl.as_str(), "noapic");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"noapic\0");
         assert!(cl.insert_str("nopci").is_ok());
-        assert_eq!(cl.as_str(), "noapic nopci");
+        assert_eq!(
+            cl.as_cstring().unwrap().as_bytes_with_nul(),
+            b"noapic nopci\0"
+        );
     }
 
     #[test]
@@ -420,7 +438,7 @@ mod tests {
         assert!(cl.insert("a", "b").is_ok());
         assert_eq!(cl.insert("a", "b"), Err(Error::TooLarge));
         assert_eq!(cl.insert_str("a"), Err(Error::TooLarge));
-        assert_eq!(cl.as_str(), "a=b");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"a=b\0");
 
         let mut cl = Cmdline::new(10);
         assert!(cl.insert("ab", "ba").is_ok()); // adds 5 length
@@ -445,25 +463,37 @@ mod tests {
             .add_virtio_mmio_device(1, GuestAddress(0), 1, None)
             .is_ok());
         let mut expected_str = "virtio_mmio.device=1@0x0:1".to_string();
-        assert_eq!(cl.as_str(), &expected_str);
+        assert_eq!(
+            cl.as_cstring().unwrap(),
+            CString::new(expected_str.as_bytes()).unwrap()
+        );
 
         assert!(cl
             .add_virtio_mmio_device(2 << 10, GuestAddress(0x100), 2, None)
             .is_ok());
         expected_str.push_str(" virtio_mmio.device=2K@0x100:2");
-        assert_eq!(cl.as_str(), &expected_str);
+        assert_eq!(
+            cl.as_cstring().unwrap(),
+            CString::new(expected_str.as_bytes()).unwrap()
+        );
 
         assert!(cl
             .add_virtio_mmio_device(3 << 20, GuestAddress(0x1000), 3, None)
             .is_ok());
         expected_str.push_str(" virtio_mmio.device=3M@0x1000:3");
-        assert_eq!(cl.as_str(), &expected_str);
+        assert_eq!(
+            cl.as_cstring().unwrap(),
+            CString::new(expected_str.as_bytes()).unwrap()
+        );
 
         assert!(cl
             .add_virtio_mmio_device(4 << 30, GuestAddress(0x0001_0000), 4, Some(42))
             .is_ok());
         expected_str.push_str(" virtio_mmio.device=4G@0x10000:4:42");
-        assert_eq!(cl.as_str(), &expected_str);
+        assert_eq!(
+            cl.as_cstring().unwrap(),
+            CString::new(expected_str.as_bytes()).unwrap()
+        );
     }
 
     #[test]
@@ -484,11 +514,14 @@ mod tests {
 
         let mut cl = Cmdline::new(100);
         assert!(cl.insert_multiple("foo", &["bar"]).is_ok());
-        assert_eq!(cl.as_str(), "foo=bar");
+        assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"foo=bar\0");
 
         let mut cl = Cmdline::new(100);
         assert!(cl.insert_multiple("foo", &["bar", "baz"]).is_ok());
-        assert_eq!(cl.as_str(), "foo=bar,baz");
+        assert_eq!(
+            cl.as_cstring().unwrap().as_bytes_with_nul(),
+            b"foo=bar,baz\0"
+        );
     }
 
     #[test]
