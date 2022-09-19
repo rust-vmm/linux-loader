@@ -56,6 +56,8 @@ pub enum Error {
     #[cfg(all(feature = "pe", target_arch = "aarch64"))]
     Pe(pe::Error),
 
+    /// Invalid command line.
+    InvalidCommandLine,
     /// Failed writing command line to guest memory.
     CommandLineCopy,
     /// Command line overflowed guest memory.
@@ -81,6 +83,7 @@ impl fmt::Display for Error {
             #[cfg(all(feature = "pe", target_arch = "aarch64"))]
             Error::Pe(ref _e) => "failed to load PE kernel image",
 
+            Error::InvalidCommandLine => "invalid command line provided",
             Error::CommandLineCopy => "failed writing command line to guest memory",
             Error::CommandLineOverflow => "command line overflowed guest memory",
             Error::InvalidKernelStartAddress => "invalid kernel start address",
@@ -101,6 +104,7 @@ impl std::error::Error for Error {
             #[cfg(all(feature = "pe", target_arch = "aarch64"))]
             Error::Pe(ref e) => Some(e),
 
+            Error::InvalidCommandLine => None,
             Error::CommandLineCopy => None,
             Error::CommandLineOverflow => None,
             Error::InvalidKernelStartAddress => None,
@@ -211,20 +215,26 @@ pub fn load_cmdline<M: GuestMemory>(
     guest_addr: GuestAddress,
     cmdline: &Cmdline,
 ) -> Result<()> {
-    let len = cmdline.as_str().len();
-    if len == 0 {
-        return Ok(());
-    }
+    // We need a null terminated string because that's what the Linux
+    // kernel expects when parsing the command line:
+    // https://elixir.bootlin.com/linux/v5.10.139/source/kernel/params.c#L179
+    let cmdline_string = cmdline
+        .as_cstring()
+        .map_err(|_| Error::InvalidCommandLine)?;
+
+    let cmdline_bytes = cmdline_string.as_bytes_with_nul();
 
     let end = guest_addr
-        .checked_add(len as u64 + 1)
-        .ok_or(Error::CommandLineOverflow)?; // Extra for null termination.
+        // Underflow not possible because the cmdline contains at least
+        // a byte (null terminator)
+        .checked_add((cmdline_bytes.len() - 1) as u64)
+        .ok_or(Error::CommandLineOverflow)?;
     if end > guest_mem.last_addr() {
         return Err(Error::CommandLineOverflow);
     }
 
     guest_mem
-        .write_slice(cmdline.as_str().as_bytes(), guest_addr)
+        .write_slice(cmdline_bytes, guest_addr)
         .map_err(|_| Error::CommandLineCopy)?;
 
     Ok(())
@@ -245,22 +255,44 @@ mod tests {
     #[test]
     fn test_cmdline_overflow() {
         let gm = create_guest_mem();
-        let cmdline_address = GuestAddress(MEM_SIZE - 5);
         let mut cl = Cmdline::new(10);
         cl.insert_str("12345").unwrap();
+
+        let cmdline_address = GuestAddress(u64::MAX - 5);
         assert_eq!(
             Err(Error::CommandLineOverflow),
             load_cmdline(&gm, cmdline_address, &cl)
         );
+
+        let cmdline_address = GuestAddress(MEM_SIZE - 5);
+        assert_eq!(
+            Err(Error::CommandLineOverflow),
+            load_cmdline(&gm, cmdline_address, &cl)
+        );
+        let cmdline_address = GuestAddress(MEM_SIZE - 6);
+        assert!(load_cmdline(&gm, cmdline_address, &cl).is_ok());
     }
 
     #[test]
-    fn test_cmdline_write_end() {
+    fn test_cmdline_write_end_regresion() {
         let gm = create_guest_mem();
         let mut cmdline_address = GuestAddress(45);
+        let sample_buf = &[1; 100];
+
+        // Fill in guest memory with non zero bytes
+        gm.write(sample_buf, cmdline_address).unwrap();
+
         let mut cl = Cmdline::new(10);
-        cl.insert_str("1234").unwrap();
-        assert_eq!(Ok(()), load_cmdline(&gm, cmdline_address, &cl));
+
+        // Test loading an empty cmdline
+        load_cmdline(&gm, cmdline_address, &cl).unwrap();
+        let val: u8 = gm.read_obj(cmdline_address).unwrap();
+        assert_eq!(val, b'\0');
+
+        // Test loading an non-empty cmdline
+        cl.insert_str("123").unwrap();
+        load_cmdline(&gm, cmdline_address, &cl).unwrap();
+
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
         assert_eq!(val, b'1');
         cmdline_address = cmdline_address.unchecked_add(1);
@@ -269,9 +301,6 @@ mod tests {
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
         assert_eq!(val, b'3');
-        cmdline_address = cmdline_address.unchecked_add(1);
-        let val: u8 = gm.read_obj(cmdline_address).unwrap();
-        assert_eq!(val, b'4');
         cmdline_address = cmdline_address.unchecked_add(1);
         let val: u8 = gm.read_obj(cmdline_address).unwrap();
         assert_eq!(val, b'\0');
