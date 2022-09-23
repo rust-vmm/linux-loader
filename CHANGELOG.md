@@ -1,3 +1,20 @@
+# [v0.6.0]
+
+## Changed
+- Crate is now using edition 2021.
+
+## Added
+- Derived `Eq` for `Error` types and the `PvhBootCapability` enum.
+
+## Fixed
+- Fixed a bug in `load_cmdline` due to which the command line was not null
+  terminated. This resulted in a change in the `Cmdline` API where instead of
+  returning the cmdline as a String, we're now returning it as a `CString` as
+  the latter has support for converting it to a null terminated bytes array.
+- Fixed an off-by-one error in load_cmdline, where we were doing validations
+  on the first address after the command line memory region, instead of the
+  last inclusive one of it.
+
 # [v0.5.0]
 
 ## Fixed
