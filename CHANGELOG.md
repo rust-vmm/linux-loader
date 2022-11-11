@@ -1,3 +1,9 @@
+# [v0.8.0]
+
+# Changed
+
+- Updated vm-memory from 0.9.0 to 0.10.0
+
 # [v0.7.0]
 
 ## Added
