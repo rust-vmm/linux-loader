@@ -6,7 +6,8 @@
             "platform": [
                 "x86_64",
                 "aarch64"
-            ]
+            ],
+            "timeout_in_minutes": 15
         }
     ]
 }
