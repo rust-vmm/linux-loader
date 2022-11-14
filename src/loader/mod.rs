@@ -180,8 +180,13 @@ pub trait KernelLoader {
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for bootparam::setup_header {}
+
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for bootparam::boot_params {}
 
 /// Writes the command line string to the given guest memory slice.

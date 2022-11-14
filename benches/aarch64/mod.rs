@@ -24,6 +24,8 @@ fn create_guest_memory() -> GuestMemoryMmap {
 #[derive(Clone, Copy, Default)]
 pub struct FdtPlaceholder([u8; FDT_MAX_SIZE]);
 
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for FdtPlaceholder {}
 
 fn build_fdt_boot_params() -> BootParams {

@@ -94,6 +94,7 @@ impl BootConfigurator for FdtBootConfigurator {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::undocumented_unsafe_blocks)]
     use super::*;
     use vm_memory::{Address, ByteValued, GuestAddress, GuestMemoryMmap};
 
