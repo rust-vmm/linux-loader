@@ -23,6 +23,8 @@ use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult,
 /// ARM64 Image (PE) format support
 pub struct PE;
 
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for arm64_image_header {}
 
 #[derive(Debug, PartialEq, Eq)]

@@ -69,8 +69,16 @@ impl From<Error> for BootConfiguratorError {
     }
 }
 
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for hvm_start_info {}
+
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for hvm_memmap_table_entry {}
+
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for hvm_modlist_entry {}
 
 impl BootConfigurator for PvhBootConfigurator {

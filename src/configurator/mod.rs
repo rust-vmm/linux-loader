@@ -424,6 +424,7 @@ impl BootParams {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::undocumented_unsafe_blocks)]
     use super::*;
 
     #[derive(Clone, Copy, Default)]

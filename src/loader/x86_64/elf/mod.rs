@@ -23,8 +23,16 @@ use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult
 use crate::loader_gen::elf;
 pub use crate::loader_gen::start_info;
 
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for elf::Elf64_Ehdr {}
+
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for elf::Elf64_Nhdr {}
+
+// SAFETY: The layout of the structure is fixed and can be initialized by
+// reading its content from byte array.
 unsafe impl ByteValued for elf::Elf64_Phdr {}
 
 #[derive(Debug, PartialEq, Eq)]
