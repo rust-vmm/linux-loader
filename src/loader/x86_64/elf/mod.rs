@@ -217,8 +217,8 @@ impl KernelLoader for Elf {
             .map_err(|_| Error::SeekElfStart)?;
 
         let mut ehdr = elf::Elf64_Ehdr::default();
-        ehdr.as_bytes()
-            .read_from(0, kernel_image, mem::size_of::<elf::Elf64_Ehdr>())
+        kernel_image
+            .read_exact(ehdr.as_mut_slice())
             .map_err(|_| Error::ReadElfHeader)?;
 
         // Sanity checks.
@@ -246,12 +246,11 @@ impl KernelLoader for Elf {
             .seek(SeekFrom::Start(ehdr.e_phoff))
             .map_err(|_| Error::SeekProgramHeader)?;
 
-        let phdr_sz = mem::size_of::<elf::Elf64_Phdr>();
         let mut phdrs: Vec<elf::Elf64_Phdr> = vec![];
         for _ in 0usize..ehdr.e_phnum as usize {
             let mut phdr = elf::Elf64_Phdr::default();
-            phdr.as_bytes()
-                .read_from(0, kernel_image, phdr_sz)
+            kernel_image
+                .read_exact(phdr.as_mut_slice())
                 .map_err(|_| Error::ReadProgramHeader)?;
             phdrs.push(phdr);
         }
@@ -335,8 +334,8 @@ where
     let nhdr_sz = mem::size_of::<elf::Elf64_Nhdr>();
 
     while read_size < phdr.p_filesz as usize {
-        nhdr.as_bytes()
-            .read_from(0, kernel_image, nhdr_sz)
+        kernel_image
+            .read_exact(nhdr.as_mut_slice())
             .map_err(|_| Error::ReadNoteHeader)?;
 
         // Check if the note header's name and type match the ones specified by the PVH ABI.
