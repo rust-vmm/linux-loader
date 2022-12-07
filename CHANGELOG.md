@@ -1,6 +1,19 @@
+# [v0.8.1]
+
+## Fixed
+
+- [[#125]](https://github.com/rust-vmm/linux-loader/pull/125) The ELF
+header contains offsets that the loader uses to find other
+structures. If those offsets are beyond the end of the file (or would go
+past the end of the file) it is essential to error out when attempting
+to read those.
+
+## Added
+- Add a new criterion advisory to ignore list [`2580d4`](https://github.com/rust-vmm/linux-loader/commit/2580d45f741988468e9b086adbcadae7cc7433a5)
+
 # [v0.8.0]
 
-# Changed
+## Changed
 
 - Updated vm-memory from 0.9.0 to 0.10.0
 
