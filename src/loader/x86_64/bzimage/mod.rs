@@ -221,7 +221,6 @@ mod tests {
         v
     }
 
-    #[allow(unaligned_references)]
     #[allow(non_snake_case)]
     #[test]
     fn test_load_bzImage() {
@@ -238,10 +237,23 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
+        let setup_header = loader_result.setup_header.unwrap();
 
         assert_eq!(loader_result.kernel_load.raw_value(), 0x200000);
-        assert_eq!(loader_result.setup_header.unwrap().header, 0x53726448);
-        assert_eq!(loader_result.setup_header.unwrap().version, 0x20d);
+        assert_eq!(
+            // SAFETY:
+            // Reading the value from an unaligned address is not considered safe.
+            // but this is not an issue since this is a test.
+            unsafe { std::ptr::addr_of!(setup_header.header).read_unaligned() },
+            0x53726448
+        );
+        assert_eq!(
+            // SAFETY:
+            // Reading the value from an unaligned address is not considered safe.
+            // but this is not an issue since this is a test.
+            unsafe { std::ptr::addr_of!(setup_header.version).read_unaligned() },
+            0x20d
+        );
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
         assert_eq!(loader_result.kernel_end, 0x60D320);
 
@@ -253,11 +265,20 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
+        let setup_header = loader_result.setup_header.unwrap();
+
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
-        // load bzImage withouth himem_start
+        // load bzImage without himem_start
         loader_result = BzImage::load(&gm, None, &mut Cursor::new(&image), None).unwrap();
-        assert_eq!(0x53726448, loader_result.setup_header.unwrap().header);
+        // Reading the value from an unaligned address is not considered safe.
+        assert_eq!(
+            0x53726448,
+            // SAFETY:
+            // Reading the value from an unaligned address is not considered safe.
+            // but this is not an issue since this is a test.
+            unsafe { std::ptr::addr_of!(setup_header.header).read_unaligned() }
+        );
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
         // load bzImage with a bad himem setting
