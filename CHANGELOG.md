@@ -1,3 +1,10 @@
+# [Upcoming Release]
+
+## Fixed
+- [[#71]](https://github.com/rust-vmm/linux-loader/issues/71) Fix incorrect
+  alignment for ELF notes, starting address of name field and descriptor
+  field have a 4-byte alignment.
+
 # [v0.8.1]
 
 ## Fixed

@@ -62,7 +62,8 @@ the binaries used in the unit tests.
 | invalid_pvh_note_writer.cpp | test_invalid_pvh_note.bin |
 | dummy_note.cpp | test_dummy_note.bin |
 | basic_elf.cpp | test_elf.bin |
-| pvh_note.cpp | test_elfnote.bin |
+| ignored_phv.cpp | test_elfnote.bin |
+| ignored_phv_8byte_align.cpp | test_elfnote_8byte_align.bin |
 
 #### Example for generating `test_bad_align.bin`
 
