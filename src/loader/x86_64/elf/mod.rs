@@ -322,6 +322,14 @@ where
     // the PVH boot protocol.
     const XEN_ELFNOTE_PHYS32_ENTRY: u32 = 18;
 
+    // Alignment of ELF notes, starting address of name field and descriptor field have a 4-byte
+    // alignment.
+    //
+    // See refer from:
+    //  - 'Note Section' of 'Executable and Linking Format (ELF) Specification' v1.2.
+    //  - Linux implementations, https://elixir.bootlin.com/linux/v6.1/source/include/linux/elfnote.h#L56
+    const ELFNOTE_ALIGN: u64 = 4;
+
     // Seek to the beginning of the note segment.
     kernel_image
         .seek(SeekFrom::Start(phdr.p_offset))
@@ -350,8 +358,8 @@ where
         }
 
         // Skip the note header plus the size of its fields (with alignment).
-        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), phdr.p_align)?;
-        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), phdr.p_align)?;
+        let namesz_aligned = align_up(u64::from(nhdr.n_namesz), ELFNOTE_ALIGN)?;
+        let descsz_aligned = align_up(u64::from(nhdr.n_descsz), ELFNOTE_ALIGN)?;
 
         // `namesz` and `descsz` are both `u32`s. We need to also verify for overflow, to be sure
         // we do not lose information.
@@ -385,7 +393,7 @@ where
     kernel_image
         .seek(SeekFrom::Current(
             // Safe conversion since it is not losing data.
-            align_up(u64::from(nhdr.n_namesz), phdr.p_align)? as i64 - PVH_NOTE_STR_SZ as i64,
+            align_up(u64::from(nhdr.n_namesz), ELFNOTE_ALIGN)? as i64 - PVH_NOTE_STR_SZ as i64,
         ))
         .map_err(|_| Error::SeekNoteHeader)?;
 
@@ -449,6 +457,10 @@ mod tests {
         include_bytes!("test_elfnote.bin").to_vec()
     }
 
+    fn make_elfnote_8byte_align() -> Vec<u8> {
+        include_bytes!("test_elfnote_8byte_align.bin").to_vec()
+    }
+
     fn make_dummy_elfnote() -> Vec<u8> {
         include_bytes!("test_dummy_note.bin").to_vec()
     }
@@ -457,7 +469,7 @@ mod tests {
         include_bytes!("test_invalid_pvh_note.bin").to_vec()
     }
 
-    fn make_bad_align() -> Vec<u8> {
+    fn make_elfnote_bad_align() -> Vec<u8> {
         include_bytes!("test_bad_align.bin").to_vec()
     }
 
@@ -585,13 +597,31 @@ mod tests {
     }
 
     #[test]
-    fn test_bad_align() {
-        let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x1000_0000_usize))]).unwrap();
-        let bad_align_image = make_bad_align();
-        assert_eq!(
-            Some(KernelLoaderError::Elf(Error::Align)),
-            Elf::load(&gm, None, &mut Cursor::new(&bad_align_image), None).err()
-        );
+    fn test_load_pvh_with_align() {
+        // Alignment of ELF notes is always const value (4-bytes), ELF notes parse should not get Align
+        // error.
+        {
+            let gm =
+                GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (0x1000_0000_usize))]).unwrap();
+            let bad_align_image = make_elfnote_bad_align();
+            assert_ne!(
+                Some(KernelLoaderError::Elf(Error::Align)),
+                Elf::load(&gm, None, &mut Cursor::new(&bad_align_image), None).err()
+            );
+        }
+
+        // Alignment of ELF notes is always const value (4-byte), ELF notes parse should always
+        // success even there is incorrect p_align in phdr.
+        {
+            let gm = create_guest_mem();
+            let pvhnote_image = make_elfnote_8byte_align();
+            let loader_result =
+                Elf::load(&gm, None, &mut Cursor::new(&pvhnote_image), None).unwrap();
+            assert_eq!(
+                loader_result.pvh_boot_cap,
+                PvhBootCapability::PvhEntryPresent(GuestAddress(0x1e1fe1f))
+            );
+        }
     }
 
     #[test]
