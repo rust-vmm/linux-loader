@@ -224,7 +224,7 @@ impl KernelLoader for Elf {
         // Sanity checks.
         Self::validate_header(&ehdr)?;
         if let Some(addr) = highmem_start_address {
-            if (ehdr.e_entry as u64) < addr.raw_value() {
+            if (ehdr.e_entry) < addr.raw_value() {
                 return Err(Error::InvalidEntryAddress.into());
             }
         }
@@ -234,10 +234,10 @@ impl KernelLoader for Elf {
                 Some(k_offset) => GuestAddress(
                     k_offset
                         .raw_value()
-                        .checked_add(ehdr.e_entry as u64)
+                        .checked_add(ehdr.e_entry)
                         .ok_or(Error::Overflow)?,
                 ),
-                None => GuestAddress(ehdr.e_entry as u64),
+                None => GuestAddress(ehdr.e_entry),
             },
             ..Default::default()
         };
@@ -282,9 +282,9 @@ impl KernelLoader for Elf {
             // load it to the physical address p_paddr for each segment.
             let mem_offset = match kernel_offset {
                 Some(k_offset) => k_offset
-                    .checked_add(phdr.p_paddr as u64)
+                    .checked_add(phdr.p_paddr)
                     .ok_or(Error::InvalidProgramHeaderAddress)?,
-                None => GuestAddress(phdr.p_paddr as u64),
+                None => GuestAddress(phdr.p_paddr),
             };
 
             guest_mem
