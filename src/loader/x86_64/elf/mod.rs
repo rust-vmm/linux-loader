@@ -212,9 +212,7 @@ impl KernelLoader for Elf {
     where
         F: Read + Seek,
     {
-        kernel_image
-            .seek(SeekFrom::Start(0))
-            .map_err(|_| Error::SeekElfStart)?;
+        kernel_image.rewind().map_err(|_| Error::SeekElfStart)?;
 
         let mut ehdr = elf::Elf64_Ehdr::default();
         kernel_image
