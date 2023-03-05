@@ -118,9 +118,7 @@ impl KernelLoader for PE {
             .seek(SeekFrom::End(0))
             .map_err(|_| Error::SeekImageEnd)? as usize;
         let mut arm64_header: arm64_image_header = Default::default();
-        kernel_image
-            .seek(SeekFrom::Start(0))
-            .map_err(|_| Error::SeekImageHeader)?;
+        kernel_image.rewind().map_err(|_| Error::SeekImageHeader)?;
 
         arm64_header
             .as_bytes()
@@ -156,9 +154,7 @@ impl KernelLoader for PE {
             ..Default::default()
         };
 
-        kernel_image
-            .seek(SeekFrom::Start(0))
-            .map_err(|_| Error::SeekImageHeader)?;
+        kernel_image.rewind().map_err(|_| Error::SeekImageHeader)?;
         guest_mem
             .read_exact_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadKernelImage)?;
@@ -194,9 +190,7 @@ where
     if dtb_size > 0x200000 {
         return Err(Error::DtbTooBig.into());
     }
-    dtb_image
-        .seek(SeekFrom::Start(0))
-        .map_err(|_| Error::SeekDtbStart)?;
+    dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
     guest_mem
         .read_exact_from(guest_addr, dtb_image, dtb_size)
         .map_err(|_| Error::ReadDtbImage.into())
