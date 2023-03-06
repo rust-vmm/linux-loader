@@ -1,7 +1,11 @@
 [package]
 name = "linux-loader"
 version = "0.8.1"
-authors = ["Cathy Zhang <cathy.zhang@intel.com>"]
+authors = [
+    "The rust-vmm maintainers",
+    "rust-vmm AWS maintainers <rust-vmm-maintainers@amazon.com>",
+    "Cathy Zhang <cathy.zhang@intel.com>"
+]
 edition = "2021"
 license = "Apache-2.0 AND BSD-3-Clause"
 description = "A Linux kernel image loading crate."
