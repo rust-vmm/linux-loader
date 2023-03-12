@@ -380,7 +380,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).ext_mem_k) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).ext_mem_k) as *const _
+                as usize
+        },
         2usize,
         concat!(
             "Offset of field: ",
@@ -390,7 +393,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_page) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_page) as *const _
+                as usize
+        },
         4usize,
         concat!(
             "Offset of field: ",
@@ -440,7 +446,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_ega_bx) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_ega_bx) as *const _
+                as usize
+        },
         10usize,
         concat!(
             "Offset of field: ",
@@ -450,7 +459,9 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).unused3) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).unused3) as *const _ as usize
+        },
         12usize,
         concat!(
             "Offset of field: ",
@@ -480,7 +491,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_points) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).orig_video_points) as *const _
+                as usize
+        },
         16usize,
         concat!(
             "Offset of field: ",
@@ -490,7 +504,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_width) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_width) as *const _
+                as usize
+        },
         18usize,
         concat!(
             "Offset of field: ",
@@ -500,7 +517,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_height) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_height) as *const _
+                as usize
+        },
         20usize,
         concat!(
             "Offset of field: ",
@@ -510,7 +530,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_depth) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_depth) as *const _
+                as usize
+        },
         22usize,
         concat!(
             "Offset of field: ",
@@ -520,7 +543,9 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_base) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_base) as *const _ as usize
+        },
         24usize,
         concat!(
             "Offset of field: ",
@@ -530,7 +555,9 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_size) as *const _ as usize
+        },
         28usize,
         concat!(
             "Offset of field: ",
@@ -540,7 +567,9 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).cl_magic) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).cl_magic) as *const _ as usize
+        },
         32usize,
         concat!(
             "Offset of field: ",
@@ -550,7 +579,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).cl_offset) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).cl_offset) as *const _
+                as usize
+        },
         34usize,
         concat!(
             "Offset of field: ",
@@ -560,7 +592,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_linelength) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).lfb_linelength) as *const _
+                as usize
+        },
         36usize,
         concat!(
             "Offset of field: ",
@@ -650,7 +685,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesapm_seg) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesapm_seg) as *const _
+                as usize
+        },
         46usize,
         concat!(
             "Offset of field: ",
@@ -660,7 +698,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesapm_off) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesapm_off) as *const _
+                as usize
+        },
         48usize,
         concat!(
             "Offset of field: ",
@@ -670,7 +711,9 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).pages) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).pages) as *const _ as usize
+        },
         50usize,
         concat!(
             "Offset of field: ",
@@ -680,7 +723,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesa_attributes) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).vesa_attributes) as *const _
+                as usize
+        },
         52usize,
         concat!(
             "Offset of field: ",
@@ -690,7 +736,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).capabilities) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).capabilities) as *const _
+                as usize
+        },
         54usize,
         concat!(
             "Offset of field: ",
@@ -700,7 +749,10 @@ fn bindgen_test_layout_screen_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).ext_lfb_base) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<screen_info>())).ext_lfb_base) as *const _
+                as usize
+        },
         58usize,
         concat!(
             "Offset of field: ",
@@ -898,8 +950,10 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>())).base_address)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>()))
+                    .base_address
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -911,8 +965,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>())).reserved1)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>())).reserved1
+            ) as *const _ as usize
         },
         2usize,
         concat!(
@@ -924,8 +979,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_1>())).reserved2
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1017,8 +1073,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_2() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_2>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_2>())).reserved
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1054,8 +1111,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_3() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_3>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_3>())).reserved
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1091,8 +1149,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_4() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_4>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_4>())).reserved
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1128,8 +1187,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_5() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_5>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_5>())).reserved
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1165,8 +1225,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_1__bindgen_ty_6() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_6>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_1__bindgen_ty_6>())).reserved
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1337,8 +1398,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved2
+            ) as *const _ as usize
         },
         2usize,
         concat!(
@@ -1350,8 +1412,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved3)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved3
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1363,8 +1426,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_1() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved4)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_1>())).reserved4
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1457,8 +1521,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_2() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_2>())).reserved3)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_2>())).reserved3
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1470,8 +1535,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_2() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_2>())).reserved4)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_2>())).reserved4
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1510,8 +1576,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_3() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).id) as *const _
-                as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).id
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1523,8 +1590,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_3() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).lun)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).lun
+            ) as *const _ as usize
         },
         2usize,
         concat!(
@@ -1536,8 +1604,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_3() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).reserved1)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).reserved1
+            ) as *const _ as usize
         },
         10usize,
         concat!(
@@ -1549,8 +1618,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_3() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_3>())).reserved2
+            ) as *const _ as usize
         },
         12usize,
         concat!(
@@ -1587,8 +1657,10 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_4() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_4>())).serial_number)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_4>()))
+                    .serial_number
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1600,8 +1672,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_4() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_4>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_4>())).reserved
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1638,8 +1711,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_5() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_5>())).eui)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_5>())).eui
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1651,8 +1725,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_5() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_5>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_5>())).reserved
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1689,8 +1764,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_6() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_6>())).wwid)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_6>())).wwid
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1702,8 +1778,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_6() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_6>())).lun)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_6>())).lun
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1740,8 +1817,10 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_7() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_7>())).identity_tag)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_7>()))
+                    .identity_tag
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1753,8 +1832,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_7() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_7>())).reserved)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_7>())).reserved
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1792,8 +1872,10 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_8() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>())).array_number)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>()))
+                    .array_number
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1805,8 +1887,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_8() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>())).reserved1)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>())).reserved1
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1818,8 +1901,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_8() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_8>())).reserved2
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1885,8 +1969,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_9() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved2
+            ) as *const _ as usize
         },
         2usize,
         concat!(
@@ -1898,8 +1983,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_9() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved3)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved3
+            ) as *const _ as usize
         },
         4usize,
         concat!(
@@ -1911,8 +1997,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_9() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved4)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_9>())).reserved4
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -1949,8 +2036,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_10() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_10>())).reserved1)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_10>())).reserved1
+            ) as *const _ as usize
         },
         0usize,
         concat!(
@@ -1962,8 +2050,9 @@ fn bindgen_test_layout_edd_device_params__bindgen_ty_2__bindgen_ty_10() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_10>())).reserved2)
-                as *const _ as usize
+            std::ptr::addr_of!(
+                (*(::std::ptr::null::<edd_device_params__bindgen_ty_2__bindgen_ty_10>())).reserved2
+            ) as *const _ as usize
         },
         8usize,
         concat!(
@@ -2125,7 +2214,10 @@ fn bindgen_test_layout_edd_device_params() {
         concat!("Alignment of ", stringify!(edd_device_params))
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).length) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).length) as *const _
+                as usize
+        },
         0usize,
         concat!(
             "Offset of field: ",
@@ -2135,7 +2227,10 @@ fn bindgen_test_layout_edd_device_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).info_flags) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).info_flags) as *const _
+                as usize
+        },
         2usize,
         concat!(
             "Offset of field: ",
@@ -2146,7 +2241,8 @@ fn bindgen_test_layout_edd_device_params() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).num_default_cylinders) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).num_default_cylinders)
+                as *const _ as usize
         },
         4usize,
         concat!(
@@ -2158,7 +2254,8 @@ fn bindgen_test_layout_edd_device_params() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).num_default_heads) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).num_default_heads)
+                as *const _ as usize
         },
         8usize,
         concat!(
@@ -2170,7 +2267,8 @@ fn bindgen_test_layout_edd_device_params() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).sectors_per_track) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).sectors_per_track)
+                as *const _ as usize
         },
         12usize,
         concat!(
@@ -2182,7 +2280,8 @@ fn bindgen_test_layout_edd_device_params() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).number_of_sectors) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).number_of_sectors)
+                as *const _ as usize
         },
         16usize,
         concat!(
@@ -2194,7 +2293,8 @@ fn bindgen_test_layout_edd_device_params() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).bytes_per_sector) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).bytes_per_sector)
+                as *const _ as usize
         },
         24usize,
         concat!(
@@ -2205,7 +2305,10 @@ fn bindgen_test_layout_edd_device_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).dpte_ptr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).dpte_ptr) as *const _
+                as usize
+        },
         26usize,
         concat!(
             "Offset of field: ",
@@ -2215,7 +2318,10 @@ fn bindgen_test_layout_edd_device_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).key) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).key) as *const _
+                as usize
+        },
         30usize,
         concat!(
             "Offset of field: ",
@@ -2248,7 +2354,10 @@ fn bindgen_test_layout_edd_device_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).reserved3) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_device_params>())).reserved3) as *const _
+                as usize
+        },
         34usize,
         concat!(
             "Offset of field: ",
@@ -2371,7 +2480,10 @@ fn bindgen_test_layout_edd_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_info>())).interface_support) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_info>())).interface_support) as *const _
+                as usize
+        },
         2usize,
         concat!(
             "Offset of field: ",
@@ -2381,7 +2493,10 @@ fn bindgen_test_layout_edd_info() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<edd_info>())).legacy_max_cylinder) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<edd_info>())).legacy_max_cylinder) as *const _
+                as usize
+        },
         4usize,
         concat!(
             "Offset of field: ",
@@ -2714,7 +2829,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).root_flags) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).root_flags) as *const _
+                as usize
+        },
         1usize,
         concat!(
             "Offset of field: ",
@@ -2724,7 +2842,9 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).syssize) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).syssize) as *const _ as usize
+        },
         3usize,
         concat!(
             "Offset of field: ",
@@ -2734,7 +2854,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ram_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ram_size) as *const _
+                as usize
+        },
         7usize,
         concat!(
             "Offset of field: ",
@@ -2744,7 +2867,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).vid_mode) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).vid_mode) as *const _
+                as usize
+        },
         9usize,
         concat!(
             "Offset of field: ",
@@ -2754,7 +2880,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).root_dev) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).root_dev) as *const _
+                as usize
+        },
         11usize,
         concat!(
             "Offset of field: ",
@@ -2764,7 +2893,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).boot_flag) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).boot_flag) as *const _
+                as usize
+        },
         13usize,
         concat!(
             "Offset of field: ",
@@ -2774,7 +2906,9 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).jump) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).jump) as *const _ as usize
+        },
         15usize,
         concat!(
             "Offset of field: ",
@@ -2784,7 +2918,9 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).header) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).header) as *const _ as usize
+        },
         17usize,
         concat!(
             "Offset of field: ",
@@ -2794,7 +2930,9 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).version) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).version) as *const _ as usize
+        },
         21usize,
         concat!(
             "Offset of field: ",
@@ -2804,7 +2942,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).realmode_swtch) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).realmode_swtch) as *const _
+                as usize
+        },
         23usize,
         concat!(
             "Offset of field: ",
@@ -2814,7 +2955,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).start_sys_seg) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).start_sys_seg) as *const _
+                as usize
+        },
         27usize,
         concat!(
             "Offset of field: ",
@@ -2824,7 +2968,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).kernel_version) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).kernel_version) as *const _
+                as usize
+        },
         29usize,
         concat!(
             "Offset of field: ",
@@ -2854,7 +3001,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).setup_move_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).setup_move_size) as *const _
+                as usize
+        },
         33usize,
         concat!(
             "Offset of field: ",
@@ -2864,7 +3014,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).code32_start) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).code32_start) as *const _
+                as usize
+        },
         35usize,
         concat!(
             "Offset of field: ",
@@ -2874,7 +3027,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ramdisk_image) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ramdisk_image) as *const _
+                as usize
+        },
         39usize,
         concat!(
             "Offset of field: ",
@@ -2884,7 +3040,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ramdisk_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).ramdisk_size) as *const _
+                as usize
+        },
         43usize,
         concat!(
             "Offset of field: ",
@@ -2894,7 +3053,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).bootsect_kludge) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).bootsect_kludge) as *const _
+                as usize
+        },
         47usize,
         concat!(
             "Offset of field: ",
@@ -2904,7 +3066,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).heap_end_ptr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).heap_end_ptr) as *const _
+                as usize
+        },
         51usize,
         concat!(
             "Offset of field: ",
@@ -2934,7 +3099,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).cmd_line_ptr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).cmd_line_ptr) as *const _
+                as usize
+        },
         55usize,
         concat!(
             "Offset of field: ",
@@ -2944,7 +3112,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).initrd_addr_max) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).initrd_addr_max) as *const _
+                as usize
+        },
         59usize,
         concat!(
             "Offset of field: ",
@@ -2954,7 +3125,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).kernel_alignment) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).kernel_alignment) as *const _
+                as usize
+        },
         63usize,
         concat!(
             "Offset of field: ",
@@ -2984,7 +3158,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).xloadflags) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).xloadflags) as *const _
+                as usize
+        },
         69usize,
         concat!(
             "Offset of field: ",
@@ -2994,7 +3171,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).cmdline_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).cmdline_size) as *const _
+                as usize
+        },
         71usize,
         concat!(
             "Offset of field: ",
@@ -3004,7 +3184,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).hardware_subarch) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).hardware_subarch) as *const _
+                as usize
+        },
         75usize,
         concat!(
             "Offset of field: ",
@@ -3015,7 +3198,8 @@ fn bindgen_test_layout_setup_header() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).hardware_subarch_data) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).hardware_subarch_data)
+                as *const _ as usize
         },
         79usize,
         concat!(
@@ -3026,7 +3210,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).payload_offset) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).payload_offset) as *const _
+                as usize
+        },
         87usize,
         concat!(
             "Offset of field: ",
@@ -3036,7 +3223,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).payload_length) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).payload_length) as *const _
+                as usize
+        },
         91usize,
         concat!(
             "Offset of field: ",
@@ -3046,7 +3236,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).setup_data) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).setup_data) as *const _
+                as usize
+        },
         95usize,
         concat!(
             "Offset of field: ",
@@ -3056,7 +3249,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).pref_address) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).pref_address) as *const _
+                as usize
+        },
         103usize,
         concat!(
             "Offset of field: ",
@@ -3066,7 +3262,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).init_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).init_size) as *const _
+                as usize
+        },
         111usize,
         concat!(
             "Offset of field: ",
@@ -3076,7 +3275,10 @@ fn bindgen_test_layout_setup_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).handover_offset) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<setup_header>())).handover_offset) as *const _
+                as usize
+        },
         115usize,
         concat!(
             "Offset of field: ",
@@ -3146,7 +3348,10 @@ fn bindgen_test_layout_olpc_ofw_header() {
         concat!("Alignment of ", stringify!(olpc_ofw_header))
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).ofw_magic) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).ofw_magic) as *const _
+                as usize
+        },
         0usize,
         concat!(
             "Offset of field: ",
@@ -3156,7 +3361,10 @@ fn bindgen_test_layout_olpc_ofw_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).ofw_version )as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).ofw_version) as *const _
+                as usize
+        },
         4usize,
         concat!(
             "Offset of field: ",
@@ -3166,7 +3374,10 @@ fn bindgen_test_layout_olpc_ofw_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).cif_handler) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).cif_handler) as *const _
+                as usize
+        },
         8usize,
         concat!(
             "Offset of field: ",
@@ -3176,7 +3387,10 @@ fn bindgen_test_layout_olpc_ofw_header() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).irq_desc_table) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<olpc_ofw_header>())).irq_desc_table)
+                as *const _ as usize
+        },
         12usize,
         concat!(
             "Offset of field: ",
@@ -3311,7 +3525,9 @@ fn bindgen_test_layout_boot_e820_entry() {
         concat!("Alignment of ", stringify!(boot_e820_entry))
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).addr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).addr) as *const _ as usize
+        },
         0usize,
         concat!(
             "Offset of field: ",
@@ -3321,7 +3537,9 @@ fn bindgen_test_layout_boot_e820_entry() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).size) as *const _ as usize
+        },
         8usize,
         concat!(
             "Offset of field: ",
@@ -3331,7 +3549,10 @@ fn bindgen_test_layout_boot_e820_entry() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).type_) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_e820_entry>())).type_) as *const _
+                as usize
+        },
         16usize,
         concat!(
             "Offset of field: ",
@@ -3367,7 +3588,10 @@ fn bindgen_test_layout_jailhouse_setup_data() {
         concat!("Alignment of ", stringify!(jailhouse_setup_data))
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).version) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).version) as *const _
+                as usize
+        },
         0usize,
         concat!(
             "Offset of field: ",
@@ -3378,7 +3602,8 @@ fn bindgen_test_layout_jailhouse_setup_data() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).compatible_version) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).compatible_version)
+                as *const _ as usize
         },
         2usize,
         concat!(
@@ -3390,7 +3615,8 @@ fn bindgen_test_layout_jailhouse_setup_data() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).pm_timer_address) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).pm_timer_address)
+                as *const _ as usize
         },
         4usize,
         concat!(
@@ -3401,7 +3627,10 @@ fn bindgen_test_layout_jailhouse_setup_data() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).num_cpus) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).num_cpus) as *const _
+                as usize
+        },
         6usize,
         concat!(
             "Offset of field: ",
@@ -3412,7 +3641,8 @@ fn bindgen_test_layout_jailhouse_setup_data() {
     );
     assert_eq!(
         unsafe {
-            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).pci_mmconfig_base) as *const _ as usize
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).pci_mmconfig_base)
+                as *const _ as usize
         },
         8usize,
         concat!(
@@ -3423,7 +3653,10 @@ fn bindgen_test_layout_jailhouse_setup_data() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).tsc_khz) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).tsc_khz) as *const _
+                as usize
+        },
         16usize,
         concat!(
             "Offset of field: ",
@@ -3433,7 +3666,10 @@ fn bindgen_test_layout_jailhouse_setup_data() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).apic_khz) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<jailhouse_setup_data>())).apic_khz) as *const _
+                as usize
+        },
         20usize,
         concat!(
             "Offset of field: ",
@@ -3531,7 +3767,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).apm_bios_info) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).apm_bios_info) as *const _
+                as usize
+        },
         64usize,
         concat!(
             "Offset of field: ",
@@ -3551,7 +3790,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).tboot_addr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).tboot_addr) as *const _
+                as usize
+        },
         88usize,
         concat!(
             "Offset of field: ",
@@ -3561,7 +3803,9 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ist_info) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ist_info) as *const _ as usize
+        },
         96usize,
         concat!(
             "Offset of field: ",
@@ -3571,7 +3815,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).acpi_rsdp_addr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).acpi_rsdp_addr) as *const _
+                as usize
+        },
         112usize,
         concat!(
             "Offset of field: ",
@@ -3611,7 +3858,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).sys_desc_table) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).sys_desc_table) as *const _
+                as usize
+        },
         160usize,
         concat!(
             "Offset of field: ",
@@ -3631,7 +3881,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_ramdisk_image) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_ramdisk_image) as *const _
+                as usize
+        },
         192usize,
         concat!(
             "Offset of field: ",
@@ -3641,7 +3894,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_ramdisk_size) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_ramdisk_size) as *const _
+                as usize
+        },
         196usize,
         concat!(
             "Offset of field: ",
@@ -3651,7 +3907,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_cmd_line_ptr) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).ext_cmd_line_ptr) as *const _
+                as usize
+        },
         200usize,
         concat!(
             "Offset of field: ",
@@ -3681,7 +3940,9 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).efi_info) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).efi_info) as *const _ as usize
+        },
         448usize,
         concat!(
             "Offset of field: ",
@@ -3691,7 +3952,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).alt_mem_k) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).alt_mem_k) as *const _
+                as usize
+        },
         480usize,
         concat!(
             "Offset of field: ",
@@ -3701,7 +3965,9 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).scratch) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).scratch) as *const _ as usize
+        },
         484usize,
         concat!(
             "Offset of field: ",
@@ -3813,7 +4079,10 @@ fn bindgen_test_layout_boot_params() {
         )
     );
     assert_eq!(
-        unsafe { std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).edd_mbr_sig_buffer) as *const _ as usize },
+        unsafe {
+            std::ptr::addr_of!((*(::std::ptr::null::<boot_params>())).edd_mbr_sig_buffer)
+                as *const _ as usize
+        },
         656usize,
         concat!(
             "Offset of field: ",
