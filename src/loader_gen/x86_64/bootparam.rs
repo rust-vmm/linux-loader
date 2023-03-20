@@ -15,6 +15,8 @@
  * 0ecfebd2b52404ae0c54a878c872bb93363ada36
  */
 
+use derivative::Derivative;
+
 #[repr(C)]
 #[derive(Default)]
 pub struct __IncompleteArrayField<T>(::std::marker::PhantomData<T>, [T; 0]);
@@ -309,7 +311,7 @@ pub type __sum16 = __u16;
 pub type __wsum = __u32;
 pub type __poll_t = ::std::os::raw::c_uint;
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct screen_info {
     pub orig_x: __u8,
     pub orig_y: __u8,
@@ -726,7 +728,7 @@ fn bindgen_test_layout_screen_info() {
 pub type apm_event_t = ::std::os::raw::c_ushort;
 pub type apm_eventinfo_t = ::std::os::raw::c_ushort;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct apm_bios_info {
     pub version: __u16,
     pub cseg: __u16,
@@ -844,7 +846,8 @@ fn bindgen_test_layout_apm_bios_info() {
     );
 }
 #[repr(C, packed)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Derivative)]
+#[derivative(Default)]
 pub struct edd_device_params {
     pub length: __u16,
     pub info_flags: __u16,
@@ -860,7 +863,18 @@ pub struct edd_device_params {
     pub reserved3: __u16,
     pub host_bus_type: [__u8; 4usize],
     pub interface_type: [__u8; 8usize],
+    #[derivative(Default(value = "edd_device_params__bindgen_ty_1 {
+        unknown: edd_device_params__bindgen_ty_1__bindgen_ty_6 { 
+            reserved: 0 
+        }
+    }"))]
     pub interface_path: edd_device_params__bindgen_ty_1,
+    #[derivative(Default(value = "edd_device_params__bindgen_ty_2 {
+        unknown: edd_device_params__bindgen_ty_2__bindgen_ty_10 {
+            reserved1: 0, 
+            reserved2: 0
+        }
+    }"))]
     pub device_path: edd_device_params__bindgen_ty_2,
     pub reserved4: __u8,
     pub checksum: __u8,
@@ -2188,7 +2202,7 @@ fn bindgen_test_layout_edd_device_params() {
     );
 }
 #[repr(C, packed)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct edd_info {
     pub device: __u8,
     pub version: __u8,
@@ -2347,7 +2361,7 @@ fn bindgen_test_layout_edd() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct ist_info {
     pub signature: __u32,
     pub command: __u32,
@@ -2410,8 +2424,10 @@ fn bindgen_test_layout_ist_info() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Derivative)]
+#[derivative(Default)]
 pub struct edid_info {
+    #[derivative(Default(value = "[0; 128]"))]
     pub dummy: [::std::os::raw::c_uchar; 128usize],
 }
 #[test]
@@ -2503,7 +2519,7 @@ fn bindgen_test_layout_setup_data() {
     );
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct setup_header {
     pub setup_sects: __u8,
     pub root_flags: __u16,
@@ -2940,7 +2956,7 @@ fn bindgen_test_layout_setup_header() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct sys_desc_table {
     pub length: __u16,
     pub table: [__u8; 14usize],
@@ -2981,7 +2997,7 @@ fn bindgen_test_layout_sys_desc_table() {
     );
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct olpc_ofw_header {
     pub ofw_magic: __u32,
     pub ofw_version: __u32,
@@ -3044,7 +3060,7 @@ fn bindgen_test_layout_olpc_ofw_header() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct efi_info {
     pub efi_loader_signature: __u32,
     pub efi_systab: __u32,
@@ -3151,7 +3167,7 @@ fn bindgen_test_layout_efi_info() {
     );
 }
 #[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct boot_e820_entry {
     pub addr: __u64,
     pub size: __u64,
@@ -3321,7 +3337,8 @@ fn bindgen_test_layout_jailhouse_setup_data() {
     );
 }
 #[repr(C, packed)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Derivative)]
+#[derivative(Default)]
 pub struct boot_params {
     pub screen_info: screen_info,
     pub apm_bios_info: apm_bios_info,
@@ -3337,6 +3354,7 @@ pub struct boot_params {
     pub ext_ramdisk_image: __u32,
     pub ext_ramdisk_size: __u32,
     pub ext_cmd_line_ptr: __u32,
+    #[derivative(Default(value = "[0; 116]"))]
     pub _pad4: [__u8; 116usize],
     pub edid_info: edid_info,
     pub efi_info: efi_info,
@@ -3351,11 +3369,15 @@ pub struct boot_params {
     pub sentinel: __u8,
     pub _pad6: [__u8; 1usize],
     pub hdr: setup_header,
+    #[derivative(Default(value = "[0; 40]"))]
     pub _pad7: [__u8; 40usize],
     pub edd_mbr_sig_buffer: [__u32; 16usize],
+    #[derivative(Default(value = "[boot_e820_entry { addr: 0, size: 0, type_: 0 }; 128]"))]
     pub e820_table: [boot_e820_entry; 128usize],
+    #[derivative(Default(value = "[0; 48]"))]
     pub _pad8: [__u8; 48usize],
     pub eddbuf: [edd_info; 6usize],
+    #[derivative(Default(value = "[0; 276]"))]
     pub _pad9: [__u8; 276usize],
 }
 #[test]
