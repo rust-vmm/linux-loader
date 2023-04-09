@@ -238,20 +238,16 @@ mod tests {
         )
         .unwrap();
         let setup_header = loader_result.setup_header.unwrap();
+        let header = setup_header.header;
+        let version = setup_header.version;
 
         assert_eq!(loader_result.kernel_load.raw_value(), 0x200000);
         assert_eq!(
-            // SAFETY:
-            // Reading the value from an unaligned address is not considered safe.
-            // but this is not an issue since this is a test.
-            unsafe { std::ptr::addr_of!(setup_header.header).read_unaligned() },
+            header,
             0x53726448
         );
         assert_eq!(
-            // SAFETY:
-            // Reading the value from an unaligned address is not considered safe.
-            // but this is not an issue since this is a test.
-            unsafe { std::ptr::addr_of!(setup_header.version).read_unaligned() },
+            version,
             0x20d
         );
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
@@ -266,18 +262,15 @@ mod tests {
         )
         .unwrap();
         let setup_header = loader_result.setup_header.unwrap();
+        let header = setup_header.header;
 
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
         // load bzImage without himem_start
         loader_result = BzImage::load(&gm, None, &mut Cursor::new(&image), None).unwrap();
-        // Reading the value from an unaligned address is not considered safe.
         assert_eq!(
             0x53726448,
-            // SAFETY:
-            // Reading the value from an unaligned address is not considered safe.
-            // but this is not an issue since this is a test.
-            unsafe { std::ptr::addr_of!(setup_header.header).read_unaligned() }
+            header
         );
         assert_eq!(loader_result.kernel_load.raw_value(), 0x100000);
 
