@@ -104,7 +104,7 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Copy, Debug, PartialEq, Eq)]
 /// Availability of PVH entry point in the kernel, which allows the VMM
 /// to use the PVH boot protocol to start guests.
 pub enum PvhBootCapability {
@@ -113,13 +113,8 @@ pub enum PvhBootCapability {
     /// PVH entry point is not present
     PvhEntryNotPresent,
     /// PVH entry point is ignored, even if available
+    #[default]
     PvhEntryIgnored,
-}
-
-impl Default for PvhBootCapability {
-    fn default() -> Self {
-        PvhBootCapability::PvhEntryIgnored
-    }
 }
 
 impl fmt::Display for PvhBootCapability {
