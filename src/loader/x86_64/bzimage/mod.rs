@@ -252,10 +252,10 @@ mod tests {
             // Reading the value from an unaligned address is not considered safe.
             // but this is not an issue since this is a test.
             unsafe { std::ptr::addr_of!(setup_header.version).read_unaligned() },
-            0x20d
+            0x20f
         );
         assert_eq!(loader_result.setup_header.unwrap().loadflags, 1);
-        assert_eq!(loader_result.kernel_end, 0x60D320);
+        assert_eq!(loader_result.kernel_end, 0x8B1600);
 
         // load bzImage without kernel_offset
         loader_result = BzImage::load(
