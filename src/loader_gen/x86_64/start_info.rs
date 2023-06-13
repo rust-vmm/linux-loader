@@ -28,7 +28,7 @@
  * From the canonical version in upstream Xen repository
  * xen/include/public/arch-x86/hvm/start_info.h
  * at commit:
- * a2e84d8e42c9e878fff17b738d8e5c5d83888f31
+ * b4642c32c4d079916d5607ddda0232aae5e1690e
  *
  * The generated file has been edited to eliminate unnecessary
  * definitions, add comments, and relocate definitions and tests for clarity.
@@ -160,6 +160,8 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_hvm_start_info() {
+        const UNINIT: ::std::mem::MaybeUninit<hvm_start_info> = ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<hvm_start_info>(),
             56usize,
@@ -171,7 +173,7 @@ mod tests {
             concat!("Alignment of ", stringify!(hvm_start_info))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).magic as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).magic) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -181,7 +183,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).version as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).version) as usize - ptr as usize },
             4usize,
             concat!(
                 "Offset of field: ",
@@ -191,7 +193,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).flags as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
             8usize,
             concat!(
                 "Offset of field: ",
@@ -201,7 +203,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).nr_modules as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).nr_modules) as usize - ptr as usize },
             12usize,
             concat!(
                 "Offset of field: ",
@@ -211,9 +213,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_start_info>())).modlist_paddr as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).modlist_paddr) as usize - ptr as usize },
             16usize,
             concat!(
                 "Offset of field: ",
@@ -223,9 +223,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_start_info>())).cmdline_paddr as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).cmdline_paddr) as usize - ptr as usize },
             24usize,
             concat!(
                 "Offset of field: ",
@@ -235,7 +233,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).rsdp_paddr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).rsdp_paddr) as usize - ptr as usize },
             32usize,
             concat!(
                 "Offset of field: ",
@@ -245,7 +243,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).memmap_paddr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).memmap_paddr) as usize - ptr as usize },
             40usize,
             concat!(
                 "Offset of field: ",
@@ -255,9 +253,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_start_info>())).memmap_entries as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).memmap_entries) as usize - ptr as usize },
             48usize,
             concat!(
                 "Offset of field: ",
@@ -267,7 +263,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_start_info>())).reserved as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).reserved) as usize - ptr as usize },
             52usize,
             concat!(
                 "Offset of field: ",
@@ -280,6 +276,9 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_hvm_modlist_entry() {
+        const UNINIT: ::std::mem::MaybeUninit<hvm_modlist_entry> =
+            ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<hvm_modlist_entry>(),
             32usize,
@@ -291,7 +290,7 @@ mod tests {
             concat!("Alignment of ", stringify!(hvm_modlist_entry))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_modlist_entry>())).paddr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).paddr) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -301,7 +300,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_modlist_entry>())).size as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).size) as usize - ptr as usize },
             8usize,
             concat!(
                 "Offset of field: ",
@@ -311,9 +310,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_modlist_entry>())).cmdline_paddr as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).cmdline_paddr) as usize - ptr as usize },
             16usize,
             concat!(
                 "Offset of field: ",
@@ -323,7 +320,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_modlist_entry>())).reserved as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).reserved) as usize - ptr as usize },
             24usize,
             concat!(
                 "Offset of field: ",
@@ -336,6 +333,9 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_hvm_memmap_table_entry() {
+        const UNINIT: ::std::mem::MaybeUninit<hvm_memmap_table_entry> =
+            ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<hvm_memmap_table_entry>(),
             24usize,
@@ -347,7 +347,7 @@ mod tests {
             concat!("Alignment of ", stringify!(hvm_memmap_table_entry))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_memmap_table_entry>())).addr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).addr) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -357,7 +357,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<hvm_memmap_table_entry>())).size as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).size) as usize - ptr as usize },
             8usize,
             concat!(
                 "Offset of field: ",
@@ -367,9 +367,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_memmap_table_entry>())).type_ as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).type_) as usize - ptr as usize },
             16usize,
             concat!(
                 "Offset of field: ",
@@ -379,9 +377,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe {
-                &(*(::std::ptr::null::<hvm_memmap_table_entry>())).reserved as *const _ as usize
-            },
+            unsafe { ::std::ptr::addr_of!((*ptr).reserved) as usize - ptr as usize },
             20usize,
             concat!(
                 "Offset of field: ",
