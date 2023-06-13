@@ -14,7 +14,7 @@
  * # bindgen --with-derive-default elf.h > elf.rs
  *
  * From upstream linux include/uapi/linux/elf.h at commit:
- * 3cc6e2c599cdca573a8f347aea5da4c855ff5a78
+ * 48b1320a674e1ff5de2fad8606bee38f724594dc
  * and then edited to eliminate unnecessary definitions, add comments,
  * and relocate definitions and tests for clarity.
  */
@@ -103,6 +103,8 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_elf64_hdr() {
+        const UNINIT: ::std::mem::MaybeUninit<elf64_hdr> = ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<elf64_hdr>(),
             64usize,
@@ -114,7 +116,7 @@ mod tests {
             concat!("Alignment of ", stringify!(elf64_hdr))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_ident as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_ident) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -124,7 +126,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_type as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_type) as usize - ptr as usize },
             16usize,
             concat!(
                 "Offset of field: ",
@@ -134,7 +136,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_machine as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_machine) as usize - ptr as usize },
             18usize,
             concat!(
                 "Offset of field: ",
@@ -144,7 +146,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_version as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_version) as usize - ptr as usize },
             20usize,
             concat!(
                 "Offset of field: ",
@@ -154,7 +156,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_entry as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_entry) as usize - ptr as usize },
             24usize,
             concat!(
                 "Offset of field: ",
@@ -164,7 +166,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_phoff as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_phoff) as usize - ptr as usize },
             32usize,
             concat!(
                 "Offset of field: ",
@@ -174,7 +176,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_shoff as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_shoff) as usize - ptr as usize },
             40usize,
             concat!(
                 "Offset of field: ",
@@ -184,7 +186,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_flags as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_flags) as usize - ptr as usize },
             48usize,
             concat!(
                 "Offset of field: ",
@@ -194,7 +196,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_ehsize as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_ehsize) as usize - ptr as usize },
             52usize,
             concat!(
                 "Offset of field: ",
@@ -204,7 +206,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_phentsize as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_phentsize) as usize - ptr as usize },
             54usize,
             concat!(
                 "Offset of field: ",
@@ -214,7 +216,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_phnum as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_phnum) as usize - ptr as usize },
             56usize,
             concat!(
                 "Offset of field: ",
@@ -224,7 +226,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_shentsize as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_shentsize) as usize - ptr as usize },
             58usize,
             concat!(
                 "Offset of field: ",
@@ -234,7 +236,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_shnum as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_shnum) as usize - ptr as usize },
             60usize,
             concat!(
                 "Offset of field: ",
@@ -244,7 +246,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_hdr>())).e_shstrndx as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).e_shstrndx) as usize - ptr as usize },
             62usize,
             concat!(
                 "Offset of field: ",
@@ -257,6 +259,8 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_elf64_phdr() {
+        const UNINIT: ::std::mem::MaybeUninit<elf64_phdr> = ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<elf64_phdr>(),
             56usize,
@@ -268,7 +272,7 @@ mod tests {
             concat!("Alignment of ", stringify!(elf64_phdr))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_type as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_type) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -278,7 +282,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_flags as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_flags) as usize - ptr as usize },
             4usize,
             concat!(
                 "Offset of field: ",
@@ -288,7 +292,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_offset as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_offset) as usize - ptr as usize },
             8usize,
             concat!(
                 "Offset of field: ",
@@ -298,7 +302,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_vaddr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_vaddr) as usize - ptr as usize },
             16usize,
             concat!(
                 "Offset of field: ",
@@ -308,7 +312,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_paddr as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_paddr) as usize - ptr as usize },
             24usize,
             concat!(
                 "Offset of field: ",
@@ -318,7 +322,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_filesz as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_filesz) as usize - ptr as usize },
             32usize,
             concat!(
                 "Offset of field: ",
@@ -328,7 +332,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_memsz as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_memsz) as usize - ptr as usize },
             40usize,
             concat!(
                 "Offset of field: ",
@@ -338,7 +342,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_phdr>())).p_align as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).p_align) as usize - ptr as usize },
             48usize,
             concat!(
                 "Offset of field: ",
@@ -351,6 +355,8 @@ mod tests {
 
     #[test]
     fn bindgen_test_layout_elf64_note() {
+        const UNINIT: ::std::mem::MaybeUninit<elf64_note> = ::std::mem::MaybeUninit::uninit();
+        let ptr = UNINIT.as_ptr();
         assert_eq!(
             ::std::mem::size_of::<elf64_note>(),
             12usize,
@@ -362,7 +368,7 @@ mod tests {
             concat!("Alignment of ", stringify!(elf64_note))
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_note>())).n_namesz as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).n_namesz) as usize - ptr as usize },
             0usize,
             concat!(
                 "Offset of field: ",
@@ -372,7 +378,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_note>())).n_descsz as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).n_descsz) as usize - ptr as usize },
             4usize,
             concat!(
                 "Offset of field: ",
@@ -382,7 +388,7 @@ mod tests {
             )
         );
         assert_eq!(
-            unsafe { &(*(::std::ptr::null::<elf64_note>())).n_type as *const _ as usize },
+            unsafe { ::std::ptr::addr_of!((*ptr).n_type) as usize - ptr as usize },
             8usize,
             concat!(
                 "Offset of field: ",
