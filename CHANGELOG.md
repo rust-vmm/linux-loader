@@ -1,3 +1,9 @@
+# Unreleased
+
+## Fixed
+- [[#130]](https://github.com/rust-vmm/linux-loader/issues/130) Generate bindings
+  to fix unaligned references in unit tests. 
+
 # [v0.9.0]
 
 ## Fixed
