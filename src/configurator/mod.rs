@@ -128,7 +128,7 @@ pub trait BootConfigurator {
 }
 
 /// Boot parameters to be written in guest memory.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BootParams {
     /// "Header section", always written in guest memory irrespective of boot protocol.
     pub header: Vec<u8>,

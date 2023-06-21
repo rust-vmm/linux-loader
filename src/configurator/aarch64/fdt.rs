@@ -40,6 +40,7 @@ impl From<Error> for BootConfiguratorError {
 }
 
 /// Boot configurator for device tree.
+#[derive(Debug)]
 pub struct FdtBootConfigurator {}
 
 impl BootConfigurator for FdtBootConfigurator {

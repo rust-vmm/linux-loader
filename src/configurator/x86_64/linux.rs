@@ -19,6 +19,7 @@ use crate::configurator::{BootConfigurator, BootParams, Error as BootConfigurato
 use std::fmt;
 
 /// Boot configurator for the Linux boot protocol.
+#[derive(Debug)]
 pub struct LinuxBootConfigurator {}
 
 /// Errors specific to the Linux boot protocol configuration.
