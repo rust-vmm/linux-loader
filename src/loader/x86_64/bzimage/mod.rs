@@ -62,6 +62,7 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 /// Big zImage (bzImage) kernel image support.
+#[derive(Debug)]
 pub struct BzImage;
 
 impl KernelLoader for BzImage {

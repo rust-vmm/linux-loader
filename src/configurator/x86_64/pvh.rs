@@ -22,6 +22,7 @@ use crate::loader_gen::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, h
 use std::fmt;
 
 /// Boot configurator for the PVH boot protocol.
+#[derive(Debug)]
 pub struct PvhBootConfigurator {}
 
 /// Errors specific to the PVH boot protocol configuration.

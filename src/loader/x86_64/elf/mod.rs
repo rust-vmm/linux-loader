@@ -133,6 +133,7 @@ impl fmt::Display for PvhBootCapability {
 }
 
 /// Raw ELF (a.k.a. vmlinux) kernel image support.
+#[derive(Debug)]
 pub struct Elf;
 
 impl Elf {

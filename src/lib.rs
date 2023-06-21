@@ -7,7 +7,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
-#![deny(missing_docs)]
+#![deny(missing_docs, missing_debug_implementations)]
 
 //! A Linux kernel image loading crate.
 //!
@@ -101,7 +101,7 @@ pub mod cmdline;
 pub mod configurator;
 pub mod loader;
 
-#[allow(clippy::undocumented_unsafe_blocks)]
+#[allow(clippy::undocumented_unsafe_blocks, missing_debug_implementations)]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod loader_gen;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

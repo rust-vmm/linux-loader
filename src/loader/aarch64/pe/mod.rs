@@ -21,6 +21,7 @@ use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsiz
 use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 
 /// ARM64 Image (PE) format support
+#[derive(Debug)]
 pub struct PE;
 
 // SAFETY: The layout of the structure is fixed and can be initialized by
