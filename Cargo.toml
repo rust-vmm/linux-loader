@@ -1,6 +1,6 @@
 [package]
 name = "linux-loader"
-version = "0.9.0"
+version = "0.9.1"
 authors = [
     "The rust-vmm maintainers",
     "rust-vmm AWS maintainers <rust-vmm-maintainers@amazon.com>",
