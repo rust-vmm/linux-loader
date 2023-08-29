@@ -3,6 +3,7 @@
 ## Fixed
 - [[#130]](https://github.com/rust-vmm/linux-loader/issues/130) Generate bindings
   to fix unaligned references in unit tests. 
+- [[#160]](https://github.com/rust-vmm/linux-loader/pulls/160) Update vm-memory to 0.12.2
 
 # [v0.9.0]
 

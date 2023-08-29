@@ -22,7 +22,7 @@ elf = []
 pe = []
 
 [dependencies]
-vm-memory = "0.12.0"
+vm-memory = "0.12.2"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
