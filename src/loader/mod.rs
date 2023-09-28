@@ -1,3 +1,4 @@
+// Copyright (c) 2023 StarFive Technology Co., Ltd. All rights reserved.
 // Copyright © 2020, Oracle and/or its affiliates.
 //
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
@@ -41,6 +42,11 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 pub use aarch64::*;
 
+#[cfg(target_arch = "riscv64")]
+mod riscv;
+#[cfg(target_arch = "riscv64")]
+pub use riscv::*;
+
 #[derive(Debug, PartialEq, Eq)]
 /// Kernel loader errors.
 pub enum Error {
@@ -53,7 +59,7 @@ pub enum Error {
     Elf(elf::Error),
 
     /// Failed to load PE image.
-    #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+    #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
     Pe(pe::Error),
 
     /// Invalid command line.
@@ -80,7 +86,7 @@ impl fmt::Display for Error {
             Error::Bzimage(ref _e) => "failed to load bzImage kernel image",
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Elf(ref _e) => "failed to load ELF kernel image",
-            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref _e) => "failed to load PE kernel image",
 
             Error::InvalidCommandLine => "invalid command line provided",
@@ -101,7 +107,7 @@ impl std::error::Error for Error {
             Error::Bzimage(ref e) => Some(e),
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Elf(ref e) => Some(e),
-            #[cfg(all(feature = "pe", target_arch = "aarch64"))]
+            #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref e) => Some(e),
 
             Error::InvalidCommandLine => None,
@@ -127,7 +133,7 @@ impl From<bzimage::Error> for Error {
     }
 }
 
-#[cfg(all(feature = "pe", target_arch = "aarch64"))]
+#[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
 impl From<pe::Error> for Error {
     fn from(err: pe::Error) -> Self {
         Error::Pe(err)
