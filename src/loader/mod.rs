@@ -24,7 +24,7 @@ use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use vm_memory::ByteValued;
-use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize};
+use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use crate::loader_gen::bootparam;
@@ -176,7 +176,7 @@ pub trait KernelLoader {
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
     where
-        F: Read + Seek;
+        F: Read + ReadVolatile + Seek;
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

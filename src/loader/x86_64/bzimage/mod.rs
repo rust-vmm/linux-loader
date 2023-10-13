@@ -12,10 +12,9 @@
 #![cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
 
 use std::fmt;
-use std::io::{Read, Seek, SeekFrom};
-use std::mem;
+use std::io::{Seek, SeekFrom};
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
+use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
 use super::super::{
     bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
@@ -108,7 +107,7 @@ impl KernelLoader for BzImage {
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
     where
-        F: Read + Seek,
+        F: ReadVolatile + Seek,
     {
         let mut kernel_size = kernel_image
             .seek(SeekFrom::End(0))
@@ -118,9 +117,8 @@ impl KernelLoader for BzImage {
             .map_err(|_| Error::SeekBzImageHeader)?;
 
         let mut boot_header = bootparam::setup_header::default();
-        boot_header
-            .as_bytes()
-            .read_from(0, kernel_image, mem::size_of::<bootparam::setup_header>())
+        kernel_image
+            .read_volatile(&mut boot_header.as_bytes())
             .map_err(|_| Error::ReadBzImageHeader)?;
 
         // If the `HdrS` magic number is not found at offset 0x202, the boot protocol version is
@@ -172,7 +170,7 @@ impl KernelLoader for BzImage {
             .seek(SeekFrom::Start(setup_size as u64))
             .map_err(|_| Error::SeekBzImageCompressedKernel)?;
         guest_mem
-            .read_exact_from(mem_offset, kernel_image, kernel_size)
+            .read_exact_volatile_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadBzImageCompressedKernel)?;
 
         loader_result.kernel_end = mem_offset
@@ -189,7 +187,7 @@ mod tests {
     use super::*;
 
     use std::fs::File;
-    use std::io::Cursor;
+    use std::io::{Cursor, Read};
     use std::process::Command;
     use vm_memory::{Address, GuestAddress};
     type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;

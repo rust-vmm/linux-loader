@@ -14,9 +14,8 @@
 
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
-use std::mem;
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
+use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
 use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 
@@ -112,7 +111,7 @@ impl KernelLoader for PE {
         _highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
     where
-        F: Read + Seek,
+        F: ReadVolatile + Read + Seek,
     {
         let kernel_size = kernel_image
             .seek(SeekFrom::End(0))
@@ -120,9 +119,8 @@ impl KernelLoader for PE {
         let mut arm64_header: arm64_image_header = Default::default();
         kernel_image.rewind().map_err(|_| Error::SeekImageHeader)?;
 
-        arm64_header
-            .as_bytes()
-            .read_from(0, kernel_image, mem::size_of::<arm64_image_header>())
+        kernel_image
+            .read_exact(arm64_header.as_mut_slice())
             .map_err(|_| Error::ReadImageHeader)?;
 
         if u32::from_le(arm64_header.magic) != 0x644d_5241 {
@@ -156,7 +154,7 @@ impl KernelLoader for PE {
 
         kernel_image.rewind().map_err(|_| Error::SeekImageHeader)?;
         guest_mem
-            .read_exact_from(mem_offset, kernel_image, kernel_size)
+            .read_exact_volatile_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadKernelImage)?;
 
         loader_result.kernel_end = mem_offset
@@ -182,7 +180,7 @@ pub fn load_dtb<F, M: GuestMemory>(
     dtb_image: &mut F,
 ) -> Result<()>
 where
-    F: Read + Seek,
+    F: ReadVolatile + Read + Seek,
 {
     let dtb_size = dtb_image
         .seek(SeekFrom::End(0))
@@ -192,7 +190,7 @@ where
     }
     dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
     guest_mem
-        .read_exact_from(guest_addr, dtb_image, dtb_size)
+        .read_exact_volatile_from(guest_addr, dtb_image, dtb_size)
         .map_err(|_| Error::ReadDtbImage.into())
 }
 

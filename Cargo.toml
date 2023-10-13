@@ -22,11 +22,11 @@ elf = []
 pe = []
 
 [dependencies]
-vm-memory = "0.12.2"
+vm-memory = "0.13.1"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
-vm-memory = { version = "0.12.0", features = ["backend-mmap"] }
+vm-memory = { version = "0.13.1", features = ["backend-mmap"] }
 
 [[bench]]
 name = "main"
