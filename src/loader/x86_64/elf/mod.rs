@@ -17,7 +17,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 use std::result;
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize};
+use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
 use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 use crate::loader_gen::elf;
@@ -205,7 +205,7 @@ impl KernelLoader for Elf {
         highmem_start_address: Option<GuestAddress>,
     ) -> Result<KernelLoaderResult>
     where
-        F: Read + Seek,
+        F: Read + ReadVolatile + Seek,
     {
         kernel_image.rewind().map_err(|_| Error::SeekElfStart)?;
 
@@ -281,7 +281,7 @@ impl KernelLoader for Elf {
             };
 
             guest_mem
-                .read_exact_from(mem_offset, kernel_image, phdr.p_filesz as usize)
+                .read_exact_volatile_from(mem_offset, kernel_image, phdr.p_filesz as usize)
                 .map_err(|_| Error::ReadKernelImage)?;
 
             let kernel_end = mem_offset
@@ -309,7 +309,7 @@ const PVH_NOTE_STR_SZ: usize = 4;
 /// are found in the note header.
 fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<PvhBootCapability>
 where
-    F: Read + Seek,
+    F: Read + ReadVolatile + Seek,
 {
     // Type of note header that encodes a 32-bit entry point address to boot a guest kernel using
     // the PVH boot protocol.
