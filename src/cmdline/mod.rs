@@ -516,6 +516,37 @@ impl Cmdline {
     }
 }
 
+/// Convert a Cmdline to String
+///
+/// # Examples
+///
+/// ```rust
+/// # use linux_loader::cmdline::*;
+/// let mut cl = Cmdline::new(20).unwrap();
+/// cl.insert_str("foo").unwrap();
+/// cl.insert_init_args("bar").unwrap();
+/// assert_eq!(String::try_from(&cl).unwrap(), "foo -- bar");
+/// ```
+impl TryFrom<&Cmdline> for String {
+    type Error = Error;
+
+    fn try_from(value: &Cmdline) -> result::Result<Self, Self::Error> {
+        if value.boot_args.is_empty() && value.init_args.is_empty() {
+            Ok("".to_string())
+        } else if value.boot_args.is_empty() {
+            Err(Error::NoBootArgsInserted)
+        } else if value.init_args.is_empty() {
+            Ok(value.boot_args.to_string())
+        } else {
+            Ok(format!(
+                "{}{}{}",
+                value.boot_args, INIT_ARGS_SEPARATOR, value.init_args
+            )
+            .to_string())
+        }
+    }
+}
+
 impl TryFrom<Cmdline> for Vec<u8> {
     type Error = Error;
 
@@ -866,5 +897,25 @@ mod tests {
             cl.as_cstring().unwrap().into_bytes_with_nul(),
             b"console=ttyS0 nomodules -- /etc/password --param\0"
         );
+    }
+
+    #[test]
+    fn test_string_from_cmdline() {
+        let mut cl = Cmdline::new(CMDLINE_MAX_SIZE).unwrap();
+
+        assert_eq!(String::try_from(&cl).unwrap(), "");
+        cl.insert_init_args("bar").unwrap();
+        // This must fail as it is not allowed to have only init args
+        let err = String::try_from(&cl).unwrap_err();
+        assert_eq!(err, Error::NoBootArgsInserted);
+
+        // However, inserting only bootargs is permitted
+        cl = Cmdline::new(CMDLINE_MAX_SIZE).unwrap();
+        cl.insert_str("foo").unwrap();
+        assert_eq!(String::try_from(&cl).unwrap(), "foo");
+
+        // Test also the concatenation of arguments
+        cl.insert_init_args("bar").unwrap();
+        assert_eq!(String::try_from(&cl).unwrap(), "foo -- bar");
     }
 }
