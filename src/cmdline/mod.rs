@@ -433,12 +433,14 @@ impl Cmdline {
         slug.matches('\"').count() % 2 == 0
     }
 
-    /// Tries to build a [`Cmdline`] with a given capacity from a str. The format of the
-    /// str provided must be one of the followings:
-    /// -> <boot args> -- <init args>
-    /// -> <boot args>
-    /// where <boot args> and <init args> can contain '--' only if double quoted and
-    /// <boot args> and <init args> contain at least one non-whitespace char each.
+    /// Tries to build a [`Cmdline`] with a given capacity from a [`str`]. The format of the
+    /// str provided must be one of the following:
+    ///
+    /// * `<boot args> -- <init args>`
+    /// * `<boot args>`
+    ///
+    /// where `<boot args>` and `<init args>` can contain `--` only if double quoted and
+    /// `<boot args>` and `<init args>` contain at least one non-whitespace char each.
     ///
     /// Providing a str not following these rules might end up in undefined behaviour of
     /// the resulting `Cmdline`.
