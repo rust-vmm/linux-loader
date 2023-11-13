@@ -15,6 +15,10 @@ homepage = "https://github.com/rust-vmm/linux-loader"
 readme = "README.md"
 autobenches = false
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [features]
 default = ["elf", "pe"]
 bzimage = []
