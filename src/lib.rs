@@ -8,6 +8,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
 #![deny(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 //! A Linux kernel image loading crate.
 //!
