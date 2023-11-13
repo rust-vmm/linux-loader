@@ -324,7 +324,7 @@ impl Cmdline {
 
     /// Returns a C compatible representation of the command line
     /// The Linux kernel expects a null terminated cmdline according to the source:
-    /// https://elixir.bootlin.com/linux/v5.10.139/source/kernel/params.c#L179
+    /// <https://elixir.bootlin.com/linux/v5.10.139/source/kernel/params.c#L179>
     ///
     /// To get bytes of the cmdline to be written in guest's memory (including the
     /// null terminator) from this representation, use CString::as_bytes_with_nul()
