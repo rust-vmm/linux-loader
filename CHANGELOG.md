@@ -1,8 +1,9 @@
-# Upcoming version
+# [v0.11.0]
 
 ## Changed
 
-- Added all features to the generated docs.rs documentation.
+- [[#173](https://github.com/rust-vmm/linux-loader/pull/173)] Updated vm-memory to 0.14.0.
+- [[#170](https://github.com/rust-vmm/linux-loader/pull/170)] Added all features to the generated docs.rs documentation.
 
 # [v0.10.0]
 
