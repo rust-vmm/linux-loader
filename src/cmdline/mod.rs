@@ -832,6 +832,16 @@ mod tests {
 
         assert_eq!(cl.boot_args, "foo=\"bar--baz\" foo");
         assert_eq!(cl.init_args, "");
+
+        let cl = Cmdline::try_from("--foo --bar -- ", CMDLINE_MAX_SIZE).unwrap();
+
+        assert_eq!(cl.boot_args, "--foo --bar");
+        assert_eq!(cl.init_args, "");
+
+        let cl = Cmdline::try_from("--foo --bar --", CMDLINE_MAX_SIZE).unwrap();
+
+        assert_eq!(cl.boot_args, "--foo --bar");
+        assert_eq!(cl.init_args, "");
     }
 
     #[test]
