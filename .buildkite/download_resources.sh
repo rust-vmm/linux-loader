@@ -2,13 +2,13 @@
 
 set -e
 
-DEB_NAME="linux-image-5.10.0-22-amd64-unsigned_5.10.178-3_amd64.deb"
+DEB_NAME="linux-image-5.10.0-28-amd64-unsigned_5.10.209-2_amd64.deb"
 DEB_URL="http://ftp.us.debian.org/debian/pool/main/l/linux/${DEB_NAME}"
 
 TMP_PATH="/tmp/linux-loader/"
 DEB_PATH="${TMP_PATH}/${DEB_NAME}"
 EXTRACT_PATH="${TMP_PATH}/src/bzimage-archive"
-BZIMAGE_PATH="${EXTRACT_PATH}/boot/vmlinuz-5.10.0-22-amd64"
+BZIMAGE_PATH="${EXTRACT_PATH}/boot/vmlinuz-5.10.0-28-amd64"
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 mkdir -p ${EXTRACT_PATH}
