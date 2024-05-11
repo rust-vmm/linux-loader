@@ -1,3 +1,11 @@
+# Upcoming Release
+
+## Changed
+
+- [[#177](https://github.com/rust-vmm/linux-loader/pull/176)] Added loading
+  of PVH module blobs into guest memory. This enables booting with `initrd`
+  via PVH boot.
+
 # [v0.11.0]
 
 ## Changed
