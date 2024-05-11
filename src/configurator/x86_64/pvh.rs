@@ -39,6 +39,10 @@ pub enum Error {
     StartInfoPastRamEnd,
     /// Error writing hvm_start_info to guest memory.
     StartInfoSetup,
+    /// The starting address for the modules descriptions wasn't passed to the boot configurator.
+    ModulesAddressMissing,
+    /// Error writing module descriptions to guest memory.
+    ModulesSetup,
 }
 
 impl fmt::Display for Error {
@@ -55,6 +59,8 @@ impl fmt::Display for Error {
                 "the hvm_start_info structure extends past the end of guest memory."
             }
             StartInfoSetup => "error writing hvm_start_info to guest memory.",
+            ModulesAddressMissing => "the starting address for the modules descriptions wasn't passed to the boot configurator.",
+            ModulesSetup => "error writing module descriptions to guest memory.",
         };
 
         write!(f, "PVH Boot Configurator: {}", desc)
@@ -164,6 +170,13 @@ impl BootConfigurator for PvhBootConfigurator {
             .write_slice(params.header.as_slice(), params.header_start)
             .map_err(|_| Error::StartInfoSetup)?;
 
+        if let Some(modules) = params.modules.as_ref() {
+            let modules_addr = params.modules_start.ok_or(Error::ModulesAddressMissing)?;
+            guest_memory
+                .write_slice(modules.as_slice(), modules_addr)
+                .map_err(|_| Error::ModulesSetup)?;
+        }
+
         Ok(())
     }
 }
@@ -182,7 +195,11 @@ mod tests {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
-    fn build_bootparams_common() -> (hvm_start_info, Vec<hvm_memmap_table_entry>) {
+    fn build_bootparams_common() -> (
+        hvm_start_info,
+        Vec<hvm_memmap_table_entry>,
+        Vec<hvm_modlist_entry>,
+    ) {
         let mut start_info = hvm_start_info::default();
         let memmap_entry = hvm_memmap_table_entry {
             addr: 0x7000,
@@ -191,21 +208,29 @@ mod tests {
             reserved: 0,
         };
 
+        let modlist_entry = hvm_modlist_entry {
+            paddr: 0x10000,
+            size: 0x100,
+            cmdline_paddr: 0,
+            reserved: 0,
+        };
+
         start_info.magic = XEN_HVM_START_MAGIC_VALUE;
         start_info.version = 1;
         start_info.nr_modules = 0;
         start_info.memmap_entries = 0;
 
-        (start_info, vec![memmap_entry])
+        (start_info, vec![memmap_entry], vec![modlist_entry])
     }
 
     #[test]
     fn test_configure_pvh_boot() {
-        let (mut start_info, memmap_entries) = build_bootparams_common();
+        let (mut start_info, memmap_entries, modlist_entries) = build_bootparams_common();
         let guest_memory = create_guest_mem();
 
         let start_info_addr = GuestAddress(0x6000);
         let memmap_addr = GuestAddress(0x7000);
+        let modlist_addr = GuestAddress(0x6040);
         start_info.memmap_paddr = memmap_addr.raw_value();
 
         let mut boot_params = BootParams::new::<hvm_start_info>(&start_info, start_info_addr);
@@ -245,6 +270,7 @@ mod tests {
         );
 
         boot_params.set_sections::<hvm_memmap_table_entry>(&memmap_entries, memmap_addr);
+        boot_params.set_modules::<hvm_modlist_entry>(&modlist_entries, modlist_addr);
         assert!(PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(
             &boot_params,
             &guest_memory,
