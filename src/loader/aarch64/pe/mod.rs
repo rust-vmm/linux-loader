@@ -10,8 +10,6 @@
 
 //! Traits and structs for loading pe image kernels into guest memory.
 
-#![cfg(feature = "pe")]
-
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 

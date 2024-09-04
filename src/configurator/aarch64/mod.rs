@@ -4,6 +4,4 @@
 
 //! Traits and structs for configuring and loading boot parameters on `aarch64`.
 
-#![cfg(target_arch = "aarch64")]
-
 pub mod fdt;
