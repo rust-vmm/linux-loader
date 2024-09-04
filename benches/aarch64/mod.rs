@@ -22,6 +22,7 @@ fn create_guest_memory() -> GuestMemoryMmap {
 }
 
 #[derive(Clone, Copy, Default)]
+#[allow(dead_code)]
 pub struct FdtPlaceholder([u8; FDT_MAX_SIZE]);
 
 // SAFETY: The layout of the structure is fixed and can be initialized by
