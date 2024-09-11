@@ -1,3 +1,4 @@
+// Copyright 2024 © Institute of Software, CAS. All rights reserved.
 // Copyright (c) 2023 StarFive Technology Co., Ltd. All rights reserved.
 // Copyright © 2020, Oracle and/or its affiliates.
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
@@ -11,8 +12,6 @@
 
 //! Traits and structs for loading pe image kernels into guest memory.
 
-#![cfg(feature = "pe")]
-
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 
@@ -25,7 +24,7 @@ pub struct PE;
 
 // SAFETY: The layout of the structure is fixed and can be initialized by
 // reading its content from byte array.
-unsafe impl ByteValued for riscv_image_header {}
+unsafe impl ByteValued for riscv64_image_header {}
 
 #[derive(Debug, PartialEq, Eq)]
 /// PE kernel loader errors.
@@ -34,13 +33,21 @@ pub enum Error {
     SeekImageEnd,
     /// Unable to seek to Image header.
     SeekImageHeader,
+    /// Unable to seek to DTB start.
+    SeekDtbStart,
+    /// Unable to seek to DTB end.
+    SeekDtbEnd,
+    /// Device tree binary too big.
+    DtbTooBig,
     /// Unable to read kernel image.
     ReadKernelImage,
     /// Unable to read Image header.
     ReadImageHeader,
+    /// Unable to read DTB image
+    ReadDtbImage,
     /// Invalid Image binary.
     InvalidImage,
-    /// Invalid Image magic2 number.
+    /// Invalid Image magic number.
     InvalidImageMagicNumber,
     /// Invalid base address alignment
     InvalidBaseAddrAlignment,
@@ -52,10 +59,14 @@ impl fmt::Display for Error {
             Error::SeekImageEnd => "unable to seek Image end",
             Error::SeekImageHeader => "unable to seek Image header",
             Error::ReadImageHeader => "unable to read Image header",
+            Error::ReadDtbImage => "unable to read DTB image",
+            Error::SeekDtbStart => "unable to seek DTB start",
+            Error::SeekDtbEnd => "unable to seek DTB end",
             Error::InvalidImage => "invalid Image",
-            Error::InvalidImageMagicNumber => "invalid Image magic2 number",
+            Error::InvalidImageMagicNumber => "invalid Image magic number",
+            Error::DtbTooBig => "device tree image too big",
             Error::ReadKernelImage => "unable to read kernel image",
-            Error::InvalidBaseAddrAlignment => "base address not aligned to 2MiB (for riscv64)",
+            Error::InvalidBaseAddrAlignment => "base address not aligned to 2 MB",
         };
 
         write!(f, "PE Kernel Loader: {}", desc)
@@ -66,9 +77,9 @@ impl std::error::Error for Error {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
-// See kernel doc Documentation/riscv/boot-image-header.rst
+// See kernel doc Documentation/arch/riscv/boot-image-header.rst
 // All these fields should be little endian.
-struct riscv_image_header {
+struct riscv64_image_header {
     code0: u32,
     code1: u32,
     text_offset: u64,
@@ -88,7 +99,7 @@ impl KernelLoader for PE {
     /// # Arguments
     ///
     /// * `guest_mem` - The guest memory where the kernel image is loaded.
-    /// * `kernel_offset` - 2MiB-aligned (for riscv64) base address in guest memory at which to load the kernel.
+    /// * `kernel_offset` - 2MB-aligned base addres in guest memory at which to load the kernel.
     /// * `kernel_image` - Input Image format kernel image.
     /// * `highmem_start_address` - ignored on RISC-V.
     ///
@@ -106,21 +117,21 @@ impl KernelLoader for PE {
         let kernel_size = kernel_image
             .seek(SeekFrom::End(0))
             .map_err(|_| Error::SeekImageEnd)? as usize;
-        let mut riscv_header: riscv_image_header = Default::default();
+        let mut riscv64_header: riscv64_image_header = Default::default();
         kernel_image.rewind().map_err(|_| Error::SeekImageHeader)?;
 
         kernel_image
-            .read_exact(riscv_header.as_mut_slice())
+            .read_exact(riscv64_header.as_mut_slice())
             .map_err(|_| Error::ReadImageHeader)?;
 
-        if u32::from_le(riscv_header.magic2) != 0x05435352 {
+        if u32::from_le(riscv64_header.magic2) != 0x05435352 {
             return Err(Error::InvalidImageMagicNumber.into());
         }
 
-        let text_offset = u64::from_le(riscv_header.text_offset);
+        let text_offset = u64::from_le(riscv64_header.text_offset);
 
-        // Validate that kernel_offset is 2MiB aligned (for riscv64)
-        #[cfg(target_arch = "riscv64")]
+        // Validate that kernel_offset is 2 MB aligned, as required by the
+        // RISC-V boot protocol
         if let Some(kernel_offset) = kernel_offset {
             if kernel_offset.raw_value() % 0x0020_0000 != 0 {
                 return Err(Error::InvalidBaseAddrAlignment.into());
@@ -149,6 +160,34 @@ impl KernelLoader for PE {
 
         Ok(loader_result)
     }
+}
+
+/// Writes the device tree to the given memory slice.
+///
+/// # Arguments
+///
+/// * `guest_mem` - A u8 slice that will be partially overwritten by the device tree blob.
+/// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
+/// * `dtb_image` - The device tree blob.
+#[cfg(target_arch = "riscv64")]
+pub fn load_dtb<F, M: GuestMemory>(
+    guest_mem: &M,
+    guest_addr: GuestAddress,
+    dtb_image: &mut F,
+) -> Result<()>
+where
+    F: ReadVolatile + Read + Seek,
+{
+    let dtb_size = dtb_image
+        .seek(SeekFrom::End(0))
+        .map_err(|_| Error::SeekDtbEnd)? as usize;
+    if dtb_size > 0x200000 {
+        return Err(Error::DtbTooBig.into());
+    }
+    dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
+    guest_mem
+        .read_exact_volatile_from(guest_addr, dtb_image, dtb_size)
+        .map_err(|_| Error::ReadDtbImage.into())
 }
 
 #[cfg(test)]
@@ -181,7 +220,7 @@ mod tests {
         assert_eq!(loader_result.kernel_load.raw_value(), 0x600000);
         assert_eq!(loader_result.kernel_end, 0x601000);
 
-        // Attempt to load the kernel at an address that is not aligned to 2MiB boundary
+        // Attempt to load the kernel at an address that is not aligned to 2MB boundary
         let kernel_offset = GuestAddress(0x0030_0000);
         let loader_result = PE::load(&gm, Some(kernel_offset), &mut Cursor::new(&image), None);
         assert_eq!(

@@ -1,8 +1,13 @@
 # Upcoming Release
 
+## Added
+
+- Introduce RISC-V support to `loader` module.
+
 # [v0.12.0]
 
 ## Changed
+
 - [[#187](https://github.com/rust-vmm/linux-loader/pull/187)] Updated vm-memory to 0.15.0.
 - [[#179](https://github.com/rust-vmm/linux-loader/pull/179)] Load hvm_modlist_entry into guest memory when requested.
 - [[#177](https://github.com/rust-vmm/linux-loader/pull/176)] Added loading

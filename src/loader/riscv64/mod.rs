@@ -1,3 +1,4 @@
+// Copyright 2024 © Institute of Software, CAS. All rights reserved.
 // Copyright (c) 2023 StarFive Technology Co., Ltd. All rights reserved.
 // Copyright (c) 2019 Intel Corporation. All rights reserved.
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -8,9 +9,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
-//! Traits and structs for loading `riscv` kernels into guest memory.
-
-#![cfg(target_arch = "riscv64")]
+//! Traits and structs for loading `riscv64` kernels into guest memory.
 
 #[cfg(feature = "pe")]
 pub mod pe;

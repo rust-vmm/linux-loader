@@ -43,9 +43,9 @@ mod aarch64;
 pub use aarch64::*;
 
 #[cfg(target_arch = "riscv64")]
-mod riscv;
+mod riscv64;
 #[cfg(target_arch = "riscv64")]
-pub use riscv::*;
+pub use riscv64::*;
 
 #[derive(Debug, PartialEq, Eq)]
 /// Kernel loader errors.
