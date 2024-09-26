@@ -75,22 +75,21 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let desc = match self {
+        write!(f, "Kernel Loader: ")?;
+        match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Bzimage(ref _e) => "failed to load bzImage kernel image",
+            Error::Bzimage(ref e) => write!(f, "failed to load bzImage kernel image: {e}"),
             #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
-            Error::Elf(ref _e) => "failed to load ELF kernel image",
+            Error::Elf(ref e) => write!(f, "failed to load ELF kernel image: {e}"),
             #[cfg(all(feature = "pe", target_arch = "aarch64"))]
-            Error::Pe(ref _e) => "failed to load PE kernel image",
+            Error::Pe(ref e) => write!(f, "failed to load PE kernel image: {e}"),
 
-            Error::InvalidCommandLine => "invalid command line provided",
-            Error::CommandLineCopy => "failed writing command line to guest memory",
-            Error::CommandLineOverflow => "command line overflowed guest memory",
-            Error::InvalidKernelStartAddress => "invalid kernel start address",
-            Error::MemoryOverflow => "memory to load kernel image is not enough",
-        };
-
-        write!(f, "Kernel Loader: {}", desc)
+            Error::InvalidCommandLine => write!(f, "invalid command line provided"),
+            Error::CommandLineCopy => write!(f, "failed writing command line to guest memory"),
+            Error::CommandLineOverflow => write!(f, "command line overflowed guest memory"),
+            Error::InvalidKernelStartAddress => write!(f, "invalid kernel start address"),
+            Error::MemoryOverflow => write!(f, "memory to load kernel image is not enough"),
+        }
     }
 }
 
