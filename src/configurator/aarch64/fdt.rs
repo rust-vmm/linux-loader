@@ -106,7 +106,7 @@ mod tests {
     }
 
     #[derive(Clone, Copy, Default)]
-    #[allow(dead_code)]  // rustc thinks the field is never read, but it is via `ByteValued` impl
+    #[allow(dead_code)] // rustc thinks the field is never read, but it is via `ByteValued` impl
     struct FdtPlaceholder([u8; FDT_MAX_SIZE]);
     unsafe impl ByteValued for FdtPlaceholder {}
 
