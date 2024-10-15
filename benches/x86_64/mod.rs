@@ -120,13 +120,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             .unwrap();
         })
     });
-}
 
-#[cfg(feature = "bzimage")]
-pub fn criterion_benchmark_bzimage(c: &mut Criterion) {
-    let guest_mem = create_guest_memory();
+    #[cfg(feature = "bzimage")]
     let bzimage = create_bzimage();
 
+    #[cfg(feature = "bzimage")]
     c.bench_function("load_bzimage", |b| {
         b.iter(|| {
             black_box(BzImage::load(
