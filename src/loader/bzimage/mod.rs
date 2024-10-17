@@ -16,7 +16,7 @@ use std::io::{Seek, SeekFrom};
 
 use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
-use super::super::{
+use crate::loader::{
     bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
 };
 
@@ -209,10 +209,7 @@ mod tests {
     fn make_bzimage() -> Vec<u8> {
         download_resources();
         let mut v = Vec::new();
-        let path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/src/loader/x86_64/bzimage/bzimage"
-        );
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/src/loader/bzimage/bzimage");
         let mut f = File::open(path).unwrap();
         f.read_to_end(&mut v).unwrap();
 
@@ -297,11 +294,11 @@ mod tests {
 
     #[test]
     fn test_invalid_bzimage_underflow() {
-        use super::super::super::Error as LoaderError;
+        use crate::loader::Error as LoaderError;
 
         let path = concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/loader/x86_64/bzimage/fuzz_invalid_bzimage.bin"
+            "/src/loader/bzimage/fuzz_invalid_bzimage.bin"
         );
 
         let gm = create_guest_mem();

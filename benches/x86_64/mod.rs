@@ -35,7 +35,7 @@ fn create_guest_memory() -> GuestMemoryMmap {
 fn create_elf_pvh_image() -> Vec<u8> {
     include_bytes!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/loader/x86_64/elf/test_elfnote.bin"
+        "/src/loader/elf/test_elfnote.bin"
     ))
     .to_vec()
 }
@@ -83,10 +83,7 @@ fn download_resources() {
 fn create_bzimage() -> Vec<u8> {
     download_resources();
     let mut v = Vec::new();
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/loader/x86_64/bzimage/bzimage"
-    );
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/src/loader/bzimage/bzimage");
     let mut f = File::open(path).unwrap();
     f.read_to_end(&mut v).unwrap();
 

@@ -31,15 +31,20 @@ pub use crate::loader_gen::bootparam;
 
 pub use crate::cmdline::Cmdline;
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-mod x86_64;
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use x86_64::*;
+#[cfg(all(target_arch = "aarch64", feature = "pe"))]
+pub mod pe;
+#[cfg(all(target_arch = "aarch64", feature = "pe"))]
+pub use pe::*;
 
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-#[cfg(target_arch = "aarch64")]
-pub use aarch64::*;
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+pub mod elf;
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+pub use elf::*;
+
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "bzimage"))]
+pub mod bzimage;
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "bzimage"))]
+pub use bzimage::*;
 
 #[derive(Debug, PartialEq, Eq)]
 /// Kernel loader errors.

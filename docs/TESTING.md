@@ -78,5 +78,5 @@ git checkout 57e614a
 
 g++ bad_align_writer.cpp -o bad_align_writer -I. -std=c++11
 ./bad_align_writer
-cp test_bad_align.bin "${LINUX_LOADER_PATH}/src/loader/x86_64/elf/"
+cp test_bad_align.bin "${LINUX_LOADER_PATH}/src/loader/elf/"
 ```
