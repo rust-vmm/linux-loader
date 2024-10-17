@@ -16,6 +16,6 @@ mkdir -p ${EXTRACT_PATH}
 curl $DEB_URL -o ${DEB_PATH}
 dpkg-deb -x ${DEB_PATH} ${EXTRACT_PATH}
 
-mv ${BZIMAGE_PATH} "${SCRIPTPATH}/../src/loader/x86_64/bzimage/bzimage"
+mv ${BZIMAGE_PATH} "${SCRIPTPATH}/../src/loader/bzimage/bzimage"
 rm -r ${EXTRACT_PATH}
 rm -f ${DEB_PATH}

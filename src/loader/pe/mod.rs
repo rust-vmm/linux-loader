@@ -15,7 +15,7 @@ use std::io::{Read, Seek, SeekFrom};
 
 use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
-use super::super::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
+use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 
 /// ARM64 Image (PE) format support
 pub struct PE;
