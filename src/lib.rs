@@ -93,6 +93,9 @@
 //!
 //! # #[cfg(target_arch = "aarch64")]
 //! # fn main() {}
+//!
+//! # #[cfg(target_arch = "riscv64")]
+//! # fn main() {}
 //! ```
 //!
 //! [`BootConfigurator`]: trait.BootConfigurator.html

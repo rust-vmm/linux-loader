@@ -21,6 +21,11 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 use aarch64::*;
 
+#[cfg(target_arch = "riscv64")]
+mod riscv64;
+#[cfg(target_arch = "riscv64")]
+use riscv64::*;
+
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(500);
