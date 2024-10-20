@@ -17,9 +17,9 @@ mod x86_64;
 use x86_64::*;
 
 #[cfg(target_arch = "aarch64")]
-mod aarch64;
+mod fdt;
 #[cfg(target_arch = "aarch64")]
-use aarch64::*;
+pub use fdt::*;
 
 criterion_group! {
     name = benches;
