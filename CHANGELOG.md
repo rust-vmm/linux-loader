@@ -3,6 +3,10 @@
 # [v0.12.0]
 
 ## Changed
+
+- [[#197](https://github.com/rust-vmm/linux-loader/pull/197)] Re-organize
+`loader`, `configurator` and `benches` module layout, leaving original interface
+intact.
 - [[#187](https://github.com/rust-vmm/linux-loader/pull/187)] Updated vm-memory to 0.15.0.
 - [[#179](https://github.com/rust-vmm/linux-loader/pull/179)] Load hvm_modlist_entry into guest memory when requested.
 - [[#177](https://github.com/rust-vmm/linux-loader/pull/176)] Added loading
