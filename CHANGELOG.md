@@ -1,5 +1,7 @@
 # Upcoming Release
 
+# [v0.13.0]
+
 ## Added
 
 - [[#190](https://github.com/rust-vmm/linux-loader/pull/190)] Introduce RISC-V64
@@ -7,6 +9,7 @@
 
 ## Changed
 
+- [[#194](https://github.com/rust-vmm/linux-loader/pull/194)] Updated vm-memory to 0.16.0.
 - [[#197](https://github.com/rust-vmm/linux-loader/pull/197)] Re-organize
   `loader`, `configurator` and `benches` module layout, leaving original interface
   intact.
