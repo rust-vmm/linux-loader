@@ -27,7 +27,7 @@ mod x86_64;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use x86_64::*;
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
 pub mod fdt;
 
 use std::cmp::max;
@@ -43,7 +43,7 @@ pub enum Error {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     Pvh(pvh::Error),
     /// Errors specific to device tree boot configuration.
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
     Fdt(fdt::Error),
 
     /// Boot parameter was specified without its starting address in guest memory.
@@ -62,7 +62,7 @@ impl fmt::Display for Error {
             Linux(ref _e) => "failed to configure boot parameter by Linux Boot protocol.",
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
             Pvh(ref _e) => "failed to configure boot parameter by PVH.",
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
             Fdt(ref _e) => "failed to configure boot parameter by FDT.",
 
             MissingStartAddress => {
@@ -84,7 +84,7 @@ impl std::error::Error for Error {
             Linux(ref e) => Some(e),
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
             Pvh(ref e) => Some(e),
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
             Fdt(ref e) => Some(e),
 
             MissingStartAddress => None,
@@ -176,7 +176,7 @@ impl BootParams {
 
     /// Sets or overwrites the boot sections and associated memory address.
     ///
-    /// Unused on `aarch64` and for the Linux boot protocol.
+    /// Unused on `aarch64` and `riscv64` for the Linux boot protocol.
     /// For the PVH boot protocol, the sections specify the memory map table in
     /// [`hvm_memmap_table_entry`] structs.
     ///
@@ -286,7 +286,7 @@ impl BootParams {
 
     /// Sets or overwrites the boot modules and associated memory address.
     ///
-    /// Unused on `aarch64` and for the Linux boot protocol.
+    /// Unused on `aarch64` and `riscv64` for the Linux boot protocol.
     /// For the PVH boot protocol, the modules are specified in [`hvm_modlist_entry`] structs.
     ///
     /// # Arguments
@@ -498,7 +498,7 @@ mod tests {
             );
         }
 
-        #[cfg(target_arch = "aarch64")]
+        #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
         // FDT
         assert_eq!(
             format!("{}", Error::Fdt(fdt::Error::WriteFDTToMemory)),
