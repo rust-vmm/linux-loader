@@ -1,12 +1,20 @@
 # Upcoming Release
 
-# [v0.12.0]
+## Added
+
+- [[#190](https://github.com/rust-vmm/linux-loader/pull/190)] Introduce RISC-V64
+  architecture support.
 
 ## Changed
 
 - [[#197](https://github.com/rust-vmm/linux-loader/pull/197)] Re-organize
-`loader`, `configurator` and `benches` module layout, leaving original interface
-intact.
+  `loader`, `configurator` and `benches` module layout, leaving original interface
+  intact.
+
+# [v0.12.0]
+
+## Changed
+
 - [[#187](https://github.com/rust-vmm/linux-loader/pull/187)] Updated vm-memory to 0.15.0.
 - [[#179](https://github.com/rust-vmm/linux-loader/pull/179)] Load hvm_modlist_entry into guest memory when requested.
 - [[#177](https://github.com/rust-vmm/linux-loader/pull/176)] Added loading
