@@ -22,6 +22,7 @@
 //!
 //! - `x86_64`
 //! - `ARM64`
+//! - `RISC-V64`
 //!
 //! # Example - load an ELF kernel and configure boot params with the PVH protocol
 //!
@@ -91,7 +92,7 @@
 //!     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_mem).unwrap();
 //! }
 //!
-//! # #[cfg(target_arch = "aarch64")]
+//! # #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
 //! # fn main() {}
 //! ```
 //!
