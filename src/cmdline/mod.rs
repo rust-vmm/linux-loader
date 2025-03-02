@@ -37,6 +37,10 @@ pub enum Error {
     MmioSize,
     /// Operation would have made the command line too large.
     TooLarge,
+    /// Double-quotes can be used to protect spaces in values
+    NoQuoteSpace,
+    /// A double quote that is in the middle of the value
+    InvalidQuote,
 }
 
 impl fmt::Display for Error {
@@ -56,6 +60,11 @@ impl fmt::Display for Error {
                 "0-sized virtio MMIO device passed to the kernel command line builder."
             ),
             Error::TooLarge => write!(f, "Inserting string would make command line too long."),
+            Error::NoQuoteSpace => write!(
+                f,
+                "Value that contains spaces need to be surrounded by quotes"
+            ),
+            Error::InvalidQuote => write!(f, "Double quote can not be in the middle of the value"),
         }
     }
 }
@@ -79,13 +88,44 @@ fn valid_str(s: &str) -> Result<()> {
     }
 }
 
-fn valid_element(s: &str) -> Result<()> {
+fn is_quoted(s: &str) -> bool {
+    if s.len() < 2 {
+        return false;
+    }
+    if let Some(first_char) = s.chars().next() {
+        if let Some(last_char) = s.chars().last() {
+            return first_char == '"' && last_char == '"';
+        }
+    }
+    false
+}
+
+fn contains_double_quotes(s: &str) -> bool {
+    if s.len() < 3 {
+        return false;
+    }
+    return s.chars().skip(1).take(s.len() - 2).any(|c| c == '"');
+}
+
+fn valid_key(s: &str) -> Result<()> {
     if !s.chars().all(valid_char) {
         Err(Error::InvalidAscii)
     } else if s.contains(' ') {
         Err(Error::HasSpace)
     } else if s.contains('=') {
         Err(Error::HasEquals)
+    } else {
+        Ok(())
+    }
+}
+
+fn valid_value(s: &str) -> Result<()> {
+    if !s.chars().all(valid_char) {
+        Err(Error::InvalidAscii)
+    } else if contains_double_quotes(s) {
+        Err(Error::InvalidQuote)
+    } else if s.contains(' ') && !is_quoted(s) {
+        Err(Error::NoQuoteSpace)
     } else {
         Ok(())
     }
@@ -155,8 +195,8 @@ impl Cmdline {
         let k = key.as_ref();
         let v = val.as_ref();
 
-        valid_element(k)?;
-        valid_element(v)?;
+        valid_key(k)?;
+        valid_value(v)?;
 
         let kv_str = format!("{}={}", k, v);
 
@@ -186,7 +226,7 @@ impl Cmdline {
     pub fn insert_multiple<T: AsRef<str>>(&mut self, key: T, vals: &[T]) -> Result<()> {
         let k = key.as_ref();
 
-        valid_element(k)?;
+        valid_key(k)?;
         if vals.is_empty() {
             return Err(Error::MissingVal(k.to_string()));
         }
@@ -196,7 +236,7 @@ impl Cmdline {
             k,
             vals.iter()
                 .map(|v| -> Result<&str> {
-                    valid_element(v.as_ref())?;
+                    valid_value(v.as_ref())?;
                     Ok(v.as_ref())
                 })
                 .collect::<Result<Vec<&str>>>()?
@@ -567,20 +607,29 @@ mod tests {
     fn test_insert_space() {
         let mut cl = Cmdline::new(100).unwrap();
         assert_eq!(cl.insert("a ", "b"), Err(Error::HasSpace));
-        assert_eq!(cl.insert("a", "b "), Err(Error::HasSpace));
+        assert_eq!(cl.insert("a", "b "), Err(Error::NoQuoteSpace));
         assert_eq!(cl.insert("a ", "b "), Err(Error::HasSpace));
         assert_eq!(cl.insert(" a", "b"), Err(Error::HasSpace));
+        assert_eq!(cl.insert("a", "hello \"world"), Err(Error::InvalidQuote));
+        assert_eq!(
+            cl.insert("a", "\"foor bar\" \"foor bar\""),
+            Err(Error::InvalidQuote)
+        );
         assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
+        assert!(cl.insert("a", "\"b b\"").is_ok());
+        assert!(cl.insert("c", "\" d\"").is_ok());
+        assert_eq!(
+            cl.as_cstring().unwrap().as_bytes_with_nul(),
+            b"a=\"b b\" c=\" d\"\0"
+        );
     }
 
     #[test]
     fn test_insert_equals() {
         let mut cl = Cmdline::new(100).unwrap();
         assert_eq!(cl.insert("a=", "b"), Err(Error::HasEquals));
-        assert_eq!(cl.insert("a", "b="), Err(Error::HasEquals));
         assert_eq!(cl.insert("a=", "b "), Err(Error::HasEquals));
         assert_eq!(cl.insert("=a", "b"), Err(Error::HasEquals));
-        assert_eq!(cl.insert("a", "=b"), Err(Error::HasEquals));
         assert_eq!(cl.as_cstring().unwrap().as_bytes_with_nul(), b"\0");
     }
 
@@ -702,7 +751,10 @@ mod tests {
             cl.insert_multiple("foo", &no_vals),
             Err(Error::MissingVal("foo".to_string()))
         );
-        assert_eq!(cl.insert_multiple("foo", &["bar "]), Err(Error::HasSpace));
+        assert_eq!(
+            cl.insert_multiple("foo", &["bar "]),
+            Err(Error::NoQuoteSpace)
+        );
         assert_eq!(
             cl.insert_multiple("foo", &["bar", "baz"]),
             Err(Error::TooLarge)
