@@ -104,7 +104,7 @@ fn contains_double_quotes(s: &str) -> bool {
     if s.len() < 3 {
         return false;
     }
-    return s.chars().skip(1).take(s.len() - 2).any(|c| c == '"');
+    s.chars().skip(1).take(s.len() - 2).any(|c| c == '"')
 }
 
 fn valid_key(s: &str) -> Result<()> {
