@@ -11,6 +11,7 @@ extern crate linux_loader;
 extern crate vm_memory;
 
 use std::fs::File;
+use std::hint::black_box;
 use std::io::{Cursor, Read};
 
 use linux_loader::configurator::pvh::PvhBootConfigurator;
@@ -22,7 +23,7 @@ use linux_loader::loader::elf::Elf;
 use linux_loader::loader::KernelLoader;
 use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
 
 const MEM_SIZE: usize = 0x100_0000;
 const E820_RAM: u32 = 1;
