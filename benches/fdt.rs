@@ -8,11 +8,13 @@ extern crate criterion;
 extern crate linux_loader;
 extern crate vm_memory;
 
+use std::hint::black_box;
+
 use linux_loader::configurator::fdt::FdtBootConfigurator;
 use linux_loader::configurator::{BootConfigurator, BootParams};
 use vm_memory::{ByteValued, GuestAddress, GuestMemoryMmap};
 
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
 
 const MEM_SIZE: usize = 0x100_0000;
 const FDT_MAX_SIZE: usize = 0x20;
