@@ -1,5 +1,7 @@
 # Upcoming Release
 
+# [v0.13.1]
+
 ## Changed
 - [[#148](https://github.com/rust-vmm/linux-loader/pull/148)] Fixing kernel commandline parameter validation
   This change allows parameter values containing spaces in the middle, provided they are enclosed in quotes. However, 
