@@ -14,7 +14,7 @@
 use std::fmt;
 use std::io::{Seek, SeekFrom};
 
-use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
 
 use crate::loader::{
     bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
