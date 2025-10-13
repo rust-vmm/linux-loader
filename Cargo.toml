@@ -26,7 +26,7 @@ elf = []
 pe = []
 
 [dependencies]
-vm-memory = ">=0.16.0,<=0.17.0"
+vm-memory = ">=0.16.0, <=0.17.1"
 
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["html_reports"] }
