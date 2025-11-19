@@ -1,5 +1,11 @@
 # Upcoming Release
 
+# [v0.13.2]
+
+## Changed
+
+- [[#214](https://github.com/rust-vmm/linux-loader/pull/214)] Updated vm-memory to 0.17.1.
+
 # [v0.13.1]
 
 ## Changed
