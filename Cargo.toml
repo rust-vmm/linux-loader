@@ -29,7 +29,7 @@ pe = []
 vm-memory = ">=0.16.0, <=0.17.1"
 
 [dev-dependencies]
-criterion = { version = "0.7.0", features = ["html_reports"] }
+criterion = { version = "0.8.0", features = ["html_reports"] }
 vm-memory = { version = ">=0.16.0, <=0.17.1", features = ["backend-mmap"] }
 
 [[bench]]
