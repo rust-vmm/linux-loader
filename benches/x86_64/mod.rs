@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
 
 #![cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#![cfg(any(feature = "elf", feature = "pe", feature = "bzimage"))]
 
 extern crate linux_loader;
 extern crate vm_memory;
