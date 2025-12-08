@@ -33,6 +33,7 @@
 //! # extern crate linux_loader;
 //! # extern crate vm_memory;
 //! # use std::{io::{Cursor, Read}, fs::File};
+//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! # use linux_loader::configurator::{BootConfigurator, BootParams};
 //! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 //! # use linux_loader::configurator::pvh::PvhBootConfigurator;
