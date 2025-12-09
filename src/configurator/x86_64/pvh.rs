@@ -93,8 +93,8 @@ impl BootConfigurator for PvhBootConfigurator {
     /// # Arguments
     ///
     /// * `params` - boot parameters. The header contains a [`hvm_start_info`] struct. The
-    ///              sections contain the memory map in a vector of [`hvm_memmap_table_entry`]
-    ///              structs. The modules, if specified, contain [`hvm_modlist_entry`] structs.
+    ///   sections contain the memory map in a vector of [`hvm_memmap_table_entry`]
+    ///   structs. The modules, if specified, contain [`hvm_modlist_entry`] structs.
     /// * `guest_memory` - guest's physical memory.
     ///
     /// [`hvm_start_info`]: ../loader/elf/start_info/struct.hvm_start_info.html

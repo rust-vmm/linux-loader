@@ -56,7 +56,7 @@ impl BootConfigurator for LinuxBootConfigurator {
     /// # Arguments
     ///
     /// * `params` - boot parameters. The header contains a [`boot_params`] struct. The `sections`
-    ///              and `modules` are unused.
+    ///   and `modules` are unused.
     /// * `guest_memory` - guest's physical memory.
     ///
     /// # Examples

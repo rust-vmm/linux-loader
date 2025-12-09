@@ -118,8 +118,8 @@ pub trait BootConfigurator {
     /// # Arguments
     ///
     /// * `params` - struct containing the header section of the boot parameters, additional
-    ///              sections and modules, and their associated addresses in guest memory. These
-    ///              vary with the boot protocol used.
+    ///   sections and modules, and their associated addresses in guest memory. These
+    ///   vary with the boot protocol used.
     /// * `guest_memory` - guest's physical memory.
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where

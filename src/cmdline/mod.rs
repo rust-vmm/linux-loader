@@ -457,20 +457,20 @@ impl Cmdline {
         const MB_MULT: u64 = KB_MULT << 10;
         const GB_MULT: u64 = MB_MULT << 10;
 
-        if size % GB_MULT == 0 {
+        if size.is_multiple_of(GB_MULT) {
             return format!("{}G", size / GB_MULT);
         }
-        if size % MB_MULT == 0 {
+        if size.is_multiple_of(MB_MULT) {
             return format!("{}M", size / MB_MULT);
         }
-        if size % KB_MULT == 0 {
+        if size.is_multiple_of(KB_MULT) {
             return format!("{}K", size / KB_MULT);
         }
         size.to_string()
     }
 
     fn check_outside_double_quotes(slug: &str) -> bool {
-        slug.matches('\"').count() % 2 == 0
+        slug.matches('\"').count().is_multiple_of(2)
     }
 
     /// Tries to build a [`Cmdline`] with a given capacity from a [`str`]. The format of the
