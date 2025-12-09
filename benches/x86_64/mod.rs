@@ -7,6 +7,7 @@
 
 #![cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #![cfg(any(feature = "elf", feature = "pe", feature = "bzimage"))]
+#![allow(unused_imports)]
 
 extern crate linux_loader;
 extern crate vm_memory;
