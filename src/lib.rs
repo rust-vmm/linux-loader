@@ -33,21 +33,34 @@
 //! # extern crate linux_loader;
 //! # extern crate vm_memory;
 //! # use std::{io::{Cursor, Read}, fs::File};
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-//! # use linux_loader::configurator::{BootConfigurator, BootParams};
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-//! # use linux_loader::configurator::pvh::PvhBootConfigurator;
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-//! # use linux_loader::loader::elf::start_info::{hvm_memmap_table_entry, hvm_start_info};
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-//! # use linux_loader::loader::elf::Elf;
+//!
+//! # #[cfg(all(
+//! #     any(target_arch = "x86", target_arch = "x86_64"),
+//! #     any(feature = "elf", feature = "pe", feature = "bzimage")
+//! # ))]
+//! # mod imports {
+//! #     pub use linux_loader::configurator::{BootConfigurator, BootParams};
+//! #     pub use linux_loader::configurator::pvh::PvhBootConfigurator;
+//! #     pub use linux_loader::loader::elf::start_info::{hvm_memmap_table_entry, hvm_start_info};
+//! #     pub use linux_loader::loader::elf::Elf;
+//! # }
+//!
+//! # #[cfg(all(
+//! #     any(target_arch = "x86", target_arch = "x86_64"),
+//! #     any(feature = "elf", feature = "pe", feature = "bzimage")
+//! # ))]
+//! # pub use imports::*;
+//!
 //! # use linux_loader::loader::KernelLoader;
 //! # use vm_memory::{Address, GuestAddress, GuestMemoryMmap};
 //! # const E820_RAM: u32 = 1;
 //! # const MEM_SIZE: usize = 0x100_0000;
 //! # const XEN_HVM_START_MAGIC_VALUE: u32 = 0x336ec578;
 //!
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+//! # #[cfg(all(
+//! #     any(target_arch = "x86", target_arch = "x86_64"),
+//! #     any(feature = "elf", feature = "pe", feature = "bzimage")
+//! # ))]
 //! fn build_boot_params() -> (hvm_start_info, Vec<hvm_memmap_table_entry>) {
 //!     let mut start_info = hvm_start_info::default();
 //!     let memmap_entry = hvm_memmap_table_entry {
@@ -63,7 +76,10 @@
 //!     (start_info, vec![memmap_entry])
 //! }
 //!
-//! # #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+//! # #[cfg(all(
+//! #     any(target_arch = "x86", target_arch = "x86_64"),
+//! #     any(feature = "elf", feature = "pe", feature = "bzimage")
+//! # ))]
 //! fn main() {
 //!     let guest_mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), MEM_SIZE)]).unwrap();
 //!
@@ -93,7 +109,13 @@
 //!     PvhBootConfigurator::write_bootparams::<GuestMemoryMmap>(&boot_params, &guest_mem).unwrap();
 //! }
 //!
-//! # #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+//! # #[cfg(all(
+//! #     any(target_arch = "aarch64", target_arch = "riscv64"),
+//! #     any(feature = "elf", feature = "pe", feature = "bzimage")
+//! # ))]
+//! # fn main() {}
+//!
+//! # #[cfg(not(any(feature = "elf", feature = "pe", feature = "bzimage")))]
 //! # fn main() {}
 //! ```
 //!
