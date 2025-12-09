@@ -10,12 +10,15 @@ DEB_PATH="${TMP_PATH}/${DEB_NAME}"
 EXTRACT_PATH="${TMP_PATH}/src/bzimage-archive"
 BZIMAGE_PATH="${EXTRACT_PATH}/boot/vmlinuz-5.10.0-30-amd64"
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+DEST_PATH="${SCRIPTPATH}/../src/loader/bzimage/bzimage"
 
-mkdir -p ${EXTRACT_PATH}
+if [ ! -f ${DEST_PATH} ]; then
+  mkdir -p ${EXTRACT_PATH}
 
-curl $DEB_URL -o ${DEB_PATH}
-dpkg-deb -x ${DEB_PATH} ${EXTRACT_PATH}
+  curl $DEB_URL -o ${DEB_PATH}
+  dpkg-deb -x ${DEB_PATH} ${EXTRACT_PATH}
 
-mv ${BZIMAGE_PATH} "${SCRIPTPATH}/../src/loader/bzimage/bzimage"
-rm -r ${EXTRACT_PATH}
-rm -f ${DEB_PATH}
+  mv ${BZIMAGE_PATH} ${DEST_PATH}
+  rm -r ${EXTRACT_PATH}
+  rm -f ${DEB_PATH}
+fi
