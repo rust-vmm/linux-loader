@@ -20,10 +20,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["elf", "pe"]
-bzimage = []
+default = ["pe"]
+bzimage = ["elf"]
+pe = ["elf"]
 elf = []
-pe = []
 
 [dependencies]
 vm-memory = ">=0.16.0, <=0.17.1"
