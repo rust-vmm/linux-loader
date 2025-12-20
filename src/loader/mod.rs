@@ -24,7 +24,9 @@ use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use vm_memory::ByteValued;
-use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{
+    Address, Bytes, GuestAddress, GuestMemory, GuestMemoryBackend, GuestUsize, ReadVolatile,
+};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use crate::loader_gen::bootparam;
@@ -219,7 +221,7 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
 /// gm.read_slice(buf.as_mut_slice(), GuestAddress(0x1000)).unwrap();
 /// assert_eq!(buf.as_slice(), "foo=bar\0".as_bytes());
-pub fn load_cmdline<M: GuestMemory>(
+pub fn load_cmdline<M: GuestMemory + GuestMemoryBackend>(
     guest_mem: &M,
     guest_addr: GuestAddress,
     cmdline: &Cmdline,

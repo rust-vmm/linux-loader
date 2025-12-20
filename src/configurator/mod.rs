@@ -18,7 +18,7 @@
 
 #![cfg(any(feature = "elf", feature = "pe", feature = "bzimage"))]
 
-use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory};
+use vm_memory::{Address, ByteValued, GuestAddress, GuestMemory, GuestMemoryBackend};
 
 use std::fmt;
 
@@ -123,7 +123,7 @@ pub trait BootConfigurator {
     /// * `guest_memory` - guest's physical memory.
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
-        M: GuestMemory;
+        M: GuestMemory + GuestMemoryBackend;
 }
 
 /// Boot parameters to be written in guest memory.
