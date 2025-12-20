@@ -12,7 +12,7 @@
 //! Traits and structs for configuring and loading boot parameters on `x86_64` using the Linux
 //! boot protocol.
 
-use vm_memory::{Bytes, GuestMemory};
+use vm_memory::{Bytes, GuestMemory, GuestMemoryBackend};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
@@ -97,7 +97,7 @@ impl BootConfigurator for LinuxBootConfigurator {
     /// [`boot_params`]: ../loader/bootparam/struct.boot_params.html
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
-        M: GuestMemory,
+        M: GuestMemory + GuestMemoryBackend,
     {
         // The VMM has filled a `boot_params` struct and its e820 map.
         // This will be written in guest memory at the zero page.
