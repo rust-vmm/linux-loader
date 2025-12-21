@@ -1,5 +1,7 @@
 # Upcoming Release
 
+- [[#224](https://github.com/rust-vmm/linux-loader/pull/224)] Fixed docs.rs build.
+
 # [v0.13.2]
 
 ## Changed
