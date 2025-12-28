@@ -4,7 +4,7 @@
 
 ## Changed
 
-- [[#214](https://github.com/rust-vmm/linux-loader/pull/214)] Updated vm-memory to 0.17.1.
+- [[#214](https://github.com/rust-vmm/linux-loader/pull/214)],[[#225]](https://github.com/rust-vmm/linux-loader/pull/225) Support vm-memory 0.17 and 0.18.
 
 # [v0.13.1]
 
