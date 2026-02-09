@@ -159,6 +159,9 @@ impl Elf {
     }
 }
 
+// x86-64 kernel must be aligned to 2MB.
+const KERNEL_SEGMENT_ALIGN: u64 = 0x200000; // 2 MiB
+
 impl KernelLoader for Elf {
     /// Loads a kernel from a vmlinux elf image into guest memory.
     ///
@@ -279,6 +282,12 @@ impl KernelLoader for Elf {
                     .ok_or(Error::InvalidProgramHeaderAddress)?,
                 None => GuestAddress(phdr.p_paddr),
             };
+
+            // Ensure that mem_offset is aligned to 2M, otherwise, the kernel may hang during
+            // booting. Refer to the check in __startup_64() in the Linux kernel source code.
+            if mem_offset.raw_value() & (KERNEL_SEGMENT_ALIGN - 1) != 0 {
+                return Err(Error::Align.into());
+            }
 
             guest_mem
                 .read_exact_volatile_from(mem_offset, kernel_image, phdr.p_filesz as usize)
@@ -479,10 +488,10 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x400000);
 
         loader_result = Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x400000);
 
         loader_result = Elf::load(
             &gm,
@@ -491,7 +500,7 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x200000);
 
         highmem_start_address = GuestAddress(0xa00000);
         assert_eq!(
@@ -626,6 +635,22 @@ mod tests {
             Elf::load(
                 &gm,
                 Some(GuestAddress(u64::MAX)),
+                &mut Cursor::new(&image),
+                None
+            )
+            .err()
+        );
+    }
+
+    #[test]
+    fn test_unaligned_loadaddr() {
+        let gm = create_guest_mem();
+        let image = make_elf_bin();
+        assert_eq!(
+            Some(KernelLoaderError::Elf(Error::Align)),
+            Elf::load(
+                &gm,
+                Some(GuestAddress(0x1000)),
                 &mut Cursor::new(&image),
                 None
             )
