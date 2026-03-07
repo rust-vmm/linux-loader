@@ -4,7 +4,7 @@
 
 //! Traits and structs for loading the device tree.
 
-use vm_memory::{Bytes, GuestMemory};
+use vm_memory::{Bytes, GuestMemoryBackend};
 
 use std::fmt;
 
@@ -56,7 +56,7 @@ impl BootConfigurator for FdtBootConfigurator {
     /// # extern crate vm_memory;
     /// # use linux_loader::configurator::{BootConfigurator, BootParams};
     /// # use linux_loader::configurator::fdt::FdtBootConfigurator;
-    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # use vm_memory::{Address, ByteValued, GuestMemoryBackend, GuestMemoryMmap, GuestAddress};
     /// # #[derive(Clone, Copy, Default)]
     /// # struct FdtPlaceholder([u8; 0x20]);
     /// # unsafe impl ByteValued for FdtPlaceholder {}
@@ -79,7 +79,7 @@ impl BootConfigurator for FdtBootConfigurator {
     /// ```
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
-        M: GuestMemory,
+        M: GuestMemoryBackend,
     {
         guest_memory
             .checked_offset(params.header_start, params.header.len())

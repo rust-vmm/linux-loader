@@ -24,7 +24,7 @@ use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use vm_memory::ByteValued;
-use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{Address, Bytes, GuestAddress, GuestMemoryBackend, GuestUsize, ReadVolatile};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use crate::loader_gen::bootparam;
@@ -167,13 +167,13 @@ pub trait KernelLoader {
     ///
     /// # Arguments
     ///
-    /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
+    /// * `guest_mem`: [`GuestMemoryBackend`] to load the kernel in.
     /// * `kernel_offset`: Usage varies between implementations.
     /// * `kernel_image`: Kernel image to be loaded.
     /// * `highmem_start_address`: Address where high memory starts.
     ///
-    /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
-    fn load<F, M: GuestMemory>(
+    /// [`GuestMemoryBackend`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemoryBackend.html
+    fn load<F, M: GuestMemoryBackend>(
         guest_mem: &M,
         kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
@@ -197,11 +197,11 @@ unsafe impl ByteValued for bootparam::boot_params {}
 ///
 /// # Arguments
 ///
-/// * `guest_mem` - [`GuestMemory`] that will be partially overwritten by the command line.
+/// * `guest_mem` - [`GuestMemoryBackend`] that will be partially overwritten by the command line.
 /// * `guest_addr` - The address in `guest_mem` at which to load the command line.
 /// * `cmdline` - The kernel command line.
 ///
-/// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
+/// [`GuestMemoryBackend`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemoryBackend.html
 ///
 /// # Examples
 ///
@@ -219,7 +219,7 @@ unsafe impl ByteValued for bootparam::boot_params {}
 /// let result = load_cmdline(&gm, GuestAddress(0x1000), &cl).unwrap();
 /// gm.read_slice(buf.as_mut_slice(), GuestAddress(0x1000)).unwrap();
 /// assert_eq!(buf.as_slice(), "foo=bar\0".as_bytes());
-pub fn load_cmdline<M: GuestMemory>(
+pub fn load_cmdline<M: GuestMemoryBackend>(
     guest_mem: &M,
     guest_addr: GuestAddress,
     cmdline: &Cmdline,

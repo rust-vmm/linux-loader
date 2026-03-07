@@ -14,7 +14,9 @@
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{
+    Address, ByteValued, Bytes, GuestAddress, GuestMemoryBackend, GuestUsize, ReadVolatile,
+};
 
 use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 
@@ -131,7 +133,7 @@ impl KernelLoader for PE {
     ///
     /// # Returns
     /// * KernelLoaderResult
-    fn load<F, M: GuestMemory>(
+    fn load<F, M: GuestMemoryBackend>(
         guest_mem: &M,
         kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
@@ -213,7 +215,7 @@ impl KernelLoader for PE {
 /// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
 /// * `dtb_image` - The device tree blob.
 #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
-pub fn load_dtb<F, M: GuestMemory>(
+pub fn load_dtb<F, M: GuestMemoryBackend>(
     guest_mem: &M,
     guest_addr: GuestAddress,
     dtb_image: &mut F,

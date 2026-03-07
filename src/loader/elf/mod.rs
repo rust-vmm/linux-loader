@@ -17,7 +17,9 @@ use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 use std::result;
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{
+    Address, ByteValued, Bytes, GuestAddress, GuestMemoryBackend, GuestUsize, ReadVolatile,
+};
 
 use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 use crate::loader_gen::elf;
@@ -169,7 +171,7 @@ impl KernelLoader for Elf {
     ///
     /// # Arguments
     ///
-    /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
+    /// * `guest_mem`: [`GuestMemoryBackend`] to load the kernel in.
     /// * `kernel_offset`: Offset to be added to default kernel load address in guest memory.
     /// * `kernel_image` - Input vmlinux image.
     /// * `highmem_start_address`: Address where high memory starts.
@@ -197,8 +199,8 @@ impl KernelLoader for Elf {
     /// .unwrap();
     /// ```
     ///
-    /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
-    fn load<F, M: GuestMemory>(
+    /// [`GuestMemoryBackend`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemoryBackend.html
+    fn load<F, M: GuestMemoryBackend>(
         guest_mem: &M,
         kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,

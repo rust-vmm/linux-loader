@@ -14,7 +14,9 @@
 use std::fmt;
 use std::io::{Seek, SeekFrom};
 
-use vm_memory::{Address, ByteValued, Bytes, GuestAddress, GuestMemory, GuestUsize, ReadVolatile};
+use vm_memory::{
+    Address, ByteValued, Bytes, GuestAddress, GuestMemoryBackend, GuestUsize, ReadVolatile,
+};
 
 use crate::loader::{
     bootparam, Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result,
@@ -71,7 +73,7 @@ impl KernelLoader for BzImage {
     ///
     /// # Arguments
     ///
-    /// * `guest_mem`: [`GuestMemory`] to load the kernel in.
+    /// * `guest_mem`: [`GuestMemoryBackend`] to load the kernel in.
     /// * `kernel_offset`: Address in guest memory where the kernel is loaded.
     /// * `kernel_image` - Input bzImage image.
     /// * `highmem_start_address`: Address where high memory starts.
@@ -99,8 +101,8 @@ impl KernelLoader for BzImage {
     /// .unwrap();
     /// ```
     ///
-    /// [`GuestMemory`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemory.html
-    fn load<F, M: GuestMemory>(
+    /// [`GuestMemoryBackend`]: https://docs.rs/vm-memory/latest/vm_memory/guest_memory/trait.GuestMemoryBackend.html
+    fn load<F, M: GuestMemoryBackend>(
         guest_mem: &M,
         kernel_offset: Option<GuestAddress>,
         kernel_image: &mut F,
