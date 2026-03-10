@@ -135,6 +135,9 @@ impl fmt::Display for PvhBootCapability {
 /// Raw ELF (a.k.a. vmlinux) kernel image support.
 pub struct Elf;
 
+// x86-64 kernel must be aligned to 2MB.
+const KERNEL_SEGMENT_ALIGN: u64 = 0x200000; // 2 MiB
+
 impl Elf {
     /// Verifies that magic numbers are present in the Elf header.
     fn validate_header(ehdr: &elf::Elf64_Ehdr) -> std::result::Result<(), Error> {
@@ -224,12 +227,18 @@ impl KernelLoader for Elf {
 
         let mut loader_result = KernelLoaderResult {
             kernel_load: match kernel_offset {
-                Some(k_offset) => GuestAddress(
-                    k_offset
+                Some(k_offset) => {
+                    let load_addr = k_offset
                         .raw_value()
                         .checked_add(ehdr.e_entry)
-                        .ok_or(Error::Overflow)?,
-                ),
+                        .ok_or(Error::Overflow)?;
+                    // Ensure that kernel_offset is aligned to 2M, otherwise, the kernel may hang during
+                    // booting. Refer to the check in __startup_64() in the Linux kernel source code.
+                    if k_offset.raw_value() & (KERNEL_SEGMENT_ALIGN - 1) != 0 {
+                        return Err(Error::Align.into());
+                    }
+                    GuestAddress(load_addr)
+                },
                 None => GuestAddress(ehdr.e_entry),
             },
             ..Default::default()
@@ -270,6 +279,12 @@ impl KernelLoader for Elf {
             kernel_image
                 .seek(SeekFrom::Start(phdr.p_offset))
                 .map_err(|_| Error::SeekKernelStart)?;
+
+            // Verify alignment of the LOAD segment.
+            // See commit c55b8550fa57ba4f5e507be406ff9fc2845713e8 in Linux kernel tree.
+            if phdr.p_align & (KERNEL_SEGMENT_ALIGN - 1) != 0 {
+                return Err(Error::Align.into());
+            }
 
             // if the vmm does not specify where the kernel should be loaded, just
             // load it to the physical address p_paddr for each segment.
@@ -479,10 +494,10 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x400000);
 
         loader_result = Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x200400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x400000);
 
         loader_result = Elf::load(
             &gm,
@@ -491,7 +506,7 @@ mod tests {
             Some(highmem_start_address),
         )
         .unwrap();
-        assert_eq!(loader_result.kernel_load.raw_value(), 0x400);
+        assert_eq!(loader_result.kernel_load.raw_value(), 0x200000);
 
         highmem_start_address = GuestAddress(0xa00000);
         assert_eq!(
@@ -626,6 +641,22 @@ mod tests {
             Elf::load(
                 &gm,
                 Some(GuestAddress(u64::MAX)),
+                &mut Cursor::new(&image),
+                None
+            )
+            .err()
+        );
+    }
+
+    #[test]
+    fn test_unaligned_loadaddr() {
+        let gm = create_guest_mem();
+        let image = make_elf_bin();
+        assert_eq!(
+            Some(KernelLoaderError::Elf(Error::Align)),
+            Elf::load(
+                &gm,
+                Some(GuestAddress(0x1000)),
                 &mut Cursor::new(&image),
                 None
             )
