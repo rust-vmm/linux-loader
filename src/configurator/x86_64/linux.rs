@@ -12,7 +12,7 @@
 //! Traits and structs for configuring and loading boot parameters on `x86_64` using the Linux
 //! boot protocol.
 
-use vm_memory::{Bytes, GuestMemory};
+use vm_memory::{Bytes, GuestMemoryBackend};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 
@@ -66,7 +66,7 @@ impl BootConfigurator for LinuxBootConfigurator {
     /// # use linux_loader::configurator::{BootConfigurator, BootParams};
     /// # use linux_loader::configurator::linux::LinuxBootConfigurator;
     /// # use linux_loader::loader::bootparam::boot_params;
-    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # use vm_memory::{Address, ByteValued, GuestMemoryBackend, GuestMemoryMmap, GuestAddress};
     /// # const KERNEL_BOOT_FLAG_MAGIC: u16 = 0xaa55;
     /// # const KERNEL_HDR_MAGIC: u32 = 0x53726448;
     /// # const KERNEL_LOADER_OTHER: u8 = 0xff;
@@ -97,7 +97,7 @@ impl BootConfigurator for LinuxBootConfigurator {
     /// [`boot_params`]: ../loader/bootparam/struct.boot_params.html
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
-        M: GuestMemory,
+        M: GuestMemoryBackend,
     {
         // The VMM has filled a `boot_params` struct and its e820 map.
         // This will be written in guest memory at the zero page.

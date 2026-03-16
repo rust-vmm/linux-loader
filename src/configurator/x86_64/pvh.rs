@@ -14,7 +14,7 @@
 
 #![cfg(any(feature = "elf", feature = "bzimage"))]
 
-use vm_memory::{ByteValued, Bytes, GuestMemory};
+use vm_memory::{ByteValued, Bytes, GuestMemoryBackend};
 
 use crate::configurator::{BootConfigurator, BootParams, Error as BootConfiguratorError, Result};
 use crate::loader_gen::start_info::{hvm_memmap_table_entry, hvm_modlist_entry, hvm_start_info};
@@ -108,7 +108,7 @@ impl BootConfigurator for PvhBootConfigurator {
     /// # use linux_loader::configurator::{BootConfigurator, BootParams};
     /// # use linux_loader::configurator::pvh::PvhBootConfigurator;
     /// # use linux_loader::loader::elf::start_info::{hvm_start_info, hvm_memmap_table_entry};
-    /// # use vm_memory::{Address, ByteValued, GuestMemory, GuestMemoryMmap, GuestAddress};
+    /// # use vm_memory::{Address, ByteValued, GuestMemoryBackend, GuestMemoryMmap, GuestAddress};
     /// # const XEN_HVM_START_MAGIC_VALUE: u32 = 0x336ec578;
     /// # const MEM_SIZE: u64 = 0x100_0000;
     /// # const E820_RAM: u32 = 1;
@@ -145,7 +145,7 @@ impl BootConfigurator for PvhBootConfigurator {
     /// ```
     fn write_bootparams<M>(params: &BootParams, guest_memory: &M) -> Result<()>
     where
-        M: GuestMemory,
+        M: GuestMemoryBackend,
     {
         // The VMM has filled an `hvm_start_info` struct and a `Vec<hvm_memmap_table_entry>`
         // and has passed them on to this function.
