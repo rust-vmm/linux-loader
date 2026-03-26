@@ -218,6 +218,8 @@ pub struct __kernel_fd_set {
     pub fds_bits: [::std::os::raw::c_ulong; 16usize],
 }
 #[test]
+// On Windows the unsigned long size is 4 bytes, instead of 8
+#[cfg(target_family = "unix")]
 fn bindgen_test_layout___kernel_fd_set() {
     const UNINIT: ::std::mem::MaybeUninit<__kernel_fd_set> = ::std::mem::MaybeUninit::uninit();
     let ptr = UNINIT.as_ptr();
