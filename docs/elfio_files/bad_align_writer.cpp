@@ -56,10 +56,10 @@ int main( void )
     // Create a loadable segment
     segment* text_seg = writer.segments.add();
     text_seg->set_type( PT_LOAD );
-    text_seg->set_virtual_address( 0x400 );
-    text_seg->set_physical_address( 0x400 );
+    text_seg->set_virtual_address( 0x200000 );
+    text_seg->set_physical_address( 0x200000 );
     text_seg->set_flags( PF_X | PF_R );
-    text_seg->set_align( 0x100 );
+    text_seg->set_align( 0x200000 );
 
     // Add code section into program segment
     text_seg->add_section_index( text_sec->get_index(),
@@ -80,10 +80,10 @@ int main( void )
     // Create a read/write segment
     segment* data_seg = writer.segments.add();
     data_seg->set_type( PT_NOTE );
-    data_seg->set_virtual_address( 0x8888048020 );
-    data_seg->set_physical_address( 0x8888048020 );
+    data_seg->set_virtual_address( 0x8888400000 );
+    data_seg->set_physical_address( 0x888400000 );
     data_seg->set_flags( PF_W | PF_R );
-    data_seg->set_align( 13 );
+    data_seg->set_align( 0x200000 );
 
     // Add code section into program segment
     data_seg->add_section_index( data_sec->get_index(),
@@ -103,7 +103,7 @@ int main( void )
     // In this example, the code starts at the first address of the
     // 'text_seg' segment. Therefore, the start address is set
     // to be equal to the segment location
-    writer.set_entry( 0x400 );
+    writer.set_entry( 0x200000 );
 
     // Create ELF file
     writer.save( "test_bad_align.bin" );
