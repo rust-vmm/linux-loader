@@ -3,9 +3,10 @@
 [![crates.io](https://img.shields.io/crates/v/linux-loader)](https://crates.io/crates/linux-loader)
 [![docs.rs](https://img.shields.io/docsrs/linux-loader)](https://docs.rs/linux-loader/)
 
-The `linux-loader` crate offers support for loading raw ELF (`vmlinux`) and
-compressed big zImage (`bzImage`) format kernel images on `x86_64` and PE
-(`Image`) kernel images on `aarch64` and `riscv64`. ELF support includes the
+The `linux-loader` crate offers support for loading raw ELF (`vmlinux`) on
+`aarch64`, `riscv64` and `x86_64`, compressed big zImage (`bzImage`) format
+kernel images on `x86_64` and PE (`Image`) kernel images on `aarch64` and
+`riscv64`. ELF support includes the
 [Linux](https://www.kernel.org/doc/Documentation/x86/boot.txt) and
 [PVH](https://xenbits.xen.org/docs/unstable/misc/pvh.html) boot protocols.
 
@@ -16,8 +17,8 @@ much of the boot process remains the VMM's responsibility. See [Usage] for detai
 
 - Parsing and loading kernel images into guest memory.
    - `x86_64`: `vmlinux` (raw ELF image), `bzImage`
-   - `aarch64`: `Image`
-   - `riscv64`: `Image`
+   - `aarch64`: raw ELF images, `Image`
+   - `riscv64`: raw ELF images, `Image`
 - Parsing and building the kernel command line.
 - Loading device tree blobs (`aarch64` and `riscv64`).
 - Configuring boot parameters using the exported primitives.
