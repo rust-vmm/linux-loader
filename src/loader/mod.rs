@@ -36,9 +36,25 @@ pub mod pe;
 #[cfg(all(any(target_arch = "aarch64", target_arch = "riscv64"), feature = "pe"))]
 pub use pe::*;
 
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+#[cfg(all(
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    ),
+    feature = "elf"
+))]
 pub mod elf;
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+#[cfg(all(
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    ),
+    feature = "elf"
+))]
 pub use elf::*;
 
 #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "bzimage"))]
@@ -54,7 +70,15 @@ pub enum Error {
     Bzimage(bzimage::Error),
 
     /// Failed to load elf image.
-    #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+    #[cfg(all(
+        feature = "elf",
+        any(
+            target_arch = "aarch64",
+            target_arch = "riscv64",
+            target_arch = "x86",
+            target_arch = "x86_64"
+        )
+    ))]
     Elf(elf::Error),
 
     /// Failed to load PE image.
@@ -84,7 +108,15 @@ impl fmt::Display for Error {
         match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Bzimage(ref e) => write!(f, "failed to load bzImage kernel image: {e}"),
-            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            #[cfg(all(
+                feature = "elf",
+                any(
+                    target_arch = "aarch64",
+                    target_arch = "riscv64",
+                    target_arch = "x86",
+                    target_arch = "x86_64"
+                )
+            ))]
             Error::Elf(ref e) => write!(f, "failed to load ELF kernel image: {e}"),
             #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref e) => write!(f, "failed to load PE kernel image: {e}"),
@@ -103,7 +135,15 @@ impl std::error::Error for Error {
         match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Bzimage(ref e) => Some(e),
-            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            #[cfg(all(
+                feature = "elf",
+                any(
+                    target_arch = "aarch64",
+                    target_arch = "riscv64",
+                    target_arch = "x86",
+                    target_arch = "x86_64"
+                )
+            ))]
             Error::Elf(ref e) => Some(e),
             #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref e) => Some(e),
@@ -117,7 +157,15 @@ impl std::error::Error for Error {
     }
 }
 
-#[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+#[cfg(all(
+    feature = "elf",
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    )
+))]
 impl From<elf::Error> for Error {
     fn from(err: elf::Error) -> Self {
         Error::Elf(err)

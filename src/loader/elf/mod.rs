@@ -10,11 +10,20 @@
 
 //! Traits and structs for loading elf image kernels into guest memory.
 
-#![cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+#![cfg(all(
+    feature = "elf",
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    )
+))]
 
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use std::result;
 
 use vm_memory::{
@@ -23,6 +32,7 @@ use vm_memory::{
 
 use crate::loader::{Error as KernelLoaderError, KernelLoader, KernelLoaderResult, Result};
 use crate::loader_gen::elf;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use crate::loader_gen::start_info;
 
 // SAFETY: The layout of the structure is fixed and can be initialized by
@@ -54,6 +64,8 @@ pub enum Error {
     InvalidProgramHeaderAddress,
     /// Invalid entry address.
     InvalidEntryAddress,
+    /// Loaded little endian binary on a big endian platform.
+    LittleEndianElfOnBig,
     /// Overflow occurred during an arithmetic operation.
     Overflow,
     /// Unable to read ELF header.
@@ -88,6 +100,9 @@ impl fmt::Display for Error {
             Error::InvalidProgramHeaderOffset => "Invalid program header offset",
             Error::InvalidProgramHeaderAddress => "Invalid Program Header Address",
             Error::InvalidEntryAddress => "Invalid entry address",
+            Error::LittleEndianElfOnBig => {
+                "Trying to load little-endian binary on big-endian machine"
+            }
             Error::Overflow => "Overflow occurred during an arithmetic operation",
             Error::ReadElfHeader => "Unable to read elf header",
             Error::ReadKernelImage => "Unable to read kernel image",
@@ -148,8 +163,13 @@ impl Elf {
         {
             return Err(Error::InvalidElfMagicNumber);
         }
+        #[cfg(target_endian = "little")]
         if ehdr.e_ident[elf::EI_DATA] != elf::ELFDATA2LSB {
             return Err(Error::BigEndianElfOnLittle);
+        }
+        #[cfg(target_endian = "big")]
+        if ehdr.e_ident[elf::EI_DATA] != elf::ELFDATA2MSB {
+            return Err(Error::LittleEndianElfOnBig);
         }
         if ehdr.e_phentsize as usize != mem::size_of::<elf::Elf64_Phdr>() {
             return Err(Error::InvalidProgramHeaderSize);
@@ -252,6 +272,7 @@ impl KernelLoader for Elf {
 
         // Read in each section pointed to by the program headers.
         for phdr in phdrs {
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
             if phdr.p_type != elf::PT_LOAD || phdr.p_filesz == 0 {
                 if phdr.p_type == elf::PT_NOTE {
                     // The PVH boot protocol currently requires that the kernel is loaded at
@@ -294,13 +315,17 @@ impl KernelLoader for Elf {
         }
 
         // elf image has no setup_header which is defined for bzImage
-        loader_result.setup_header = None;
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            loader_result.setup_header = None;
+        }
 
         Ok(loader_result)
     }
 }
 
 // Size of string "Xen", including the terminating NULL.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 const PVH_NOTE_STR_SZ: usize = 4;
 
 /// Examines a supplied elf program header of type `PT_NOTE` to determine if it contains an entry
@@ -309,6 +334,7 @@ const PVH_NOTE_STR_SZ: usize = 4;
 /// with paging disabled, as described by the PVH boot protocol.
 /// Returns the encoded entry point address, or `None` if no `XEN_ELFNOTE_PHYS32_ENTRY` entries
 /// are found in the note header.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn parse_elf_note<F>(phdr: &elf::Elf64_Phdr, kernel_image: &mut F) -> Result<PvhBootCapability>
 where
     F: Read + ReadVolatile + Seek,
@@ -415,6 +441,7 @@ where
 ///
 /// Returns the smallest x with alignment `align` so that x >= addr if the alignment is a power of
 /// 2, or an error otherwise.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn align_up(addr: u64, align: u64) -> result::Result<u64, Error> {
     if !align.is_power_of_two() {
         return Err(Error::Align);
@@ -448,22 +475,27 @@ mod tests {
         v
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_elfnote() -> Vec<u8> {
         include_bytes!("test_elfnote.bin").to_vec()
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_elfnote_8byte_align() -> Vec<u8> {
         include_bytes!("test_elfnote_8byte_align.bin").to_vec()
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_dummy_elfnote() -> Vec<u8> {
         include_bytes!("test_dummy_note.bin").to_vec()
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_invalid_pvh_note() -> Vec<u8> {
         include_bytes!("test_invalid_pvh_note.bin").to_vec()
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn make_elfnote_bad_align() -> Vec<u8> {
         include_bytes!("test_bad_align.bin").to_vec()
     }
@@ -522,15 +554,27 @@ mod tests {
 
     #[test]
     fn test_bad_endian() {
-        // Only little endian is supported.
+        // Only native endian is supported.
         let gm = create_guest_mem();
         let kernel_addr = GuestAddress(0x0);
         let mut bad_image = make_elf_bin();
-        bad_image[0x5] = 2;
-        assert_eq!(
-            Some(KernelLoaderError::Elf(Error::BigEndianElfOnLittle)),
-            Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None).err()
-        );
+
+        #[cfg(target_endian = "little")]
+        {
+            bad_image[0x5] = elf::ELFDATA2MSB;
+            assert_eq!(
+                Some(KernelLoaderError::Elf(Error::BigEndianElfOnLittle)),
+                Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None).err()
+            );
+        }
+        #[cfg(target_endian = "big")]
+        {
+            bad_image[0x5] = elf::ELFDATA2LSB;
+            assert_eq!(
+                Some(KernelLoaderError::Elf(Error::LittleEndianElfOnBig)),
+                Elf::load(&gm, Some(kernel_addr), &mut Cursor::new(&bad_image), None).err()
+            );
+        }
     }
 
     #[test]
@@ -547,6 +591,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_load_pvh() {
         let gm = create_guest_mem();
         let pvhnote_image = make_elfnote();
@@ -571,6 +616,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_dummy_elfnote() {
         let gm = create_guest_mem();
         let dummynote_image = make_dummy_elfnote();
@@ -582,6 +628,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_bad_elfnote() {
         let gm = create_guest_mem();
         let badnote_image = make_invalid_pvh_note();
@@ -592,6 +639,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_load_pvh_with_align() {
         // Alignment of ELF notes is always const value (4-bytes), ELF notes parse should not get Align
         // error.
