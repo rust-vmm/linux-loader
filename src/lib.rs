@@ -127,9 +127,19 @@ pub mod configurator;
 pub mod loader;
 
 #[allow(clippy::undocumented_unsafe_blocks)]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(
+    all(target_arch = "aarch64", feature = "elf"),
+    all(target_arch = "riscv64", feature = "elf"),
+    target_arch = "x86",
+    target_arch = "x86_64"
+))]
 mod loader_gen;
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(
+    all(target_arch = "aarch64", feature = "elf"),
+    all(target_arch = "riscv64", feature = "elf"),
+    target_arch = "x86",
+    target_arch = "x86_64"
+))]
 pub use loader_gen::*;
 
 extern crate vm_memory;
