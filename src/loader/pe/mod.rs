@@ -30,18 +30,10 @@ pub enum Error {
     SeekImageEnd,
     /// Unable to seek to Image header.
     SeekImageHeader,
-    /// Unable to seek to DTB start.
-    SeekDtbStart,
-    /// Unable to seek to DTB end.
-    SeekDtbEnd,
-    /// Device tree binary too big.
-    DtbTooBig,
     /// Unable to read kernel image.
     ReadKernelImage,
     /// Unable to read Image header.
     ReadImageHeader,
-    /// Unable to read DTB image
-    ReadDtbImage,
     /// Invalid Image binary.
     InvalidImage,
     /// Invalid Image magic number.
@@ -56,12 +48,8 @@ impl fmt::Display for Error {
             Error::SeekImageEnd => "unable to seek Image end",
             Error::SeekImageHeader => "unable to seek Image header",
             Error::ReadImageHeader => "unable to read Image header",
-            Error::ReadDtbImage => "unable to read DTB image",
-            Error::SeekDtbStart => "unable to seek DTB start",
-            Error::SeekDtbEnd => "unable to seek DTB end",
             Error::InvalidImage => "invalid Image",
             Error::InvalidImageMagicNumber => "invalid Image magic number",
-            Error::DtbTooBig => "device tree image too big",
             Error::ReadKernelImage => "unable to read kernel image",
             Error::InvalidBaseAddrAlignment => "base address not aligned to 2 MB",
         };
@@ -205,34 +193,6 @@ impl KernelLoader for PE {
 
         Ok(loader_result)
     }
-}
-
-/// Writes the device tree to the given memory slice.
-///
-/// # Arguments
-///
-/// * `guest_mem` - A u8 slice that will be partially overwritten by the device tree blob.
-/// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
-/// * `dtb_image` - The device tree blob.
-#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
-pub fn load_dtb<F, M: GuestMemoryBackend>(
-    guest_mem: &M,
-    guest_addr: GuestAddress,
-    dtb_image: &mut F,
-) -> Result<()>
-where
-    F: ReadVolatile + Read + Seek,
-{
-    let dtb_size = dtb_image
-        .seek(SeekFrom::End(0))
-        .map_err(|_| Error::SeekDtbEnd)? as usize;
-    if dtb_size > 0x200000 {
-        return Err(Error::DtbTooBig.into());
-    }
-    dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
-    guest_mem
-        .read_exact_volatile_from(guest_addr, dtb_image, dtb_size)
-        .map_err(|_| Error::ReadDtbImage.into())
 }
 
 #[cfg(test)]
