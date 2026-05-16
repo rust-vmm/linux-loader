@@ -20,6 +20,8 @@
 extern crate vm_memory;
 
 use std::fmt;
+#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+use std::io::SeekFrom;
 use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -95,6 +97,19 @@ pub enum Error {
     InvalidKernelStartAddress,
     /// Memory to load kernel image is too small.
     MemoryOverflow,
+
+    /// Unable to seek to DTB start.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    SeekDtbStart,
+    /// Unable to seek to DTB end.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    SeekDtbEnd,
+    /// Device tree binary too big.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    DtbTooBig,
+    /// Unable to read DTB image
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    ReadDtbImage,
 }
 
 /// A specialized [`Result`] type for the kernel loader.
@@ -126,6 +141,15 @@ impl fmt::Display for Error {
             Error::CommandLineOverflow => write!(f, "command line overflowed guest memory"),
             Error::InvalidKernelStartAddress => write!(f, "invalid kernel start address"),
             Error::MemoryOverflow => write!(f, "memory to load kernel image is not enough"),
+
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbStart => write!(f, "unable to seek DTB start"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbEnd => write!(f, "unable to seek DTB end"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::DtbTooBig => write!(f, "device tree image too big"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::ReadDtbImage => write!(f, "unable to read DTB image"),
         }
     }
 }
@@ -153,6 +177,11 @@ impl std::error::Error for Error {
             Error::CommandLineOverflow => None,
             Error::InvalidKernelStartAddress => None,
             Error::MemoryOverflow => None,
+
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbStart | Error::SeekDtbEnd | Error::DtbTooBig | Error::ReadDtbImage => {
+                None
+            }
         }
     }
 }
@@ -295,6 +324,34 @@ pub fn load_cmdline<M: GuestMemoryBackend>(
         .map_err(|_| Error::CommandLineCopy)?;
 
     Ok(())
+}
+
+/// Writes the device tree to the given memory slice.
+///
+/// # Arguments
+///
+/// * `guest_mem` - A u8 slice that will be partially overwritten by the device tree blob.
+/// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
+/// * `dtb_image` - The device tree blob.
+#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+pub fn load_dtb<F, M: GuestMemoryBackend>(
+    guest_mem: &M,
+    guest_addr: GuestAddress,
+    dtb_image: &mut F,
+) -> Result<()>
+where
+    F: ReadVolatile + Read + Seek,
+{
+    let dtb_size = dtb_image
+        .seek(SeekFrom::End(0))
+        .map_err(|_| Error::SeekDtbEnd)? as usize;
+    if dtb_size > 0x200000 {
+        return Err(Error::DtbTooBig);
+    }
+    dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
+    guest_mem
+        .read_exact_volatile_from(guest_addr, dtb_image, dtb_size)
+        .map_err(|_| Error::ReadDtbImage)
 }
 
 #[cfg(test)]
