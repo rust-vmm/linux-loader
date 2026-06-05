@@ -3,6 +3,15 @@
 [![crates.io](https://img.shields.io/crates/v/linux-loader)](https://crates.io/crates/linux-loader)
 [![docs.rs](https://img.shields.io/docsrs/linux-loader)](https://docs.rs/linux-loader/)
 
+## Build Requirements
+
+The build process uses [bindgen](https://rust-lang.github.io/rust-bindgen/) to generate Rust bindings from C headers at build time, which requires **libclang** to be installed.
+
+**Installing libclang:**
+- **Ubuntu/Debian**: `apt-get install libclang-dev`
+- **macOS**: `xcode-select --install` (or `brew install llvm`)
+- **Fedora/RHEL**: `dnf install clang-devel`
+
 The `linux-loader` crate offers support for loading raw ELF (`vmlinux`) and
 compressed big zImage (`bzImage`) format kernel images on `x86_64` and PE
 (`Image`) kernel images on `aarch64` and `riscv64`. ELF support includes the
@@ -117,6 +126,16 @@ impl MyVMM {
 ```
 
 Done!
+
+## Generated Code
+
+The x86_64 boot parameter structures (`bootparam`, `elf`, and `start_info` modules) are automatically generated from Linux kernel UAPI headers during build time. The C headers are vendored in the `third-party/linux-headers/` directory:
+
+- `bootparam.h` - Linux boot protocol structures (from commit `48b1320a674e1ff5de2fad8606bee38f724594dc`)
+- `elf.h` - ELF64 format structures (from commit `48b1320a674e1ff5de2fad8606bee38f724594dc`)
+- `start_info.h` - PVH boot protocol structures (from commit `48b1320a674e1ff5de2fad8606bee38f724594dc`)
+
+These headers define stable userspace ABIs and are automatically converted to Rust code during the build process using bindgen. The generated files are placed in the build output directory and are not checked into version control.
 
 ## Testing
 
