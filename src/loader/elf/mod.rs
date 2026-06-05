@@ -141,14 +141,14 @@ impl Elf {
     /// Verifies that magic numbers are present in the Elf header.
     fn validate_header(ehdr: &elf::Elf64_Ehdr) -> std::result::Result<(), Error> {
         // Sanity checks
-        if ehdr.e_ident[elf::EI_MAG0 as usize] != elf::ELFMAG0 as u8
-            || ehdr.e_ident[elf::EI_MAG1 as usize] != elf::ELFMAG1
-            || ehdr.e_ident[elf::EI_MAG2 as usize] != elf::ELFMAG2
-            || ehdr.e_ident[elf::EI_MAG3 as usize] != elf::ELFMAG3
+        if ehdr.e_ident[elf::EI_MAG0] != elf::ELFMAG0
+            || ehdr.e_ident[elf::EI_MAG1] != elf::ELFMAG1
+            || ehdr.e_ident[elf::EI_MAG2] != elf::ELFMAG2
+            || ehdr.e_ident[elf::EI_MAG3] != elf::ELFMAG3
         {
             return Err(Error::InvalidElfMagicNumber);
         }
-        if ehdr.e_ident[elf::EI_DATA as usize] != elf::ELFDATA2LSB as u8 {
+        if ehdr.e_ident[elf::EI_DATA] != elf::ELFDATA2LSB {
             return Err(Error::BigEndianElfOnLittle);
         }
         if ehdr.e_phentsize as usize != mem::size_of::<elf::Elf64_Phdr>() {
