@@ -42,3 +42,6 @@ bench = false # https://bheisler.github.io/criterion.rs/book/faq.html#cargo-benc
 [profile.bench]
 lto = true
 codegen-units = 1
+
+[build-dependencies]
+bindgen = "0.69"
