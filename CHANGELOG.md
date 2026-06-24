@@ -1,5 +1,11 @@
 # Upcoming Release
 
+## Added
+
+- [[#234](https://github.com/rust-vmm/linux-loader/pull/234)] Add ELF loading support for aarch64 and riscv64
+
+## Fixed
+
 - [[#224](https://github.com/rust-vmm/linux-loader/pull/224)] Fixed docs.rs build.
 
 # [v0.13.2]
