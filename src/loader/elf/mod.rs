@@ -209,7 +209,7 @@ impl KernelLoader for Elf {
     /// let kernel_addr = GuestAddress(0x200000);
     /// let gm = GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), mem_size)]).unwrap();
     /// let mut kernel_image = vec![];
-    /// kernel_image.extend_from_slice(include_bytes!("test_elf.bin"));
+    /// kernel_image.extend_from_slice(include_bytes!("test_x86-64_elf.bin"));
     /// elf::Elf::load(
     ///     &gm,
     ///     Some(kernel_addr),
@@ -463,16 +463,18 @@ mod tests {
     use vm_memory::{Address, GuestAddress};
     type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 
-    const MEM_SIZE: u64 = 0x100_0000;
+    const MEM_SIZE: u64 = 0x8000_0000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
     }
 
-    fn make_elf_bin() -> Vec<u8> {
-        let mut v = Vec::new();
-        v.extend_from_slice(include_bytes!("test_elf.bin"));
-        v
+    fn make_x86_64_elf_bin() -> Vec<u8> {
+        include_bytes!("test_x86-64_elf.bin").to_vec()
+    }
+
+    fn make_aarch64_elf_bin() -> Vec<u8> {
+        include_bytes!("test_arm64_elf.bin").to_vec()
     }
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -501,9 +503,9 @@ mod tests {
     }
 
     #[test]
-    fn test_load_elf() {
+    fn test_load_x86_64_elf() {
         let gm = create_guest_mem();
-        let image = make_elf_bin();
+        let image = make_x86_64_elf_bin();
         let kernel_addr = GuestAddress(0x200000);
         let mut highmem_start_address = GuestAddress(0x0);
         let mut loader_result = Elf::load(
@@ -541,10 +543,24 @@ mod tests {
     }
 
     #[test]
+    fn test_load_aarch64_elf() {
+        let gm = create_guest_mem();
+        let image = make_aarch64_elf_bin();
+
+        assert_eq!(
+            Elf::load(&gm, None, &mut Cursor::new(&image), None)
+                .unwrap()
+                .kernel_load
+                .raw_value(),
+            0x40080000
+        );
+    }
+
+    #[test]
     fn test_bad_magic_number() {
         let gm = create_guest_mem();
         let kernel_addr = GuestAddress(0x0);
-        let mut bad_image = make_elf_bin();
+        let mut bad_image = make_x86_64_elf_bin();
         bad_image[0x1] = 0x33;
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::InvalidElfMagicNumber)),
@@ -557,7 +573,7 @@ mod tests {
         // Only native endian is supported.
         let gm = create_guest_mem();
         let kernel_addr = GuestAddress(0x0);
-        let mut bad_image = make_elf_bin();
+        let mut bad_image = make_x86_64_elf_bin();
 
         #[cfg(target_endian = "little")]
         {
@@ -582,7 +598,7 @@ mod tests {
         // Program header has to be past the end of the elf header.
         let gm = create_guest_mem();
         let kernel_addr = GuestAddress(0x0);
-        let mut bad_image = make_elf_bin();
+        let mut bad_image = make_x86_64_elf_bin();
         bad_image[0x20] = 0x10;
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::InvalidProgramHeaderOffset)),
@@ -670,7 +686,7 @@ mod tests {
     #[test]
     fn test_overflow_loadaddr() {
         let gm = create_guest_mem();
-        let image = make_elf_bin();
+        let image = make_x86_64_elf_bin();
         assert_eq!(
             Some(KernelLoaderError::Elf(Error::Overflow)),
             Elf::load(
