@@ -1,6 +1,12 @@
-# Upcoming Release
+# [v0.14.0]
 
+## Fixed
 - [[#224](https://github.com/rust-vmm/linux-loader/pull/224)] Fixed docs.rs build.
+
+## Changed
+- [[#237]((https://github.com/rust-vmm/linux-loader/pull/237))] Replace bindgen files with manual translations.
+    As a consequence, `elf64_phdr` is renamed to `Elf64_Phdr`, `elf64_hdr` to `Elf64_Ehdr`, and `elf64_note` to
+    `Elf64_Nhdr`. In the definition of the fixed size array `e_ident` we now use `u8` instead of `raw_char`.
 
 # [v0.13.2]
 
