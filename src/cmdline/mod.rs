@@ -513,30 +513,45 @@ impl Cmdline {
 
         // Check first occurrence of the INIT_ARGS_SEPARATOR that is not between double quotes.
         // All chars following the INIT_ARGS_SEPARATOR will be parsed as init args.
-        let (mut boot_args, mut init_args) = match cmdline_raw
-            .match_indices(INIT_ARGS_SEPARATOR)
-            .find(|&separator_occurrence| {
-                Self::check_outside_double_quotes(&cmdline_raw[..(separator_occurrence.0)])
-            }) {
-            None => (cmdline_raw, ""),
-            Some((delimiter_index, _)) => (
-                &cmdline_raw[..delimiter_index],
-                // This does not overflow as long as `delimiter_index + INIT_ARGS_SEPARATOR.len()`
-                // is pointing to the first char after the INIT_ARGS_SEPARATOR which always exists;
-                // as a result, `delimiter_index + INIT_ARGS_SEPARATOR.len()` is less or equal to the
-                // length of the initial string.
-                &cmdline_raw[(delimiter_index + INIT_ARGS_SEPARATOR.len())..],
-            ),
-        };
+        let delimiter_needle = INIT_ARGS_SEPARATOR.trim_end();
+        let (mut boot_args, init_args) =
+            match cmdline_raw
+                .match_indices(delimiter_needle)
+                .find_map(|(idx, occur)| {
+                    let mut trailing_chars = 0;
+
+                    // If something is after the seperator then it also has to be an ASCII space
+                    let succ = &cmdline_raw[(idx + occur.len())..];
+                    if !succ.is_empty() {
+                        if succ.starts_with(' ') {
+                            // Include the space character into the further process
+                            trailing_chars += 1;
+                        } else {
+                            return None;
+                        }
+                    }
+
+                    if !Self::check_outside_double_quotes(&cmdline_raw[..idx]) {
+                        return None;
+                    }
+                    Some((idx, delimiter_needle.len() + trailing_chars))
+                }) {
+                None => (cmdline_raw, None),
+                Some((delimiter_index, delimiter_len)) => (
+                    &cmdline_raw[..delimiter_index],
+                    // The index operation does not go out of bounds because the result of
+                    // match_indices+find_map at most points to the end of the string.
+                    Some(cmdline_raw[(delimiter_index + delimiter_len)..].trim()),
+                ),
+            };
 
         boot_args = boot_args.trim();
-        init_args = init_args.trim();
 
         // Step 2: Check if capacity provided for the cmdline is not exceeded and create a new `Cmdline`
         // if size check passes.
         let mut cmdline_size = boot_args.len().checked_add(1).ok_or(Error::TooLarge)?;
 
-        if !init_args.is_empty() {
+        if let Some(init_args) = init_args {
             cmdline_size = cmdline_size
                 .checked_add(INIT_ARGS_SEPARATOR.len())
                 .ok_or(Error::TooLarge)?;
@@ -552,7 +567,7 @@ impl Cmdline {
 
         Ok(Cmdline {
             boot_args: boot_args.to_string(),
-            init_args: init_args.to_string(),
+            init_args: init_args.unwrap_or("").to_string(),
             capacity,
         })
     }
@@ -868,6 +883,16 @@ mod tests {
         let cl = Cmdline::try_from("foo=\"bar--baz\" foo", CMDLINE_MAX_SIZE).unwrap();
 
         assert_eq!(cl.boot_args, "foo=\"bar--baz\" foo");
+        assert_eq!(cl.init_args, "");
+
+        let cl = Cmdline::try_from("--foo --bar -- ", CMDLINE_MAX_SIZE).unwrap();
+
+        assert_eq!(cl.boot_args, "--foo --bar");
+        assert_eq!(cl.init_args, "");
+
+        let cl = Cmdline::try_from("--foo --bar --", CMDLINE_MAX_SIZE).unwrap();
+
+        assert_eq!(cl.boot_args, "--foo --bar");
         assert_eq!(cl.init_args, "");
     }
 
