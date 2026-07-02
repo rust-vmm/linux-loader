@@ -20,6 +20,8 @@
 extern crate vm_memory;
 
 use std::fmt;
+#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+use std::io::SeekFrom;
 use std::io::{Read, Seek};
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -36,9 +38,25 @@ pub mod pe;
 #[cfg(all(any(target_arch = "aarch64", target_arch = "riscv64"), feature = "pe"))]
 pub use pe::*;
 
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+#[cfg(all(
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    ),
+    feature = "elf"
+))]
 pub mod elf;
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "elf"))]
+#[cfg(all(
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    ),
+    feature = "elf"
+))]
 pub use elf::*;
 
 #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), feature = "bzimage"))]
@@ -54,7 +72,15 @@ pub enum Error {
     Bzimage(bzimage::Error),
 
     /// Failed to load elf image.
-    #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+    #[cfg(all(
+        feature = "elf",
+        any(
+            target_arch = "aarch64",
+            target_arch = "riscv64",
+            target_arch = "x86",
+            target_arch = "x86_64"
+        )
+    ))]
     Elf(elf::Error),
 
     /// Failed to load PE image.
@@ -71,6 +97,19 @@ pub enum Error {
     InvalidKernelStartAddress,
     /// Memory to load kernel image is too small.
     MemoryOverflow,
+
+    /// Unable to seek to DTB start.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    SeekDtbStart,
+    /// Unable to seek to DTB end.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    SeekDtbEnd,
+    /// Device tree binary too big.
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    DtbTooBig,
+    /// Unable to read DTB image
+    #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+    ReadDtbImage,
 }
 
 /// A specialized [`Result`] type for the kernel loader.
@@ -84,7 +123,15 @@ impl fmt::Display for Error {
         match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Bzimage(ref e) => write!(f, "failed to load bzImage kernel image: {e}"),
-            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            #[cfg(all(
+                feature = "elf",
+                any(
+                    target_arch = "aarch64",
+                    target_arch = "riscv64",
+                    target_arch = "x86",
+                    target_arch = "x86_64"
+                )
+            ))]
             Error::Elf(ref e) => write!(f, "failed to load ELF kernel image: {e}"),
             #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref e) => write!(f, "failed to load PE kernel image: {e}"),
@@ -94,6 +141,15 @@ impl fmt::Display for Error {
             Error::CommandLineOverflow => write!(f, "command line overflowed guest memory"),
             Error::InvalidKernelStartAddress => write!(f, "invalid kernel start address"),
             Error::MemoryOverflow => write!(f, "memory to load kernel image is not enough"),
+
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbStart => write!(f, "unable to seek DTB start"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbEnd => write!(f, "unable to seek DTB end"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::DtbTooBig => write!(f, "device tree image too big"),
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::ReadDtbImage => write!(f, "unable to read DTB image"),
         }
     }
 }
@@ -103,7 +159,15 @@ impl std::error::Error for Error {
         match self {
             #[cfg(all(feature = "bzimage", any(target_arch = "x86", target_arch = "x86_64")))]
             Error::Bzimage(ref e) => Some(e),
-            #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+            #[cfg(all(
+                feature = "elf",
+                any(
+                    target_arch = "aarch64",
+                    target_arch = "riscv64",
+                    target_arch = "x86",
+                    target_arch = "x86_64"
+                )
+            ))]
             Error::Elf(ref e) => Some(e),
             #[cfg(all(feature = "pe", any(target_arch = "aarch64", target_arch = "riscv64")))]
             Error::Pe(ref e) => Some(e),
@@ -113,11 +177,24 @@ impl std::error::Error for Error {
             Error::CommandLineOverflow => None,
             Error::InvalidKernelStartAddress => None,
             Error::MemoryOverflow => None,
+
+            #[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+            Error::SeekDtbStart | Error::SeekDtbEnd | Error::DtbTooBig | Error::ReadDtbImage => {
+                None
+            }
         }
     }
 }
 
-#[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+#[cfg(all(
+    feature = "elf",
+    any(
+        target_arch = "aarch64",
+        target_arch = "riscv64",
+        target_arch = "x86",
+        target_arch = "x86_64"
+    )
+))]
 impl From<elf::Error> for Error {
     fn from(err: elf::Error) -> Self {
         Error::Elf(err)
@@ -247,6 +324,34 @@ pub fn load_cmdline<M: GuestMemoryBackend>(
         .map_err(|_| Error::CommandLineCopy)?;
 
     Ok(())
+}
+
+/// Writes the device tree to the given memory slice.
+///
+/// # Arguments
+///
+/// * `guest_mem` - A u8 slice that will be partially overwritten by the device tree blob.
+/// * `guest_addr` - The address in `guest_mem` at which to load the device tree blob.
+/// * `dtb_image` - The device tree blob.
+#[cfg(any(target_arch = "aarch64", target_arch = "riscv64"))]
+pub fn load_dtb<F, M: GuestMemoryBackend>(
+    guest_mem: &M,
+    guest_addr: GuestAddress,
+    dtb_image: &mut F,
+) -> Result<()>
+where
+    F: ReadVolatile + Read + Seek,
+{
+    let dtb_size = dtb_image
+        .seek(SeekFrom::End(0))
+        .map_err(|_| Error::SeekDtbEnd)? as usize;
+    if dtb_size > 0x200000 {
+        return Err(Error::DtbTooBig);
+    }
+    dtb_image.rewind().map_err(|_| Error::SeekDtbStart)?;
+    guest_mem
+        .read_exact_volatile_from(guest_addr, dtb_image, dtb_size)
+        .map_err(|_| Error::ReadDtbImage)
 }
 
 #[cfg(test)]
